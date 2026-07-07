@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import type { AoiPolygonFeature } from "../../types/aoi";
+import type { LngLat } from "../../utils/geojson";
+import AoiLayer from "./AoiLayer";
 
 const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
 const INITIAL_CENTER: [number, number] = [-58.3816, -34.6037];
@@ -8,9 +11,22 @@ const INITIAL_ZOOM = 10;
 
 type MapStatus = "loading" | "ready" | "error";
 
-export default function MapView() {
+interface MapViewProps {
+  isDrawing: boolean;
+  draftVertices: LngLat[];
+  completedAoi: AoiPolygonFeature | null;
+  onMapClick: (lng: number, lat: number) => void;
+}
+
+export default function MapView({
+  isDrawing,
+  draftVertices,
+  completedAoi,
+  onMapClick,
+}: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
   const [status, setStatus] = useState<MapStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -48,13 +64,40 @@ export default function MapView() {
     });
 
     map.current = mapInstance;
+    setMapInstance(mapInstance);
 
     return () => {
       isMounted = false;
       mapInstance.remove();
       map.current = null;
+      setMapInstance(null);
     };
   }, []);
+
+  useEffect(() => {
+    const mapInstance = map.current;
+    if (!mapInstance || status !== "ready") {
+      return;
+    }
+
+    if (!isDrawing) {
+      mapInstance.getCanvas().style.cursor = "";
+      return;
+    }
+
+    mapInstance.getCanvas().style.cursor = "crosshair";
+
+    const handleClick = (event: maplibregl.MapMouseEvent) => {
+      onMapClick(event.lngLat.lng, event.lngLat.lat);
+    };
+
+    mapInstance.on("click", handleClick);
+
+    return () => {
+      mapInstance.off("click", handleClick);
+      mapInstance.getCanvas().style.cursor = "";
+    };
+  }, [isDrawing, onMapClick, status]);
 
   return (
     <div className="map-wrapper">
@@ -68,6 +111,13 @@ export default function MapView() {
           {errorMessage}
         </div>
       )}
+      <AoiLayer
+        map={mapInstance}
+        mapReady={status === "ready"}
+        isDrawing={isDrawing}
+        draftVertices={draftVertices}
+        completedAoi={completedAoi}
+      />
       <div ref={mapContainer} className="map-container" />
     </div>
   );

@@ -1,4 +1,8 @@
-export default function Sidebar() {
+interface SidebarProps {
+  children?: React.ReactNode;
+}
+
+export default function Sidebar({ children }: SidebarProps) {
   return (
     <aside className="app-sidebar">
       <nav>
@@ -7,11 +11,14 @@ export default function Sidebar() {
           <li className="sidebar-item active">Mapa</li>
         </ul>
       </nav>
+
+      {children}
+
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 1: Mapa base</p>
+        <p className="sidebar-phase">Fase 2: Dibujo de AOI</p>
         <p className="sidebar-note">
-          Mapa base inicial. Las herramientas de AOI se agregarán en la próxima
-          fase.
+          Dibujá un polígono sobre el mapa. El GeoJSON se mantiene en estado
+          local y aún no se persiste en el backend.
         </p>
       </div>
     </aside>
