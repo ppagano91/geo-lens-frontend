@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import {
+  DEFAULT_BASEMAP_ID,
+  getBasemapById,
+  getBasemapStyle,
+  getDefaultBasemap,
+} from "../../config/basemaps";
 import type { AoiPolygonFeature } from "../../types/aoi";
 import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
@@ -8,13 +14,13 @@ import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
 import AoiLayer from "./AoiLayer";
 import SceneFootprintLayer from "./SceneFootprintLayer";
 
-const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
 const INITIAL_CENTER: [number, number] = [-58.3816, -34.6037];
 const INITIAL_ZOOM = 10;
 
 type MapStatus = "loading" | "ready" | "error";
 
 interface MapViewProps {
+  basemapId: string;
   isDrawing: boolean;
   draftVertices: LngLat[];
   completedAoi: AoiPolygonFeature | null;
@@ -26,6 +32,7 @@ interface MapViewProps {
 }
 
 export default function MapView({
+  basemapId,
   isDrawing,
   draftVertices,
   completedAoi,
@@ -37,6 +44,7 @@ export default function MapView({
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const prevBasemapIdRef = useRef(basemapId);
   const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
   const [status, setStatus] = useState<MapStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -47,19 +55,23 @@ export default function MapView({
     }
 
     let isMounted = true;
+    const initialBasemap =
+      getBasemapById(basemapId) ?? getDefaultBasemap();
 
     const mapInstance = new maplibregl.Map({
       container: mapContainer.current,
-      style: MAP_STYLE,
+      style: getBasemapStyle(initialBasemap),
       center: INITIAL_CENTER,
       zoom: INITIAL_ZOOM,
     });
 
     mapInstance.addControl(new maplibregl.NavigationControl(), "top-right");
+    mapInstance.addControl(new maplibregl.AttributionControl({ compact: true }));
 
     mapInstance.on("load", () => {
       if (isMounted) {
         setStatus("ready");
+        setErrorMessage(null);
       }
     });
 
@@ -84,6 +96,39 @@ export default function MapView({
       setMapInstance(null);
     };
   }, []);
+
+  useEffect(() => {
+    const mapInstance = map.current;
+    if (!mapInstance || prevBasemapIdRef.current === basemapId) {
+      return;
+    }
+
+    prevBasemapIdRef.current = basemapId;
+
+    const basemap =
+      getBasemapById(basemapId) ??
+      getBasemapById(DEFAULT_BASEMAP_ID) ??
+      getDefaultBasemap();
+    const center = mapInstance.getCenter();
+    const zoom = mapInstance.getZoom();
+    const bearing = mapInstance.getBearing();
+    const pitch = mapInstance.getPitch();
+
+    setStatus("loading");
+    setErrorMessage(null);
+
+    const handleStyleLoad = () => {
+      mapInstance.jumpTo({ center, zoom, bearing, pitch });
+      setStatus("ready");
+    };
+
+    mapInstance.once("style.load", handleStyleLoad);
+    mapInstance.setStyle(getBasemapStyle(basemap));
+
+    return () => {
+      mapInstance.off("style.load", handleStyleLoad);
+    };
+  }, [basemapId]);
 
   useEffect(() => {
     const mapInstance = map.current;

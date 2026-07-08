@@ -1,11 +1,15 @@
+import { useState } from "react";
 import AppLayout from "./components/layout/AppLayout";
+import BasemapSelector from "./components/map/BasemapSelector";
 import MapView from "./components/map/MapView";
 import AoiPanel from "./components/panels/AoiPanel";
 import ScenePanel from "./components/panels/ScenePanel";
+import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
 import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
 import { useScenes } from "./hooks/useScenes";
 
 export default function App() {
+  const [basemapId, setBasemapId] = useState(DEFAULT_BASEMAP_ID);
   const workspace = useAoiWorkspace();
   const scenes = useScenes();
 
@@ -13,6 +17,7 @@ export default function App() {
     <AppLayout
       sidebar={
         <>
+          <BasemapSelector value={basemapId} onChange={setBasemapId} />
           <AoiPanel
             statusMessage={workspace.statusMessage}
             isDrawing={workspace.drawing.isDrawing}
@@ -54,6 +59,7 @@ export default function App() {
       }
     >
       <MapView
+        basemapId={basemapId}
         isDrawing={workspace.drawing.isDrawing}
         draftVertices={workspace.drawing.draftVertices}
         completedAoi={workspace.drawing.completedAoi}

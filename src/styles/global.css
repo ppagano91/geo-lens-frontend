@@ -133,6 +133,34 @@ body {
   color: #9b1c1c;
 }
 
+.basemap-selector {
+  margin-top: 1.25rem;
+}
+
+.basemap-selector-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.basemap-select {
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #1a1a2e;
+  background-color: #ffffff;
+}
+
+.basemap-select:focus {
+  outline: 2px solid #bee3f8;
+  border-color: #2c5282;
+}
+
 .aoi-panel {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
