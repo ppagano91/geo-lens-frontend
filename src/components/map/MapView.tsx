@@ -3,6 +3,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { AoiPolygonFeature } from "../../types/aoi";
 import type { LngLat } from "../../utils/geojson";
+import { getPolygonBounds } from "../../utils/geojson";
 import AoiLayer from "./AoiLayer";
 
 const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
@@ -15,6 +16,7 @@ interface MapViewProps {
   isDrawing: boolean;
   draftVertices: LngLat[];
   completedAoi: AoiPolygonFeature | null;
+  fitBoundsTrigger: number;
   onMapClick: (lng: number, lat: number) => void;
 }
 
@@ -22,6 +24,7 @@ export default function MapView({
   isDrawing,
   draftVertices,
   completedAoi,
+  fitBoundsTrigger,
   onMapClick,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -98,6 +101,19 @@ export default function MapView({
       mapInstance.getCanvas().style.cursor = "";
     };
   }, [isDrawing, onMapClick, status]);
+
+  useEffect(() => {
+    const mapInstance = map.current;
+    if (!mapInstance || status !== "ready" || !completedAoi || fitBoundsTrigger === 0) {
+      return;
+    }
+
+    mapInstance.fitBounds(getPolygonBounds(completedAoi), {
+      padding: 48,
+      maxZoom: 14,
+      duration: 500,
+    });
+  }, [completedAoi, fitBoundsTrigger, status]);
 
   return (
     <div className="map-wrapper">

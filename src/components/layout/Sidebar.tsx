@@ -15,10 +15,10 @@ export default function Sidebar({ children }: SidebarProps) {
       {children}
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 2: Dibujo de AOI</p>
+        <p className="sidebar-phase">Fase 3B: AOIs con backend</p>
         <p className="sidebar-note">
-          Dibujá un polígono sobre el mapa. El GeoJSON se mantiene en estado
-          local y aún no se persiste en el backend.
+          Dibujá un polígono, guardalo en la API y consultá o eliminá AOIs
+          persistidos desde el panel lateral.
         </p>
       </div>
     </aside>

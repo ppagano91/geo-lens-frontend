@@ -1,4 +1,4 @@
-import type { AoiPolygonFeature } from "../types/aoi";
+import type { AoiPolygonFeature, AoiRecord } from "../types/aoi";
 
 export type LngLat = [number, number];
 
@@ -26,6 +26,27 @@ export function createAoiFeature(vertices: LngLat[]): AoiPolygonFeature {
       coordinates: [closeRing(vertices)],
     },
   };
+}
+
+export function aoiRecordToFeature(aoi: AoiRecord): AoiPolygonFeature {
+  return {
+    type: "Feature",
+    properties: { name: aoi.name },
+    geometry: aoi.geometry,
+  };
+}
+
+export function getPolygonBounds(
+  aoi: AoiPolygonFeature,
+): [[number, number], [number, number]] {
+  const ring = aoi.geometry.coordinates[0];
+  const lngs = ring.map((coord) => coord[0]);
+  const lats = ring.map((coord) => coord[1]);
+
+  return [
+    [Math.min(...lngs), Math.min(...lats)],
+    [Math.max(...lngs), Math.max(...lats)],
+  ];
 }
 
 const emptyCollection = (): GeoJSON.FeatureCollection => ({

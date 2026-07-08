@@ -78,6 +78,13 @@ export function useAoiDrawing() {
     setStatus("idle");
   }, []);
 
+  const loadAoi = useCallback((feature: AoiPolygonFeature) => {
+    setCompletedAoi(feature);
+    setDraftVertices([]);
+    setValidationMessage(null);
+    setStatus("ready");
+  }, []);
+
   return {
     status,
     isDrawing,
@@ -90,5 +97,6 @@ export function useAoiDrawing() {
     addVertex,
     finishDrawing,
     clearAoi,
+    loadAoi,
   };
 }
