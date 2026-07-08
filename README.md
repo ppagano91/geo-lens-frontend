@@ -9,8 +9,8 @@ El frontend permite dibujar un polígono AOI, guardarlo en la API, listar AOIs p
 ## Requisitos
 
 - Node.js 20+
-- Backend corriendo en `http://localhost:8000` (ver `backend/README.md`)
-- PostgreSQL/PostGIS levantado con migraciones aplicadas
+- PostgreSQL + PostGIS local en Windows con base `geochange` y migraciones aplicadas (ver [README raíz](../README.md) pasos 1–5 o [backend/README.md](../backend/README.md))
+- Backend corriendo en `http://localhost:8000`
 
 ## Instalación
 
@@ -30,6 +30,8 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## Ejecutar
 
+Con el backend ya levantado (paso 6 del [README raíz](../README.md)):
+
 ```powershell
 npm run dev
 ```
@@ -38,7 +40,7 @@ La aplicación estará en `http://localhost:5173`.
 
 ## Cómo probar AOIs con backend
 
-1. Asegurarse de que backend y PostgreSQL estén corriendo.
+1. Completar el flujo local: PostgreSQL/PostGIS → `alembic upgrade head` → backend → frontend.
 2. Abrir `http://localhost:5173`.
 3. **Iniciar dibujo** → click en el mapa (mínimo 3 vértices) → **Finalizar AOI**.
 4. Completar **Nombre del AOI** → **Guardar AOI**.
