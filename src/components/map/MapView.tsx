@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { AoiPolygonFeature } from "../../types/aoi";
+import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
-import { getPolygonBounds } from "../../utils/geojson";
+import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
 import AoiLayer from "./AoiLayer";
+import SceneFootprintLayer from "./SceneFootprintLayer";
 
 const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
 const INITIAL_CENTER: [number, number] = [-58.3816, -34.6037];
@@ -17,6 +19,9 @@ interface MapViewProps {
   draftVertices: LngLat[];
   completedAoi: AoiPolygonFeature | null;
   fitBoundsTrigger: number;
+  sceneFootprint: SceneFootprintGeometry | null;
+  sceneName: string | null;
+  sceneFitBoundsTrigger: number;
   onMapClick: (lng: number, lat: number) => void;
 }
 
@@ -25,6 +30,9 @@ export default function MapView({
   draftVertices,
   completedAoi,
   fitBoundsTrigger,
+  sceneFootprint,
+  sceneName,
+  sceneFitBoundsTrigger,
   onMapClick,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -115,6 +123,24 @@ export default function MapView({
     });
   }, [completedAoi, fitBoundsTrigger, status]);
 
+  useEffect(() => {
+    const mapInstance = map.current;
+    if (
+      !mapInstance ||
+      status !== "ready" ||
+      !sceneFootprint ||
+      sceneFitBoundsTrigger === 0
+    ) {
+      return;
+    }
+
+    mapInstance.fitBounds(getFootprintBounds(sceneFootprint), {
+      padding: 48,
+      maxZoom: 14,
+      duration: 500,
+    });
+  }, [sceneFootprint, sceneFitBoundsTrigger, status]);
+
   return (
     <div className="map-wrapper">
       {status === "loading" && (
@@ -133,6 +159,12 @@ export default function MapView({
         isDrawing={isDrawing}
         draftVertices={draftVertices}
         completedAoi={completedAoi}
+      />
+      <SceneFootprintLayer
+        map={mapInstance}
+        mapReady={status === "ready"}
+        footprint={sceneFootprint}
+        sceneName={sceneName}
       />
       <div ref={mapContainer} className="map-container" />
     </div>

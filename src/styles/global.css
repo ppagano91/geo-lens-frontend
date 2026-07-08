@@ -327,3 +327,101 @@ body {
   display: flex;
   gap: 0.4rem;
 }
+
+.scene-panel {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.scene-list {
+  margin-top: 0.75rem;
+}
+
+.scene-item-meta {
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  color: #555;
+  line-height: 1.35;
+}
+
+.scene-detail {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.scene-detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.scene-detail-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.scene-detail-row dt {
+  font-weight: 600;
+  color: #555;
+}
+
+.scene-detail-row dd {
+  color: #1a1a2e;
+  word-break: break-word;
+}
+
+.scene-bands {
+  margin-top: 0.5rem;
+}
+
+.scene-band-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scene-band-item {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.scene-band-header {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.scene-band-key {
+  font-size: 0.82rem;
+  color: #276749;
+}
+
+.scene-band-name {
+  font-size: 0.78rem;
+  color: #444;
+}
+
+.scene-band-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.scene-band-path {
+  font-size: 0.68rem;
+  color: #888;
+  line-height: 1.35;
+  word-break: break-all;
+}

@@ -2,9 +2,14 @@
 
 Interfaz web con React, Vite, TypeScript y MapLibre GL JS.
 
-## Fase actual: AOIs con backend (Fase 3B)
+## Fase actual: Escenas en frontend (Fase 4B)
 
-El frontend permite dibujar un polígono AOI, guardarlo en la API, listar AOIs persistidos, visualizarlos en el mapa y eliminarlos.
+El frontend permite:
+
+- **AOIs**: dibujar, guardar, listar, visualizar y eliminar (Fase 3B).
+- **Escenas**: listar escenas registradas, seleccionar, ver detalle con bandas y mostrar footprint en el mapa.
+
+Solo metadata; `asset_path` se muestra como texto y no se abre. Sin lectura raster.
 
 ## Requisitos
 
@@ -38,6 +43,15 @@ npm run dev
 
 La aplicación estará en `http://localhost:5173`.
 
+## Cómo probar escenas
+
+1. Crear una escena desde Swagger (`http://localhost:8000/docs`) o curl (ver [docs/scenes_metadata.md](../docs/scenes_metadata.md)).
+2. Abrir `http://localhost:5173`.
+3. En el panel **Escenas**, click en **Refrescar escenas**.
+4. Click en **Seleccionar** sobre una escena.
+5. Verificar detalle, lista de bandas y footprint verde en el mapa.
+6. Confirmar que el flujo de AOIs sigue funcionando.
+
 ## Cómo probar AOIs con backend
 
 1. Completar el flujo local: PostgreSQL/PostGIS → `alembic upgrade head` → backend → frontend.
@@ -54,12 +68,16 @@ La aplicación estará en `http://localhost:5173`.
 |---|---|
 | `src/api/client.ts` | Cliente HTTP base |
 | `src/api/aoiApi.ts` | Funciones CRUD de AOIs |
+| `src/api/sceneApi.ts` | Funciones de escenas (listar, detalle, bandas, eliminar) |
 | `src/hooks/useAois.ts` | Estado de AOIs guardados (API) |
 | `src/hooks/useAoiDrawing.ts` | Dibujo local de AOI |
-| `src/hooks/useAoiWorkspace.ts` | Orquestación dibujo + API |
-| `src/components/panels/AoiPanel.tsx` | Panel lateral con controles y lista |
-| `src/components/map/MapView.tsx` | Mapa base y fitBounds al cargar AOI |
-| `src/components/map/AoiLayer.tsx` | Capas GeoJSON del polígono |
+| `src/hooks/useAoiWorkspace.ts` | Orquestación dibujo + API de AOIs |
+| `src/hooks/useScenes.ts` | Estado de escenas (listar, seleccionar, eliminar) |
+| `src/components/panels/AoiPanel.tsx` | Panel lateral de AOIs |
+| `src/components/panels/ScenePanel.tsx` | Panel lateral de escenas |
+| `src/components/map/MapView.tsx` | Mapa base y fitBounds |
+| `src/components/map/AoiLayer.tsx` | Capas GeoJSON del AOI (azul) |
+| `src/components/map/SceneFootprintLayer.tsx` | Capa footprint de escena (verde) |
 
 ## Build
 
@@ -69,6 +87,7 @@ npm run build
 
 ## Qué no incluye todavía
 
-- Edición de AOIs existentes.
-- Escenas, raster, índices espectrales.
+- Creación de escenas desde la UI.
+- Edición de AOIs o escenas existentes.
+- Lectura raster, índices espectrales, previews.
 - Autenticación ni multiusuario.

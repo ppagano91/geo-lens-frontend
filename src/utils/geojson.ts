@@ -1,4 +1,5 @@
 import type { AoiPolygonFeature, AoiRecord } from "../types/aoi";
+import type { SceneFootprintGeometry } from "../types/scene";
 
 export type LngLat = [number, number];
 
@@ -36,17 +37,73 @@ export function aoiRecordToFeature(aoi: AoiRecord): AoiPolygonFeature {
   };
 }
 
+function collectLngLatsFromFootprint(
+  footprint: SceneFootprintGeometry,
+): LngLat[] {
+  if (footprint.type === "Polygon") {
+    return footprint.coordinates[0] as LngLat[];
+  }
+
+  return footprint.coordinates.flatMap((polygon) => polygon[0] as LngLat[]);
+}
+
 export function getPolygonBounds(
   aoi: AoiPolygonFeature,
 ): [[number, number], [number, number]] {
-  const ring = aoi.geometry.coordinates[0];
-  const lngs = ring.map((coord) => coord[0]);
-  const lats = ring.map((coord) => coord[1]);
+  return getFootprintBounds(aoi.geometry);
+}
+
+export function getFootprintBounds(
+  footprint: SceneFootprintGeometry,
+): [[number, number], [number, number]] {
+  const coords = collectLngLatsFromFootprint(footprint);
+  const lngs = coords.map((coord) => coord[0]);
+  const lats = coords.map((coord) => coord[1]);
 
   return [
     [Math.min(...lngs), Math.min(...lats)],
     [Math.max(...lngs), Math.max(...lats)],
   ];
+}
+
+export function footprintToPolygonFeatures(
+  footprint: SceneFootprintGeometry,
+  sceneName?: string,
+): GeoJSON.Feature<GeoJSON.Polygon>[] {
+  const properties = { name: sceneName ?? "Escena" };
+
+  if (footprint.type === "Polygon") {
+    return [
+      {
+        type: "Feature",
+        properties,
+        geometry: footprint,
+      },
+    ];
+  }
+
+  return footprint.coordinates.map((polygonCoords) => ({
+    type: "Feature" as const,
+    properties,
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: polygonCoords,
+    },
+  }));
+}
+
+export function sceneFootprintToFeatureCollection(
+  footprint: SceneFootprintGeometry | null,
+  sceneName?: string,
+): GeoJSON.FeatureCollection {
+  if (!footprint) {
+    return { type: "FeatureCollection", features: [] };
+  }
+
+  return {
+    type: "FeatureCollection",
+    features: footprintToPolygonFeatures(footprint, sceneName),
+  };
 }
 
 const emptyCollection = (): GeoJSON.FeatureCollection => ({

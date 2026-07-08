@@ -15,10 +15,10 @@ export default function Sidebar({ children }: SidebarProps) {
       {children}
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 3B: AOIs con backend</p>
+        <p className="sidebar-phase">Fase 4B: Escenas en frontend</p>
         <p className="sidebar-note">
-          Dibujá un polígono, guardalo en la API y consultá o eliminá AOIs
-          persistidos desde el panel lateral.
+          Dibujá y guardá AOIs, y consultá escenas registradas con su footprint
+          en el mapa. Solo metadata; sin lectura raster todavía.
         </p>
       </div>
     </aside>
