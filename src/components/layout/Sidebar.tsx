@@ -1,24 +1,47 @@
+import { useState } from "react";
+import type { ReactNode } from "react";
+import {
+  DEFAULT_SIDEBAR_TAB,
+  type SidebarTabId,
+} from "../../types/sidebar";
+import SidebarTabs from "./SidebarTabs";
+
 interface SidebarProps {
-  children?: React.ReactNode;
+  aoi: ReactNode;
+  scenes: ReactNode;
+  indices: ReactNode;
+  map: ReactNode;
 }
 
-export default function Sidebar({ children }: SidebarProps) {
+export default function Sidebar({ aoi, scenes, indices, map }: SidebarProps) {
+  const [activeTab, setActiveTab] = useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
+
+  const sections: Record<SidebarTabId, ReactNode> = {
+    aoi,
+    scenes,
+    indices,
+    map,
+  };
+
   return (
     <aside className="app-sidebar">
-      <nav>
-        <p className="sidebar-label">Navegación</p>
-        <ul>
-          <li className="sidebar-item active">Mapa</li>
-        </ul>
-      </nav>
+      <SidebarTabs activeTab={activeTab} onChange={setActiveTab} />
 
-      {children}
+      <div
+        className="sidebar-section"
+        role="tabpanel"
+        id={`sidebar-panel-${activeTab}`}
+        aria-labelledby={`sidebar-tab-${activeTab}`}
+      >
+        {sections[activeTab]}
+      </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 4B: Escenas en frontend</p>
+        <p className="sidebar-phase">Fase 5B: Índices en frontend</p>
         <p className="sidebar-note">
-          Dibujá y guardá AOIs, y consultá escenas registradas con su footprint
-          en el mapa. Solo metadata; sin lectura raster todavía.
+          Dibujá y guardá AOIs, consultá escenas con footprint en el mapa y
+          explorá el catálogo de índices espectrales. Solo metadata; sin cálculo
+          raster todavía.
         </p>
       </div>
     </aside>

@@ -2,15 +2,16 @@
 
 Interfaz web con React, Vite, TypeScript y MapLibre GL JS.
 
-## Fase actual: Escenas en frontend (Fase 4B)
+## Fase actual: Índices espectrales en frontend (Fase 5B)
 
 El frontend permite:
 
 - **AOIs**: dibujar, guardar, listar, visualizar y eliminar (Fase 3B).
-- **Escenas**: listar escenas registradas, seleccionar, ver detalle con bandas y mostrar footprint en el mapa.
+- **Escenas**: listar escenas registradas, seleccionar, ver detalle con bandas y mostrar footprint en el mapa (Fase 4B).
+- **Índices**: listar índices espectrales del catálogo, filtrar por categoría, seleccionar y ver detalle (fórmula, bandas, interpretación).
 - **Mapas base**: selector para alternar entre calles (OSM), topográfico, satélite y demo MapLibre.
 
-Solo metadata; `asset_path` se muestra como texto y no se abre. Sin lectura raster.
+Solo metadata; sin lectura raster ni cálculo de índices.
 
 ## Requisitos
 
@@ -43,6 +44,17 @@ npm run dev
 ```
 
 La aplicación estará en `http://localhost:5173`.
+
+## Cómo probar índices espectrales
+
+1. Verificar que el backend expone índices: `curl http://localhost:8000/api/v1/indices`.
+2. Abrir `http://localhost:5173`.
+3. En el panel **Índices**, click en **Refrescar índices**.
+4. Deben aparecer NDVI, NDWI, NBR y NDMI.
+5. Click en **Seleccionar** sobre NDVI → ver nombre, categoría, fórmula, bandas requeridas e interpretación.
+6. Repetir con NDWI, NBR y NDMI.
+7. Probar el filtro por categoría (ej. **Vegetación** → solo NDVI).
+8. Confirmar que AOIs y escenas siguen funcionando.
 
 ## Cómo probar escenas
 
@@ -93,12 +105,16 @@ Configuración centralizada en `src/config/basemaps.ts`.
 | `src/api/client.ts` | Cliente HTTP base |
 | `src/api/aoiApi.ts` | Funciones CRUD de AOIs |
 | `src/api/sceneApi.ts` | Funciones de escenas (listar, detalle, bandas, eliminar) |
+| `src/api/indexApi.ts` | Funciones de índices espectrales (listar, detalle) |
 | `src/hooks/useAois.ts` | Estado de AOIs guardados (API) |
 | `src/hooks/useAoiDrawing.ts` | Dibujo local de AOI |
 | `src/hooks/useAoiWorkspace.ts` | Orquestación dibujo + API de AOIs |
 | `src/hooks/useScenes.ts` | Estado de escenas (listar, seleccionar, eliminar) |
+| `src/hooks/useSpectralIndices.ts` | Estado de índices espectrales (listar, filtrar, seleccionar) |
 | `src/components/panels/AoiPanel.tsx` | Panel lateral de AOIs |
 | `src/components/panels/ScenePanel.tsx` | Panel lateral de escenas |
+| `src/components/panels/IndexPanel.tsx` | Panel lateral de índices espectrales |
+| `src/types/spectralIndex.ts` | Tipos TypeScript para definiciones de índices |
 | `src/config/basemaps.ts` | Configuración de mapas base (OSM, OpenTopoMap, Esri, demo) |
 | `src/components/map/BasemapSelector.tsx` | Selector de mapa base en sidebar |
 | `src/components/map/MapView.tsx` | Mapa base, cambio de estilo y fitBounds |
@@ -113,7 +129,9 @@ npm run build
 
 ## Qué no incluye todavía
 
+- Cálculo de índices (NumPy, rasterio).
+- Validación de índice contra bandas de una escena.
 - Creación de escenas desde la UI.
 - Edición de AOIs o escenas existentes.
-- Lectura raster, índices espectrales, previews.
+- Lectura raster, previews, composiciones RGB.
 - Autenticación ni multiusuario.
