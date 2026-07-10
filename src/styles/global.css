@@ -567,3 +567,55 @@ body {
   font-weight: 600;
   color: #276749;
 }
+
+.compatibility-panel {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.compatibility-status {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.compatibility-status--ok {
+  background-color: #e6f4ea;
+  color: #1e7e34;
+}
+
+.compatibility-status--warn {
+  background-color: #fff4e5;
+  color: #9a6700;
+}
+
+.compatibility-status--neutral {
+  background-color: #f0f2f5;
+  color: #555;
+}
+
+.compatibility-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.compatibility-badge.compatibility-status--ok {
+  background-color: #e6f4ea;
+  color: #1e7e34;
+}
+
+.compatibility-badge.compatibility-status--warn {
+  background-color: #fff4e5;
+  color: #9a6700;
+}
+
+.compatibility-missing {
+  color: #9a6700;
+  font-weight: 600;
+}

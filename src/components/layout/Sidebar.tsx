@@ -37,11 +37,10 @@ export default function Sidebar({ aoi, scenes, indices, map }: SidebarProps) {
       </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 5B: Índices en frontend</p>
+        <p className="sidebar-phase">Fase 6A: Compatibilidad índice / escena</p>
         <p className="sidebar-note">
-          Dibujá y guardá AOIs, consultá escenas con footprint en el mapa y
-          explorá el catálogo de índices espectrales. Solo metadata; sin cálculo
-          raster todavía.
+          Validá si la escena seleccionada tiene las bandas que pide el índice.
+          Solo metadata; sin cálculo raster todavía.
         </p>
       </div>
     </aside>

@@ -2,13 +2,14 @@
 
 Interfaz web con React, Vite, TypeScript y MapLibre GL JS.
 
-## Fase actual: Índices espectrales en frontend (Fase 5B)
+## Fase actual: Compatibilidad índice / escena (Fase 6A)
 
 El frontend permite:
 
 - **AOIs**: dibujar, guardar, listar, visualizar y eliminar (Fase 3B).
 - **Escenas**: listar escenas registradas, seleccionar, ver detalle con bandas y mostrar footprint en el mapa (Fase 4B).
-- **Índices**: listar índices espectrales del catálogo, filtrar por categoría, seleccionar y ver detalle (fórmula, bandas, interpretación).
+- **Índices**: listar índices espectrales del catálogo, filtrar por categoría, seleccionar y ver detalle (fórmula, bandas, interpretación) (Fase 5B).
+- **Compatibilidad**: evaluar si la escena seleccionada tiene las bandas que pide el índice (solo metadata).
 - **Mapas base**: selector para alternar entre calles (OSM), topográfico, satélite y demo MapLibre.
 
 Solo metadata; sin lectura raster ni cálculo de índices.
@@ -44,6 +45,21 @@ npm run dev
 ```
 
 La aplicación estará en `http://localhost:5173`.
+
+## Cómo probar compatibilidad índice / escena
+
+1. Tener al menos una escena con bandas registradas (ej. B02, B03, B04, B08, B11, B12).
+2. Abrir `http://localhost:5173`.
+3. En **Escenas**, seleccionar la escena.
+4. En **Índices**, seleccionar **NDVI**.
+5. En **Compatibilidad índice / escena** verificar:
+   - Bandas requeridas: B08, B04
+   - Bandas disponibles: las de la escena
+   - Bandas faltantes: vacías (o —)
+   - Estado: Compatible
+6. Probar un índice con bandas ausentes → No compatible y listado de faltantes.
+7. Sin escena o sin índice → mensajes claros de selección.
+8. Cambiar escena o índice → la evaluación se actualiza sola.
 
 ## Cómo probar índices espectrales
 
@@ -114,6 +130,9 @@ Configuración centralizada en `src/config/basemaps.ts`.
 | `src/components/panels/AoiPanel.tsx` | Panel lateral de AOIs |
 | `src/components/panels/ScenePanel.tsx` | Panel lateral de escenas |
 | `src/components/panels/IndexPanel.tsx` | Panel lateral de índices espectrales |
+| `src/components/panels/CompatibilityPanel.tsx` | Compatibilidad índice / escena (metadata) |
+| `src/utils/indexCompatibility.ts` | Evaluación de bandas requeridas vs disponibles |
+| `src/types/indexCompatibility.ts` | Tipos del resultado de compatibilidad |
 | `src/types/spectralIndex.ts` | Tipos TypeScript para definiciones de índices |
 | `src/config/basemaps.ts` | Configuración de mapas base (OSM, OpenTopoMap, Esri, demo) |
 | `src/components/map/BasemapSelector.tsx` | Selector de mapa base en sidebar |
@@ -130,7 +149,7 @@ npm run build
 ## Qué no incluye todavía
 
 - Cálculo de índices (NumPy, rasterio).
-- Validación de índice contra bandas de una escena.
+- Lectura o validación física de `asset_path`.
 - Creación de escenas desde la UI.
 - Edición de AOIs o escenas existentes.
 - Lectura raster, previews, composiciones RGB.

@@ -64,6 +64,7 @@ export default function App() {
           indices={spectralIndices.indices}
           selectedIndex={spectralIndices.selectedIndex}
           selectedIndexKey={spectralIndices.selectedIndexKey}
+          selectedScene={scenes.selectedScene}
           categoryFilter={spectralIndices.categoryFilter}
           listLoading={spectralIndices.listLoading}
           detailLoading={spectralIndices.detailLoading}

@@ -1,9 +1,12 @@
+import type { SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
+import CompatibilityPanel from "./CompatibilityPanel";
 
 interface IndexPanelProps {
   indices: SpectralIndexDefinition[];
   selectedIndex: SpectralIndexDefinition | null;
   selectedIndexKey: string | null;
+  selectedScene: SceneRead | null;
   categoryFilter: string;
   listLoading: boolean;
   detailLoading: boolean;
@@ -78,6 +81,7 @@ export default function IndexPanel({
   indices,
   selectedIndex,
   selectedIndexKey,
+  selectedScene,
   categoryFilter,
   listLoading,
   detailLoading,
@@ -89,6 +93,11 @@ export default function IndexPanel({
   return (
     <section className="index-panel" aria-label="Índices espectrales">
       <p className="sidebar-label">Índices</p>
+
+      <CompatibilityPanel
+        selectedIndex={selectedIndex}
+        selectedScene={selectedScene}
+      />
 
       {error && (
         <p className="aoi-error" role="alert">
