@@ -2,17 +2,18 @@
 
 Interfaz web con React, Vite, TypeScript y MapLibre GL JS.
 
-## Fase actual: Compatibilidad índice / escena (Fase 6A)
+## Fase actual: Cobertura espacial AOI / escena (Fase 6C)
 
 El frontend permite:
 
 - **AOIs**: dibujar, guardar, listar, visualizar y eliminar (Fase 3B).
 - **Escenas**: listar escenas registradas, seleccionar, ver detalle con bandas y mostrar footprint en el mapa (Fase 4B).
 - **Índices**: listar índices espectrales del catálogo, filtrar por categoría, seleccionar y ver detalle (fórmula, bandas, interpretación) (Fase 5B).
-- **Compatibilidad**: evaluar si la escena seleccionada tiene las bandas que pide el índice (solo metadata).
+- **Compatibilidad**: evaluar si la escena seleccionada tiene las bandas que pide el índice (solo metadata) (Fase 6A).
+- **Cobertura espacial**: evaluar si el AOI guardado queda cubierto por el footprint de la escena (PostGIS vía API) (Fase 6C).
 - **Mapas base**: selector para alternar entre calles (OSM), topográfico, satélite y demo MapLibre.
 
-Solo metadata; sin lectura raster ni cálculo de índices.
+Solo geometrías y metadata; sin lectura raster ni cálculo de índices sobre archivos.
 
 ## Requisitos
 
@@ -45,6 +46,18 @@ npm run dev
 ```
 
 La aplicación estará en `http://localhost:5173`.
+
+## Cómo probar cobertura espacial AOI / escena
+
+1. Crear o seleccionar un **AOI guardado** (tab AOI → Seleccionar en la lista). Un dibujo sin guardar no alcanza: hace falta `aoi_id`.
+2. En **Escenas**, seleccionar una escena cuyo footprint cubra el AOI.
+3. En **Cobertura espacial AOI / escena** verificar:
+   - Mensaje: *El AOI está completamente cubierto por la escena.*
+   - Estado: Full, cobertura 100%
+4. Probar un AOI que solo intersecte parcialmente → Partial y porcentaje entre 0 y 100.
+5. Probar un AOI fuera del footprint → None y 0%.
+6. Sin AOI o sin escena → *Seleccioná un AOI y una escena para evaluar cobertura.*
+7. Confirmar que compatibilidad de bandas, índices y mapa siguen funcionando.
 
 ## Cómo probar compatibilidad índice / escena
 
@@ -122,17 +135,21 @@ Configuración centralizada en `src/config/basemaps.ts`.
 | `src/api/aoiApi.ts` | Funciones CRUD de AOIs |
 | `src/api/sceneApi.ts` | Funciones de escenas (listar, detalle, bandas, eliminar) |
 | `src/api/indexApi.ts` | Funciones de índices espectrales (listar, detalle) |
+| `src/api/coverageApi.ts` | Cobertura espacial AOI / escena |
 | `src/hooks/useAois.ts` | Estado de AOIs guardados (API) |
 | `src/hooks/useAoiDrawing.ts` | Dibujo local de AOI |
 | `src/hooks/useAoiWorkspace.ts` | Orquestación dibujo + API de AOIs |
 | `src/hooks/useScenes.ts` | Estado de escenas (listar, seleccionar, eliminar) |
 | `src/hooks/useSpectralIndices.ts` | Estado de índices espectrales (listar, filtrar, seleccionar) |
+| `src/hooks/useSpatialCoverage.ts` | Consulta de cobertura espacial al cambiar AOI/escena |
 | `src/components/panels/AoiPanel.tsx` | Panel lateral de AOIs |
 | `src/components/panels/ScenePanel.tsx` | Panel lateral de escenas |
 | `src/components/panels/IndexPanel.tsx` | Panel lateral de índices espectrales |
 | `src/components/panels/CompatibilityPanel.tsx` | Compatibilidad índice / escena (metadata) |
+| `src/components/panels/CoveragePanel.tsx` | Cobertura espacial AOI / escena |
 | `src/utils/indexCompatibility.ts` | Evaluación de bandas requeridas vs disponibles |
 | `src/types/indexCompatibility.ts` | Tipos del resultado de compatibilidad |
+| `src/types/spatialCoverage.ts` | Tipos del resultado de cobertura espacial |
 | `src/types/spectralIndex.ts` | Tipos TypeScript para definiciones de índices |
 | `src/config/basemaps.ts` | Configuración de mapas base (OSM, OpenTopoMap, Esri, demo) |
 | `src/components/map/BasemapSelector.tsx` | Selector de mapa base en sidebar |
@@ -148,9 +165,9 @@ npm run build
 
 ## Qué no incluye todavía
 
-- Cálculo de índices (NumPy, rasterio).
+- Cálculo de índices sobre archivos (NumPy + rasterio).
 - Lectura o validación física de `asset_path`.
 - Creación de escenas desde la UI.
 - Edición de AOIs o escenas existentes.
-- Lectura raster, previews, composiciones RGB.
+- Previews, composiciones RGB.
 - Autenticación ni multiusuario.
