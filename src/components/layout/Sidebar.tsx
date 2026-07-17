@@ -37,10 +37,10 @@ export default function Sidebar({ aoi, scenes, indices, map }: SidebarProps) {
       </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 6A: Compatibilidad índice / escena</p>
+        <p className="sidebar-phase">Fase 6C: Cobertura espacial AOI / escena</p>
         <p className="sidebar-note">
-          Validá si la escena seleccionada tiene las bandas que pide el índice.
-          Solo metadata; sin cálculo raster todavía.
+          Validá si el AOI queda cubierto por el footprint de la escena.
+          Solo geometrías PostGIS; sin lectura raster.
         </p>
       </div>
     </aside>

@@ -1,10 +1,13 @@
 import type { BandRead } from "../../types/band";
 import type { SceneListItem, SceneRead } from "../../types/scene";
+import CoveragePanel from "./CoveragePanel";
 
 interface ScenePanelProps {
   scenes: SceneListItem[];
   selectedScene: SceneRead | null;
   selectedSceneId: string | null;
+  selectedAoiId: string | null;
+  selectedAoiName: string | null;
   listLoading: boolean;
   detailLoading: boolean;
   deletingId: string | null;
@@ -56,6 +59,8 @@ export default function ScenePanel({
   scenes,
   selectedScene,
   selectedSceneId,
+  selectedAoiId,
+  selectedAoiName,
   listLoading,
   detailLoading,
   deletingId,
@@ -67,6 +72,13 @@ export default function ScenePanel({
   return (
     <section className="scene-panel" aria-label="Escenas satelitales">
       <p className="sidebar-label">Escenas</p>
+
+      <CoveragePanel
+        selectedAoiId={selectedAoiId}
+        selectedAoiName={selectedAoiName}
+        selectedSceneId={selectedSceneId}
+        selectedSceneName={selectedScene?.name ?? null}
+      />
 
       {error && (
         <p className="aoi-error" role="alert">

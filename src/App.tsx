@@ -16,6 +16,10 @@ export default function App() {
   const scenes = useScenes();
   const spectralIndices = useSpectralIndices();
 
+  const selectedSavedAoi = workspace.selectedSavedId
+    ? workspace.saved.aois.find((aoi) => aoi.id === workspace.selectedSavedId)
+    : undefined;
+
   return (
     <AppLayout
       aoi={
@@ -50,6 +54,8 @@ export default function App() {
           scenes={scenes.scenes}
           selectedScene={scenes.selectedScene}
           selectedSceneId={scenes.selectedSceneId}
+          selectedAoiId={workspace.selectedSavedId}
+          selectedAoiName={selectedSavedAoi?.name ?? null}
           listLoading={scenes.listLoading}
           detailLoading={scenes.detailLoading}
           deletingId={scenes.deletingId}
