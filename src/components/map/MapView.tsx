@@ -63,6 +63,7 @@ export default function MapView({
       style: getBasemapStyle(initialBasemap),
       center: INITIAL_CENTER,
       zoom: INITIAL_ZOOM,
+      attributionControl: false
     });
 
     mapInstance.addControl(new maplibregl.NavigationControl(), "top-right");
