@@ -1,5 +1,10 @@
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
+import {
+  detectSensorFromScene,
+  getSensorLabel,
+  resolveRequiredBandsForSensor,
+} from "../../utils/sensors";
 import CompatibilityPanel from "./CompatibilityPanel";
 import IndexPreviewPanel from "./IndexPreviewPanel";
 
@@ -101,6 +106,19 @@ export default function IndexPanel({
   onSelectScene,
   onCategoryFilterChange,
 }: IndexPanelProps) {
+  const sceneSensor = selectedScene
+    ? detectSensorFromScene(selectedScene)
+    : null;
+  const detailRequiredBands =
+    selectedIndex == null
+      ? null
+      : sceneSensor
+        ? resolveRequiredBandsForSensor(
+            selectedIndex.required_bands,
+            sceneSensor,
+          )
+        : selectedIndex.required_bands;
+
   return (
     <section className="index-panel" aria-label="Índices espectrales">
       <p className="sidebar-label">Índices</p>
@@ -233,8 +251,11 @@ export default function IndexPanel({
               </dd>
             </div>
             <div className="scene-detail-row index-detail-bands">
-              <dt>Bandas</dt>
-              <RequiredBandsList requiredBands={selectedIndex.required_bands} />
+              <dt>
+                Bandas
+                {sceneSensor ? ` (${getSensorLabel(sceneSensor)})` : ""}
+              </dt>
+              <RequiredBandsList requiredBands={detailRequiredBands ?? {}} />
             </div>
             {formatOutputRange(selectedIndex.output_range) && (
               <div className="scene-detail-row">

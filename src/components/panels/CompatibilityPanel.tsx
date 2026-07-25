@@ -5,6 +5,10 @@ import {
   getCompatibilityMessage,
   resolveCompatibilityStatus,
 } from "../../utils/indexCompatibility";
+import {
+  detectSensorFromScene,
+  getSensorLabel,
+} from "../../utils/sensors";
 
 interface CompatibilityPanelProps {
   selectedIndex: SpectralIndexDefinition | null;
@@ -25,6 +29,9 @@ export default function CompatibilityPanel({
       ? evaluateIndexSceneCompatibility(selectedIndex, selectedScene)
       : null;
   const message = getCompatibilityMessage(status, result);
+  const sensorLabel = selectedScene
+    ? getSensorLabel(detectSensorFromScene(selectedScene))
+    : null;
 
   const statusClass =
     status === "compatible"
@@ -48,6 +55,10 @@ export default function CompatibilityPanel({
         <div className="scene-detail-row">
           <dt>Escena</dt>
           <dd>{selectedScene?.name ?? "Ninguna"}</dd>
+        </div>
+        <div className="scene-detail-row">
+          <dt>Sensor</dt>
+          <dd>{sensorLabel ?? "—"}</dd>
         </div>
         <div className="scene-detail-row">
           <dt>Índice</dt>

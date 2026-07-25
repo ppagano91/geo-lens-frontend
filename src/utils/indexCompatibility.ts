@@ -5,6 +5,11 @@ import type {
 } from "../types/indexCompatibility";
 import type { SceneRead } from "../types/scene";
 import type { SpectralIndexDefinition } from "../types/spectralIndex";
+import {
+  detectSensorFromScene,
+  getSensorLabel,
+  resolveRequiredBandsForSensor,
+} from "./sensors";
 
 function normalizeBandKey(bandKey: string): string {
   return bandKey.trim().toUpperCase();
@@ -47,14 +52,19 @@ export function extractAvailableBandKeys(bands: BandRead[]): string[] {
 }
 
 /**
- * Compare index required_bands (values) against scene band_key metadata.
+ * Compare index required bands (sensor-mapped) against scene band_key metadata.
  * Does not read rasters or mutate inputs.
  */
 export function evaluateIndexSceneCompatibility(
   indexDefinition: SpectralIndexDefinition,
   sceneDetail: SceneRead,
 ): IndexSceneCompatibilityResult {
-  const required_bands = extractRequiredBandKeys(indexDefinition.required_bands);
+  const sensor = detectSensorFromScene(sceneDetail);
+  const sensorRequired = resolveRequiredBandsForSensor(
+    indexDefinition.required_bands,
+    sensor,
+  );
+  const required_bands = extractRequiredBandKeys(sensorRequired);
   const available_bands = extractAvailableBandKeys(sceneDetail.bands);
   const availableSet = new Set(available_bands);
 
@@ -65,6 +75,8 @@ export function evaluateIndexSceneCompatibility(
     compatible: missing_bands.length === 0,
     index_key: indexDefinition.key,
     scene_id: sceneDetail.id,
+    sensor,
+    sensor_label: getSensorLabel(sensor),
     required_bands,
     available_bands,
     missing_bands,
@@ -102,13 +114,16 @@ export function getCompatibilityMessage(
     case "missing_index":
       return "Seleccioná un índice para evaluar compatibilidad.";
     case "compatible":
-      return "Compatible: la escena contiene todas las bandas requeridas.";
+      return result
+        ? `Compatible (${result.sensor_label}): la escena contiene todas las bandas requeridas.`
+        : "Compatible: la escena contiene todas las bandas requeridas.";
     case "incompatible": {
       const missing = result?.missing_bands ?? [];
+      const sensorHint = result ? ` (${result.sensor_label})` : "";
       if (missing.length === 0) {
-        return "No compatible: faltan bandas requeridas.";
+        return `No compatible${sensorHint}: faltan bandas requeridas.`;
       }
-      return `No compatible: faltan las bandas ${missing.join(", ")}.`;
+      return `No compatible${sensorHint}: faltan las bandas ${missing.join(", ")}.`;
     }
   }
 }

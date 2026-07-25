@@ -1,7 +1,11 @@
+import type { SensorId } from "./sensor";
+
 export interface IndexSceneCompatibilityResult {
   compatible: boolean;
   index_key: string;
   scene_id: string;
+  sensor: SensorId;
+  sensor_label: string;
   required_bands: string[];
   available_bands: string[];
   missing_bands: string[];
