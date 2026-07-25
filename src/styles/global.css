@@ -568,6 +568,36 @@ body {
   color: #276749;
 }
 
+.index-preview-panel {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.index-preview-actions {
+  margin-top: 0.75rem;
+}
+
+.index-preview-stats {
+  margin-top: 0.85rem;
+}
+
+.index-preview-image-wrap {
+  margin-top: 0.75rem;
+  padding: 0.4rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #f8f9fb;
+}
+
+.index-preview-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  background-color: #1a1a2e;
+}
+
 .compatibility-panel {
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;

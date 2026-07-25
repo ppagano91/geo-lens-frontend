@@ -70,13 +70,18 @@ export default function App() {
           indices={spectralIndices.indices}
           selectedIndex={spectralIndices.selectedIndex}
           selectedIndexKey={spectralIndices.selectedIndexKey}
+          scenes={scenes.scenes}
           selectedScene={scenes.selectedScene}
+          selectedSceneId={scenes.selectedSceneId}
+          scenesLoading={scenes.listLoading}
+          sceneDetailLoading={scenes.detailLoading}
           categoryFilter={spectralIndices.categoryFilter}
           listLoading={spectralIndices.listLoading}
           detailLoading={spectralIndices.detailLoading}
           error={spectralIndices.error}
           onRefreshList={() => void spectralIndices.refreshIndices()}
           onSelectIndex={spectralIndices.selectIndex}
+          onSelectScene={scenes.selectScene}
           onCategoryFilterChange={spectralIndices.setCategoryFilter}
         />
       }

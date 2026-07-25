@@ -1,18 +1,24 @@
-import type { SceneRead } from "../../types/scene";
+import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
 import CompatibilityPanel from "./CompatibilityPanel";
+import IndexPreviewPanel from "./IndexPreviewPanel";
 
 interface IndexPanelProps {
   indices: SpectralIndexDefinition[];
   selectedIndex: SpectralIndexDefinition | null;
   selectedIndexKey: string | null;
+  scenes: SceneListItem[];
   selectedScene: SceneRead | null;
+  selectedSceneId: string | null;
+  scenesLoading: boolean;
+  sceneDetailLoading: boolean;
   categoryFilter: string;
   listLoading: boolean;
   detailLoading: boolean;
   error: string | null;
   onRefreshList: () => void;
   onSelectIndex: (indexKey: string) => void;
+  onSelectScene: (sceneId: string) => void;
   onCategoryFilterChange: (category: string) => void;
 }
 
@@ -81,18 +87,33 @@ export default function IndexPanel({
   indices,
   selectedIndex,
   selectedIndexKey,
+  scenes,
   selectedScene,
+  selectedSceneId,
+  scenesLoading,
+  sceneDetailLoading,
   categoryFilter,
   listLoading,
   detailLoading,
   error,
   onRefreshList,
   onSelectIndex,
+  onSelectScene,
   onCategoryFilterChange,
 }: IndexPanelProps) {
   return (
     <section className="index-panel" aria-label="Índices espectrales">
       <p className="sidebar-label">Índices</p>
+
+      <IndexPreviewPanel
+        scenes={scenes}
+        selectedScene={selectedScene}
+        selectedSceneId={selectedSceneId}
+        selectedIndex={selectedIndex}
+        scenesLoading={scenesLoading}
+        sceneDetailLoading={sceneDetailLoading}
+        onSelectScene={onSelectScene}
+      />
 
       <CompatibilityPanel
         selectedIndex={selectedIndex}
