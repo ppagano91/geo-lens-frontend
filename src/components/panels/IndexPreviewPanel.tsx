@@ -78,6 +78,8 @@ export default function IndexPreviewPanel({
     computeAndSave,
     generatePreview,
     showPreview,
+    downloadGeotiff,
+    downloadPng,
     onPreviewImageError,
     onPreviewImageLoad,
   } = useIndexCompute(selectedSceneId, indexKey);
@@ -182,6 +184,24 @@ export default function IndexPreviewPanel({
           disabled={disabled}
         >
           Ver preview
+        </button>
+        <button
+          type="button"
+          className="aoi-button aoi-button--secondary"
+          onClick={() => void downloadGeotiff()}
+          disabled={disabled}
+        >
+          {busyAction === "download-tif"
+            ? "Descargando..."
+            : "Descargar GeoTIFF"}
+        </button>
+        <button
+          type="button"
+          className="aoi-button aoi-button--secondary"
+          onClick={() => void downloadPng()}
+          disabled={disabled}
+        >
+          {busyAction === "download-png" ? "Descargando..." : "Descargar PNG"}
         </button>
       </div>
 

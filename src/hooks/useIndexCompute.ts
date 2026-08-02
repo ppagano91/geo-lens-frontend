@@ -3,6 +3,7 @@ import {
   computeAndSaveIndex,
   computeIndex,
   createIndexPreview,
+  downloadIndexFile,
   getIndexPreviewPngUrl,
 } from "../api/indexComputeApi";
 import { ApiError } from "../api/client";
@@ -17,6 +18,8 @@ export type IndexComputeAction =
   | "compute"
   | "compute-and-save"
   | "preview"
+  | "download-tif"
+  | "download-png"
   | null;
 
 function formatApiError(err: unknown, fallback: string): string {
@@ -143,6 +146,32 @@ export function useIndexCompute(
     setSuccessMessage("Mostrando preview PNG.");
   }, [sceneId, indexKey]);
 
+  const downloadGeotiff = useCallback(() => {
+    return runAction(
+      "download-tif",
+      "No se pudo descargar el GeoTIFF",
+      async () => {
+        await downloadIndexFile(sceneId!, indexKey!, "tif");
+        setSuccessMessage(
+          `Descarga GeoTIFF iniciada (${sceneId}_${indexKey}.tif).`,
+        );
+      },
+    );
+  }, [runAction, sceneId, indexKey]);
+
+  const downloadPng = useCallback(() => {
+    return runAction(
+      "download-png",
+      "No se pudo descargar el PNG",
+      async () => {
+        await downloadIndexFile(sceneId!, indexKey!, "png");
+        setSuccessMessage(
+          `Descarga PNG iniciada (${sceneId}_${indexKey}.png).`,
+        );
+      },
+    );
+  }, [runAction, sceneId, indexKey]);
+
   const onPreviewImageError = useCallback(() => {
     setImageError(
       "No se pudo cargar el PNG. Generá el preview primero (requiere GeoTIFF derivado).",
@@ -173,6 +202,8 @@ export function useIndexCompute(
     computeAndSave,
     generatePreview,
     showPreview,
+    downloadGeotiff,
+    downloadPng,
     onPreviewImageError,
     onPreviewImageLoad,
   };
