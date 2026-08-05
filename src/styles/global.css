@@ -408,11 +408,101 @@ body {
   font-size: 0.78rem;
   color: #555;
   line-height: 1.35;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .aoi-saved-item-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.icon-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #c5cdd8;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #2c5282;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.icon-action-button:hover:not(:disabled) {
+  background-color: #edf2f7;
+  border-color: #2c5282;
+}
+
+.icon-action-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.icon-action-button--active {
+  background-color: #ebf8ff;
+  border-color: #3182ce;
+  color: #2b6cb0;
+}
+
+.icon-action-button--danger {
+  color: #c53030;
+  border-color: #feb2b2;
+}
+
+.icon-action-button--danger:hover:not(:disabled) {
+  background-color: #fff5f5;
+  border-color: #c53030;
+}
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(26, 26, 46, 0.45);
+}
+
+.confirm-modal {
+  width: min(100%, 26rem);
+  padding: 1.15rem 1.2rem;
+  border-radius: 6px;
+  background-color: #ffffff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  min-width: 0;
+}
+
+.confirm-modal-title {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.confirm-modal-message {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #444;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .scene-panel {
@@ -448,9 +538,10 @@ body {
 
 .scene-detail-row {
   display: grid;
-  grid-template-columns: 5.5rem 1fr;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
   gap: 0.5rem;
   font-size: 0.8rem;
+  min-width: 0;
 }
 
 .scene-detail-row dt {
@@ -460,7 +551,10 @@ body {
 
 .scene-detail-row dd {
   color: #1a1a2e;
-  word-break: break-word;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scene-bands {

@@ -1,5 +1,14 @@
+import { useState } from "react";
 import type { BandRead } from "../../types/band";
 import type { SceneListItem, SceneRead } from "../../types/scene";
+import {
+  IconCheck,
+  IconEye,
+  IconTrash,
+  IconX,
+} from "../ui/ActionIcons";
+import ConfirmModal from "../ui/ConfirmModal";
+import IconActionButton from "../ui/IconActionButton";
 import CoveragePanel from "./CoveragePanel";
 
 interface ScenePanelProps {
@@ -12,9 +21,11 @@ interface ScenePanelProps {
   detailLoading: boolean;
   deletingId: string | null;
   error: string | null;
+  successMessage?: string | null;
   onRefreshList: () => void;
   onSelectScene: (sceneId: string) => void;
-  onDeleteScene: (sceneId: string) => void;
+  onDeselectScene: () => void;
+  onDeleteScene: (sceneId: string) => Promise<void> | void;
 }
 
 function formatDate(value: string): string {
@@ -65,10 +76,27 @@ export default function ScenePanel({
   detailLoading,
   deletingId,
   error,
+  successMessage = null,
   onRefreshList,
   onSelectScene,
+  onDeselectScene,
   onDeleteScene,
 }: ScenePanelProps) {
+  const [pendingDelete, setPendingDelete] = useState<SceneListItem | null>(null);
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) {
+      return;
+    }
+
+    try {
+      await onDeleteScene(pendingDelete.id);
+      setPendingDelete(null);
+    } catch {
+      // Error feedback is handled by the parent hook.
+    }
+  };
+
   return (
     <section className="scene-panel" aria-label="Escenas satelitales">
       <p className="sidebar-label">Escenas</p>
@@ -83,6 +111,12 @@ export default function ScenePanel({
       {error && (
         <p className="aoi-error" role="alert">
           {error}
+        </p>
+      )}
+
+      {successMessage && (
+        <p className="compatibility-status compatibility-status--ok" role="status">
+          {successMessage}
         </p>
       )}
 
@@ -135,22 +169,39 @@ export default function ScenePanel({
                     {cloudCover && ` · Nubosidad: ${cloudCover}`}
                   </p>
                   <div className="aoi-saved-item-actions">
-                    <button
-                      type="button"
-                      className="aoi-button aoi-button--small"
+                    <IconActionButton
+                      label={`Ver escena ${scene.name}`}
                       onClick={() => void onSelectScene(scene.id)}
                       disabled={isDeleting || detailLoading}
                     >
-                      {detailLoading && isSelected ? "Cargando..." : "Seleccionar"}
-                    </button>
-                    <button
-                      type="button"
-                      className="aoi-button aoi-button--small aoi-button--danger"
-                      onClick={() => void onDeleteScene(scene.id)}
+                      <IconEye />
+                    </IconActionButton>
+                    {isSelected ? (
+                      <IconActionButton
+                        label={`Deseleccionar escena ${scene.name}`}
+                        tone="active"
+                        onClick={onDeselectScene}
+                        disabled={isDeleting || detailLoading}
+                      >
+                        <IconX />
+                      </IconActionButton>
+                    ) : (
+                      <IconActionButton
+                        label={`Seleccionar escena ${scene.name}`}
+                        onClick={() => void onSelectScene(scene.id)}
+                        disabled={isDeleting || detailLoading}
+                      >
+                        <IconCheck />
+                      </IconActionButton>
+                    )}
+                    <IconActionButton
+                      label={`Dar de baja escena ${scene.name}`}
+                      tone="danger"
+                      onClick={() => setPendingDelete(scene)}
                       disabled={isDeleting || detailLoading}
                     >
-                      {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </button>
+                      <IconTrash />
+                    </IconActionButton>
                   </div>
                 </li>
               );
@@ -166,7 +217,7 @@ export default function ScenePanel({
           <dl className="scene-detail-fields">
             <div className="scene-detail-row">
               <dt>Nombre</dt>
-              <dd>{selectedScene.name}</dd>
+              <dd title={selectedScene.name}>{selectedScene.name}</dd>
             </div>
             <div className="scene-detail-row">
               <dt>Fuente</dt>
@@ -200,6 +251,19 @@ export default function ScenePanel({
           )}
         </div>
       )}
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title="Dar de baja escena"
+        message="¿Seguro que querés dar de baja esta escena? Esta acción la ocultará de los listados principales, pero no eliminará los archivos del disco."
+        confirming={pendingDelete !== null && deletingId === pendingDelete.id}
+        onCancel={() => {
+          if (deletingId === null) {
+            setPendingDelete(null);
+          }
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </section>
   );
 }

@@ -71,6 +71,7 @@ export default function App() {
           onSaveAoi={() => void workspace.handleSaveAoi()}
           onRefreshList={() => void workspace.saved.refreshAois()}
           onSelectSavedAoi={workspace.handleSelectSavedAoi}
+          onDeselectSavedAoi={workspace.handleDeselectSavedAoi}
           onDeleteSavedAoi={workspace.handleDeleteSavedAoi}
         />
       }
@@ -85,8 +86,10 @@ export default function App() {
           detailLoading={scenes.detailLoading}
           deletingId={scenes.deletingId}
           error={scenes.error}
+          successMessage={scenes.successMessage}
           onRefreshList={() => void scenes.refreshScenes()}
           onSelectScene={scenes.selectScene}
+          onDeselectScene={scenes.deselectScene}
           onDeleteScene={scenes.removeScene}
         />
       }

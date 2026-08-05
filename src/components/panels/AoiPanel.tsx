@@ -1,4 +1,13 @@
+import { useState } from "react";
 import type { AoiPolygonFeature, AoiRecord } from "../../types/aoi";
+import {
+  IconCheck,
+  IconEye,
+  IconTrash,
+  IconX,
+} from "../ui/ActionIcons";
+import ConfirmModal from "../ui/ConfirmModal";
+import IconActionButton from "../ui/IconActionButton";
 
 interface AoiPanelProps {
   statusMessage: string;
@@ -23,7 +32,8 @@ interface AoiPanelProps {
   onSaveAoi: () => void;
   onRefreshList: () => void;
   onSelectSavedAoi: (aoiId: string) => void;
-  onDeleteSavedAoi: (aoiId: string) => void;
+  onDeselectSavedAoi: () => void;
+  onDeleteSavedAoi: (aoiId: string) => Promise<void> | void;
 }
 
 function formatDate(value: string): string {
@@ -58,8 +68,24 @@ export default function AoiPanel({
   onSaveAoi,
   onRefreshList,
   onSelectSavedAoi,
+  onDeselectSavedAoi,
   onDeleteSavedAoi,
 }: AoiPanelProps) {
+  const [pendingDelete, setPendingDelete] = useState<AoiRecord | null>(null);
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) {
+      return;
+    }
+
+    try {
+      await onDeleteSavedAoi(pendingDelete.id);
+      setPendingDelete(null);
+    } catch {
+      // Error feedback is handled by the parent hook.
+    }
+  };
+
   return (
     <section className="aoi-panel" aria-label="Área de interés">
       <p className="sidebar-label">AOI</p>
@@ -185,33 +211,52 @@ export default function AoiPanel({
                   className={`aoi-saved-item${isSelected ? " aoi-saved-item--selected" : ""}`}
                 >
                   <div className="aoi-saved-item-header">
-                    <strong className="aoi-saved-item-name">{aoi.name}</strong>
+                    <strong className="aoi-saved-item-name" title={aoi.name}>
+                      {aoi.name}
+                    </strong>
                     <span className="aoi-saved-item-date">
                       {formatDate(aoi.created_at)}
                     </span>
                   </div>
                   {aoi.description && (
-                    <p className="aoi-saved-item-description">
+                    <p className="aoi-saved-item-description" title={aoi.description}>
                       {aoi.description}
                     </p>
                   )}
                   <div className="aoi-saved-item-actions">
-                    <button
-                      type="button"
-                      className="aoi-button aoi-button--small"
+                    <IconActionButton
+                      label={`Ver AOI ${aoi.name}`}
                       onClick={() => onSelectSavedAoi(aoi.id)}
                       disabled={isDeleting || saving}
                     >
-                      Ver
-                    </button>
-                    <button
-                      type="button"
-                      className="aoi-button aoi-button--small aoi-button--danger"
-                      onClick={() => void onDeleteSavedAoi(aoi.id)}
+                      <IconEye />
+                    </IconActionButton>
+                    {isSelected ? (
+                      <IconActionButton
+                        label={`Deseleccionar AOI ${aoi.name}`}
+                        tone="active"
+                        onClick={onDeselectSavedAoi}
+                        disabled={isDeleting || saving}
+                      >
+                        <IconX />
+                      </IconActionButton>
+                    ) : (
+                      <IconActionButton
+                        label={`Seleccionar AOI ${aoi.name}`}
+                        onClick={() => onSelectSavedAoi(aoi.id)}
+                        disabled={isDeleting || saving}
+                      >
+                        <IconCheck />
+                      </IconActionButton>
+                    )}
+                    <IconActionButton
+                      label={`Dar de baja AOI ${aoi.name}`}
+                      tone="danger"
+                      onClick={() => setPendingDelete(aoi)}
                       disabled={isDeleting || saving}
                     >
-                      {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </button>
+                      <IconTrash />
+                    </IconActionButton>
                   </div>
                 </li>
               );
@@ -219,6 +264,19 @@ export default function AoiPanel({
           </ul>
         )}
       </div>
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title="Dar de baja AOI"
+        message="¿Seguro que querés dar de baja esta AOI? Esta acción la ocultará de los listados principales."
+        confirming={pendingDelete !== null && deletingId === pendingDelete.id}
+        onCancel={() => {
+          if (deletingId === null) {
+            setPendingDelete(null);
+          }
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </section>
   );
 }

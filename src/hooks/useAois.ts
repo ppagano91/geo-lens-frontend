@@ -59,13 +59,17 @@ export function useAois() {
     async (aoiId: string) => {
       setDeletingId(aoiId);
       setError(null);
+      setSaveSuccessMessage(null);
 
       try {
         await deleteAoi(aoiId);
         setAois((current) => current.filter((aoi) => aoi.id !== aoiId));
+        setSaveSuccessMessage("AOI dada de baja correctamente");
       } catch (err) {
         const message =
-          err instanceof ApiError ? err.message : "No se pudo eliminar el AOI";
+          err instanceof ApiError
+            ? err.message
+            : "No se pudo dar de baja el AOI";
         setError(message);
         throw err;
       } finally {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAoiDrawing } from "./useAoiDrawing";
 import { useAois } from "./useAois";
 import { aoiRecordToFeature } from "../utils/geojson";
@@ -60,6 +60,23 @@ export function useAoiWorkspace() {
     [aois, clearMessages, drawing],
   );
 
+  const handleDeselectSavedAoi = useCallback(() => {
+    setSelectedSavedId(null);
+    drawing.clearAoi();
+    setAoiName("");
+    setAoiDescription("");
+    clearMessages();
+  }, [clearMessages, drawing]);
+
+  useEffect(() => {
+    if (!selectedSavedId || listLoading) {
+      return;
+    }
+    if (!aois.some((aoi) => aoi.id === selectedSavedId)) {
+      handleDeselectSavedAoi();
+    }
+  }, [aois, handleDeselectSavedAoi, listLoading, selectedSavedId]);
+
   const handleDeleteSavedAoi = useCallback(
     async (aoiId: string) => {
       clearMessages();
@@ -115,6 +132,7 @@ export function useAoiWorkspace() {
     setAoiDescription,
     handleSaveAoi,
     handleSelectSavedAoi,
+    handleDeselectSavedAoi,
     handleDeleteSavedAoi,
     handleClearAoi,
     handleStartDrawing,

@@ -27,6 +27,7 @@ export function useScenes() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fitBoundsTrigger, setFitBoundsTrigger] = useState(0);
 
   const refreshScenes = useCallback(async () => {
@@ -36,6 +37,14 @@ export function useScenes() {
     try {
       const data = await listScenes();
       setScenes(data);
+
+      setSelectedSceneId((currentId) => {
+        if (currentId && !data.some((scene) => scene.id === currentId)) {
+          setSelectedScene(null);
+          return null;
+        }
+        return currentId;
+      });
     } catch (err) {
       setError(formatApiError(err, "No se pudo cargar la lista de escenas"));
     } finally {
@@ -50,6 +59,7 @@ export function useScenes() {
   const selectScene = useCallback(async (sceneId: string) => {
     setDetailLoading(true);
     setError(null);
+    setSuccessMessage(null);
     setSelectedSceneId(sceneId);
 
     try {
@@ -58,27 +68,37 @@ export function useScenes() {
       setFitBoundsTrigger((value) => value + 1);
     } catch (err) {
       setSelectedScene(null);
+      setSelectedSceneId(null);
       setError(formatApiError(err, "No se pudo cargar el detalle de la escena"));
     } finally {
       setDetailLoading(false);
     }
   }, []);
 
+  const deselectScene = useCallback(() => {
+    setSelectedSceneId(null);
+    setSelectedScene(null);
+    setError(null);
+    setSuccessMessage(null);
+  }, []);
+
   const removeScene = useCallback(
     async (sceneId: string) => {
       setDeletingId(sceneId);
       setError(null);
+      setSuccessMessage(null);
 
       try {
         await deleteScene(sceneId);
         setScenes((current) => current.filter((scene) => scene.id !== sceneId));
+        setSuccessMessage("Escena dada de baja correctamente");
 
         if (selectedSceneId === sceneId) {
           setSelectedSceneId(null);
           setSelectedScene(null);
         }
       } catch (err) {
-        setError(formatApiError(err, "No se pudo eliminar la escena"));
+        setError(formatApiError(err, "No se pudo dar de baja la escena"));
         throw err;
       } finally {
         setDeletingId(null);
@@ -99,9 +119,11 @@ export function useScenes() {
     detailLoading,
     deletingId,
     error,
+    successMessage,
     fitBoundsTrigger,
     refreshScenes,
     selectScene,
+    deselectScene,
     removeScene,
     clearError,
   };
