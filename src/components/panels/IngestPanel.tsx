@@ -200,8 +200,31 @@ export default function IngestPanel({
             <div className="ingest-warnings">
               <p className="aoi-field-label">Advertencias</p>
               <ul className="ingest-warning-list">
-                {result.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
+                {result.warnings.map((warning, index) => (
+                  <li
+                    key={`${warning.code}-${index}`}
+                    className={`ingest-warning-item ingest-warning-item--${warning.severity ?? "warning"}`}
+                  >
+                    <strong className="ingest-warning-title">{warning.title}</strong>
+                    {warning.description ? (
+                      <p className="ingest-warning-description">
+                        {warning.description}
+                      </p>
+                    ) : null}
+                    {warning.items && warning.items.length > 0 ? (
+                      <ul className="ingest-warning-files">
+                        {warning.items.map((item) => (
+                          <li
+                            key={item}
+                            className="ingest-warning-file"
+                            title={item}
+                          >
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
                 ))}
               </ul>
             </div>

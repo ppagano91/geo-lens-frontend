@@ -27,6 +27,14 @@ export interface AvailableIndexInfo {
   missing_roles: string[];
 }
 
+export interface IngestionWarning {
+  code: string;
+  title: string;
+  description?: string | null;
+  items?: string[];
+  severity?: "info" | "warning" | "error";
+}
+
 export interface LocalSceneIngestResult {
   scene_id: string;
   name: string;
@@ -35,7 +43,7 @@ export interface LocalSceneIngestResult {
   acquisition_date: string;
   scene_path: string;
   bands: IngestedBandInfo[];
-  warnings: string[];
+  warnings: IngestionWarning[];
   available_indices: AvailableIndexInfo[];
   metadata: Record<string, unknown> | null;
   overwritten: boolean;

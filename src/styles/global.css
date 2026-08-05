@@ -104,7 +104,9 @@ body {
 .sidebar-section {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 1rem;
 }
 
@@ -362,6 +364,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  min-width: 0;
 }
 
 .aoi-saved-item {
@@ -369,6 +372,8 @@ body {
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   background-color: #fafafa;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .aoi-saved-item--selected {
@@ -381,11 +386,16 @@ body {
   flex-direction: column;
   gap: 0.15rem;
   margin-bottom: 0.35rem;
+  min-width: 0;
 }
 
 .aoi-saved-item-name {
   font-size: 0.85rem;
   color: #1a1a2e;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .aoi-saved-item-date {
@@ -413,6 +423,7 @@ body {
 
 .scene-list {
   margin-top: 0.75rem;
+  min-width: 0;
 }
 
 .scene-item-meta {
@@ -655,6 +666,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .ingest-form {
@@ -689,6 +701,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .ingest-scene-id {
@@ -701,13 +714,64 @@ body {
   border-radius: 4px;
   background-color: #fff8e8;
   border: 1px solid #f0e0b8;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .ingest-warning-list {
   margin: 0.35rem 0 0;
-  padding-left: 1.1rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
   font-size: 0.78rem;
   color: #7a5c00;
+  min-width: 0;
+}
+
+.ingest-warning-item {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ingest-warning-title {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b4e00;
+}
+
+.ingest-warning-description {
+  margin: 0.2rem 0 0;
+  line-height: 1.35;
+  color: #7a5c00;
+}
+
+.ingest-warning-files {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ingest-warning-file {
+  display: block;
+  padding: 0.2rem 0.35rem;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.55);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #5c4700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .ingest-bands,

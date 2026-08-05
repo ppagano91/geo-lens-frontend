@@ -123,7 +123,9 @@ export default function ScenePanel({
                   className={`aoi-saved-item${isSelected ? " aoi-saved-item--selected" : ""}`}
                 >
                   <div className="aoi-saved-item-header">
-                    <strong className="aoi-saved-item-name">{scene.name}</strong>
+                    <strong className="aoi-saved-item-name" title={scene.name}>
+                      {scene.name}
+                    </strong>
                     <span className="aoi-saved-item-date">
                       {formatDate(scene.acquisition_date)}
                     </span>
