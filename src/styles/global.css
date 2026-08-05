@@ -64,21 +64,21 @@ body {
 
 .sidebar-tabs-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.25rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.2rem;
   padding: 0.2rem;
   border-radius: 6px;
   background-color: #f0f2f5;
 }
 
 .sidebar-tab {
-  padding: 0.4rem 0.25rem;
+  padding: 0.4rem 0.15rem;
   border: none;
   border-radius: 4px;
   background: transparent;
   color: #555;
   font-family: inherit;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
@@ -110,6 +110,7 @@ body {
 
 .sidebar-section .aoi-panel,
 .sidebar-section .scene-panel,
+.sidebar-section .ingest-panel,
 .sidebar-section .index-panel,
 .sidebar-section .basemap-selector {
   margin-top: 0;
@@ -649,3 +650,101 @@ body {
   color: #9a6700;
   font-weight: 600;
 }
+
+.ingest-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ingest-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ingest-checkbox-field {
+  margin-top: 0.15rem;
+}
+
+.ingest-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #333;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.ingest-checkbox-label input {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.ingest-result {
+  margin-top: 0.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ingest-scene-id {
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+.ingest-warnings {
+  padding: 0.55rem 0.65rem;
+  border-radius: 4px;
+  background-color: #fff8e8;
+  border: 1px solid #f0e0b8;
+}
+
+.ingest-warning-list {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  color: #7a5c00;
+}
+
+.ingest-bands,
+.ingest-indices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ingest-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ingest-index-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  border: 1px solid #e0e0e0;
+}
+
+.ingest-index-item--ok {
+  background-color: #f0faf2;
+  border-color: #c8e6c9;
+  color: #1e7e34;
+}
+
+.ingest-index-item--warn {
+  background-color: #fff8e8;
+  border-color: #f0e0b8;
+  color: #9a6700;
+}
+

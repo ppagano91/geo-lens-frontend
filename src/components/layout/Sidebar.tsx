@@ -9,16 +9,41 @@ import SidebarTabs from "./SidebarTabs";
 interface SidebarProps {
   aoi: ReactNode;
   scenes: ReactNode;
+  ingest: ReactNode;
   indices: ReactNode;
   map: ReactNode;
+  activeTab?: SidebarTabId;
+  onActiveTabChange?: (tabId: SidebarTabId) => void;
 }
 
-export default function Sidebar({ aoi, scenes, indices, map }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
+export default function Sidebar({
+  aoi,
+  scenes,
+  ingest,
+  indices,
+  map,
+  activeTab: controlledTab,
+  onActiveTabChange,
+}: SidebarProps) {
+  const [uncontrolledTab, setUncontrolledTab] =
+    useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
+
+  const isControlled =
+    controlledTab !== undefined && onActiveTabChange !== undefined;
+  const activeTab = isControlled ? controlledTab : uncontrolledTab;
+
+  const setActiveTab = (tabId: SidebarTabId) => {
+    if (isControlled) {
+      onActiveTabChange(tabId);
+      return;
+    }
+    setUncontrolledTab(tabId);
+  };
 
   const sections: Record<SidebarTabId, ReactNode> = {
     aoi,
     scenes,
+    ingest,
     indices,
     map,
   };
@@ -37,10 +62,10 @@ export default function Sidebar({ aoi, scenes, indices, map }: SidebarProps) {
       </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 6C: Cobertura espacial AOI / escena</p>
+        <p className="sidebar-phase">Fase 9B: Ingesta local / Band Set</p>
         <p className="sidebar-note">
-          Validá si el AOI queda cubierto por el footprint de la escena.
-          Solo geometrías PostGIS; sin lectura raster.
+          Registrá carpetas Landsat 8 bajo DATA_ROOT y calculá índices sin seed
+          SQL.
         </p>
       </div>
     </aside>

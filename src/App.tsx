@@ -4,24 +4,49 @@ import BasemapSelector from "./components/map/BasemapSelector";
 import MapView from "./components/map/MapView";
 import AoiPanel from "./components/panels/AoiPanel";
 import IndexPanel from "./components/panels/IndexPanel";
+import IngestPanel from "./components/panels/IngestPanel";
 import ScenePanel from "./components/panels/ScenePanel";
 import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
 import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
+import { useLocalSceneIngest } from "./hooks/useLocalSceneIngest";
 import { useScenes } from "./hooks/useScenes";
 import { useSpectralIndices } from "./hooks/useSpectralIndices";
+import {
+  DEFAULT_SIDEBAR_TAB,
+  type SidebarTabId,
+} from "./types/sidebar";
 
 export default function App() {
   const [basemapId, setBasemapId] = useState(DEFAULT_BASEMAP_ID);
+  const [activeTab, setActiveTab] =
+    useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
   const workspace = useAoiWorkspace();
   const scenes = useScenes();
   const spectralIndices = useSpectralIndices();
+  const ingest = useLocalSceneIngest();
 
   const selectedSavedAoi = workspace.selectedSavedId
     ? workspace.saved.aois.find((aoi) => aoi.id === workspace.selectedSavedId)
     : undefined;
 
+  const handleIngestSubmit = async () => {
+    const result = await ingest.ingest();
+    if (!result) {
+      return;
+    }
+
+    await scenes.refreshScenes();
+  };
+
+  const handleUseInIndices = async (sceneId: string) => {
+    await scenes.selectScene(sceneId);
+    setActiveTab("indices");
+  };
+
   return (
     <AppLayout
+      activeTab={activeTab}
+      onActiveTabChange={setActiveTab}
       aoi={
         <AoiPanel
           statusMessage={workspace.statusMessage}
@@ -63,6 +88,18 @@ export default function App() {
           onRefreshList={() => void scenes.refreshScenes()}
           onSelectScene={scenes.selectScene}
           onDeleteScene={scenes.removeScene}
+        />
+      }
+      ingest={
+        <IngestPanel
+          form={ingest.form}
+          submitting={ingest.submitting}
+          error={ingest.error}
+          successMessage={ingest.successMessage}
+          result={ingest.result}
+          onFormChange={ingest.updateForm}
+          onSubmit={() => void handleIngestSubmit()}
+          onUseInIndices={(sceneId) => void handleUseInIndices(sceneId)}
         />
       }
       indices={
