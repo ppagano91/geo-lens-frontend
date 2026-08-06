@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ingestLocalScene } from "../api/ingestApi";
+import { ingestLocalScene, uploadScene } from "../api/ingestApi";
 import {
   DEFAULT_INGEST_FORM,
   type LocalSceneIngestFormValues,
@@ -7,6 +7,7 @@ import {
 } from "../types/ingest";
 import {
   buildLocalSceneIngestPayload,
+  buildUploadSceneIngestPayload,
   formatIngestApiError,
   validateLocalSceneIngestForm,
 } from "../utils/ingest";
@@ -48,13 +49,17 @@ export function useLocalSceneIngest() {
     setSuccessMessage(null);
 
     try {
-      const payload = buildLocalSceneIngestPayload(form);
-      const data = await ingestLocalScene(payload);
+      const data =
+        form.mode === "upload"
+          ? await uploadScene(buildUploadSceneIngestPayload(form))
+          : await ingestLocalScene(buildLocalSceneIngestPayload(form));
       setResult(data);
 
       const overwriteNote = data.overwritten ? " (reemplazó una escena previa)" : "";
+      const modeNote =
+        form.mode === "upload" ? "subida y registrada" : "registrada";
       setSuccessMessage(
-        `Escena registrada correctamente${overwriteNote}.`,
+        `Escena ${modeNote} correctamente${overwriteNote}.`,
       );
       return data;
     } catch (err) {

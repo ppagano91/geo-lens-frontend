@@ -1,5 +1,5 @@
 /**
- * Smoke checks for Fase 9B local scene ingest UI helpers (no test runner).
+ * Smoke checks for Fase 9B/9D ingest UI helpers (no test runner).
  * Run: npx --yes tsx scripts/verify_local_scene_ingest.ts
  */
 import assert from "node:assert/strict";
@@ -11,23 +11,27 @@ import type {
 } from "../src/types/ingest";
 import {
   buildLocalSceneIngestPayload,
+  buildUploadSceneIngestPayload,
   compatibleIndicesLabel,
   formatIngestApiError,
+  formatSelectedFilesLabel,
   summarizeIngestRaster,
   validateLocalSceneIngestForm,
 } from "../src/utils/ingest";
 
-const validForm: LocalSceneIngestFormValues = {
+const validLocalForm: LocalSceneIngestFormValues = {
+  mode: "local",
   scenePath: "  sample/scenes/landsat8_lc08_225084  ",
+  files: [],
   source: "landsat-8",
   name: "  Landsat demo  ",
   overwrite: true,
 };
 
-assert.equal(validateLocalSceneIngestForm(validForm), null);
+assert.equal(validateLocalSceneIngestForm(validLocalForm), null);
 
 const emptyPath: LocalSceneIngestFormValues = {
-  ...validForm,
+  ...validLocalForm,
   scenePath: "   ",
 };
 assert.match(
@@ -35,7 +39,7 @@ assert.match(
   /scene_path|ruta/i,
 );
 
-const payload = buildLocalSceneIngestPayload(validForm);
+const payload = buildLocalSceneIngestPayload(validLocalForm);
 assert.deepEqual(payload, {
   scene_path: "sample/scenes/landsat8_lc08_225084",
   source: "landsat-8",
@@ -44,12 +48,61 @@ assert.deepEqual(payload, {
 });
 
 const payloadNoName = buildLocalSceneIngestPayload({
-  ...validForm,
+  ...validLocalForm,
   name: "  ",
   overwrite: false,
 });
 assert.equal(payloadNoName.name, null);
 assert.equal(payloadNoName.overwrite, false);
+
+const fakeTif = {
+  name: "SR_B4.tif",
+  size: 128,
+  lastModified: 1,
+} as File;
+const fakeTxt = {
+  name: "scene_MTL.txt",
+  size: 32,
+  lastModified: 2,
+} as File;
+const fakeBad = {
+  name: "notes.md",
+  size: 10,
+  lastModified: 3,
+} as File;
+
+const validUploadForm: LocalSceneIngestFormValues = {
+  mode: "upload",
+  scenePath: "",
+  files: [fakeTif, fakeTxt],
+  source: "landsat-8",
+  name: "Upload demo",
+  overwrite: false,
+};
+
+assert.equal(validateLocalSceneIngestForm(validUploadForm), null);
+
+const emptyUpload: LocalSceneIngestFormValues = {
+  ...validUploadForm,
+  files: [],
+};
+assert.match(validateLocalSceneIngestForm(emptyUpload) ?? "", /archivo/i);
+
+const badExtUpload: LocalSceneIngestFormValues = {
+  ...validUploadForm,
+  files: [fakeTif, fakeBad],
+};
+assert.match(validateLocalSceneIngestForm(badExtUpload) ?? "", /extensi/i);
+
+const uploadPayload = buildUploadSceneIngestPayload(validUploadForm);
+assert.equal(uploadPayload.source, "landsat-8");
+assert.equal(uploadPayload.name, "Upload demo");
+assert.equal(uploadPayload.overwrite, false);
+assert.equal(uploadPayload.files.length, 2);
+
+assert.equal(formatSelectedFilesLabel([]), "Ningún archivo seleccionado");
+assert.equal(formatSelectedFilesLabel([fakeTif]), "SR_B4.tif");
+assert.match(formatSelectedFilesLabel([fakeTif, fakeTxt]), /2 archivos/);
 
 const conflict = formatIngestApiError(
   new ApiError(
@@ -75,12 +128,13 @@ const mockResult: LocalSceneIngestResult = {
   source: "landsat-8",
   sensor: "landsat-8",
   acquisition_date: "2026-05-10",
-  scene_path: "sample/scenes/landsat8_lc08_225084",
+  scene_path: "uploaded/scenes/2f707fd8-c4f5-40da-92aa-6b2e7c0202c4",
   bands: [
     {
       band_key: "SR_B4",
       band_name: "Red",
-      asset_path: "sample/scenes/landsat8_lc08_225084/SR_B4.tif",
+      asset_path:
+        "uploaded/scenes/2f707fd8-c4f5-40da-92aa-6b2e7c0202c4/SR_B4.tif",
       width: 148,
       height: 179,
       crs: "EPSG:32621",

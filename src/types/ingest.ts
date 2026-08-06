@@ -1,9 +1,18 @@
-/** Tipos para POST /api/v1/ingest/local-scene (Fase 9A/9B). */
+/** Tipos para POST /api/v1/ingest/local-scene y /upload-scene (Fase 9A–9D). */
 
 export type LocalSceneSource = "landsat-8";
 
+export type IngestMode = "local" | "upload";
+
 export interface LocalSceneIngestRequest {
   scene_path: string;
+  source: string;
+  name?: string | null;
+  overwrite?: boolean;
+}
+
+export interface UploadSceneIngestRequest {
+  files: File[];
   source: string;
   name?: string | null;
   overwrite?: boolean;
@@ -50,14 +59,18 @@ export interface LocalSceneIngestResult {
 }
 
 export interface LocalSceneIngestFormValues {
+  mode: IngestMode;
   scenePath: string;
+  files: File[];
   source: LocalSceneSource;
   name: string;
   overwrite: boolean;
 }
 
 export const DEFAULT_INGEST_FORM: LocalSceneIngestFormValues = {
+  mode: "upload",
   scenePath: "",
+  files: [],
   source: "landsat-8",
   name: "",
   overwrite: false,
@@ -67,3 +80,11 @@ export const LOCAL_SCENE_SOURCES: ReadonlyArray<{
   value: LocalSceneSource;
   label: string;
 }> = [{ value: "landsat-8", label: "Landsat 8" }];
+
+export const INGEST_MODES: ReadonlyArray<{
+  value: IngestMode;
+  label: string;
+}> = [
+  { value: "upload", label: "Subir archivos" },
+  { value: "local", label: "Registrar carpeta existente" },
+];

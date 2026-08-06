@@ -1,8 +1,13 @@
-import type { LocalSceneIngestFormValues, LocalSceneIngestResult } from "../../types/ingest";
-import { LOCAL_SCENE_SOURCES } from "../../types/ingest";
+import type {
+  IngestMode,
+  LocalSceneIngestFormValues,
+  LocalSceneIngestResult,
+} from "../../types/ingest";
+import { INGEST_MODES, LOCAL_SCENE_SOURCES } from "../../types/ingest";
 import {
   compatibleIndicesLabel,
   formatAcquisitionDate,
+  formatSelectedFilesLabel,
   summarizeIngestRaster,
 } from "../../utils/ingest";
 
@@ -31,13 +36,23 @@ export default function IngestPanel({
   onUseInIndices,
 }: IngestPanelProps) {
   const raster = result ? summarizeIngestRaster(result.bands) : null;
+  const isUpload = form.mode === "upload";
+
+  const handleModeChange = (mode: IngestMode) => {
+    onFormChange("mode", mode);
+  };
+
+  const canSubmit = isUpload
+    ? form.files.length > 0
+    : form.scenePath.trim().length > 0;
 
   return (
-    <section className="ingest-panel" aria-label="Ingesta local de escenas">
+    <section className="ingest-panel" aria-label="Ingesta de escenas">
       <p className="sidebar-label">Ingesta / Band Set</p>
       <p className="aoi-hint">
-        Registrá una carpeta de bandas GeoTIFF bajo DATA_ROOT (sin upload ni
-        STAC). Por ahora solo Landsat 8.
+        {isUpload
+          ? "Subí bandas Landsat 8 desde tu máquina. La app las guarda en storage interno y registra la escena (sin conocer DATA_ROOT)."
+          : "Registrá una carpeta de bandas GeoTIFF ya presente bajo DATA_ROOT (modo admin/dev)."}
       </p>
 
       {error && (
@@ -52,6 +67,33 @@ export default function IngestPanel({
         </p>
       )}
 
+      <div
+        className="ingest-mode-toggle"
+        role="tablist"
+        aria-label="Modo de ingesta"
+      >
+        {INGEST_MODES.map((option) => {
+          const selected = form.mode === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              className={
+                selected
+                  ? "ingest-mode-button ingest-mode-button--active"
+                  : "ingest-mode-button"
+              }
+              onClick={() => handleModeChange(option.value)}
+              disabled={submitting}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+
       <form
         className="ingest-form"
         onSubmit={(event) => {
@@ -59,25 +101,61 @@ export default function IngestPanel({
           onSubmit();
         }}
       >
-        <div className="aoi-field">
-          <label className="aoi-field-label" htmlFor="ingest-scene-path">
-            Ruta de carpeta (scene_path)
-          </label>
-          <input
-            id="ingest-scene-path"
-            className="aoi-input"
-            type="text"
-            value={form.scenePath}
-            onChange={(event) => onFormChange("scenePath", event.target.value)}
-            placeholder="sample/scenes/landsat8_lc08_225084"
-            disabled={submitting}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <p className="aoi-hint">
-            Relativa a DATA_ROOT. Ejemplo: sample/scenes/landsat8_lc08_225084
-          </p>
-        </div>
+        {isUpload ? (
+          <div className="aoi-field">
+            <label className="aoi-field-label" htmlFor="ingest-files">
+              Archivos de bandas
+            </label>
+            <input
+              id="ingest-files"
+              className="aoi-input ingest-file-input"
+              type="file"
+              multiple
+              accept=".tif,.tiff,.TIF,.TIFF,.txt"
+              onChange={(event) => {
+                const list = event.target.files;
+                onFormChange(
+                  "files",
+                  list ? Array.from(list) : [],
+                );
+              }}
+              disabled={submitting}
+            />
+            <p className="aoi-hint">
+              Esperados: SR_B2…SR_B7 (.tif/.tiff). Opcional: MTL.txt.{" "}
+              {formatSelectedFilesLabel(form.files)}
+            </p>
+            {form.files.length > 0 && (
+              <ul className="ingest-file-list">
+                {form.files.map((file) => (
+                  <li key={`${file.name}-${file.size}-${file.lastModified}`}>
+                    {file.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="aoi-field">
+            <label className="aoi-field-label" htmlFor="ingest-scene-path">
+              Ruta de carpeta (scene_path)
+            </label>
+            <input
+              id="ingest-scene-path"
+              className="aoi-input"
+              type="text"
+              value={form.scenePath}
+              onChange={(event) => onFormChange("scenePath", event.target.value)}
+              placeholder="sample/scenes/landsat8_lc08_225084"
+              disabled={submitting}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <p className="aoi-hint">
+              Relativa a DATA_ROOT. Ejemplo: sample/scenes/landsat8_lc08_225084
+            </p>
+          </div>
+        )}
 
         <div className="aoi-field">
           <label className="aoi-field-label" htmlFor="ingest-source">
@@ -130,7 +208,11 @@ export default function IngestPanel({
               }
               disabled={submitting}
             />
-            <span>Overwrite — reemplazar si ya existe una escena del mismo path</span>
+            <span>
+              {isUpload
+                ? "Overwrite — reemplazar si ya existe una escena del mismo path interno"
+                : "Overwrite — reemplazar si ya existe una escena del mismo path"}
+            </span>
           </label>
         </div>
 
@@ -138,9 +220,15 @@ export default function IngestPanel({
           <button
             type="submit"
             className="aoi-button"
-            disabled={submitting || !form.scenePath.trim()}
+            disabled={submitting || !canSubmit}
           >
-            {submitting ? "Registrando..." : "Registrar escena"}
+            {submitting
+              ? isUpload
+                ? "Subiendo..."
+                : "Registrando..."
+              : isUpload
+                ? "Subir e ingerir escena"
+                : "Registrar escena"}
           </button>
         </div>
       </form>
