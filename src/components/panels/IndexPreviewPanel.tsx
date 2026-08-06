@@ -1,4 +1,5 @@
 import { useIndexCompute } from "../../hooks/useIndexCompute";
+import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import {
   isComputableIndexKey,
@@ -14,6 +15,13 @@ interface IndexPreviewPanelProps {
   scenesLoading: boolean;
   sceneDetailLoading: boolean;
   onSelectScene: (sceneId: string) => void;
+  mapOverlay: ActiveIndexOverlay | null;
+  mapOverlayLoading: boolean;
+  mapOverlayError: string | null;
+  onAddIndexToMap: (sceneId: string, indexKey: string) => void;
+  onRemoveIndexFromMap: () => void;
+  onIndexOverlayOpacityChange: (opacity: number) => void;
+  onFitIndexOverlay: () => void;
 }
 
 function formatStat(value: number | null | undefined): string {
@@ -59,6 +67,13 @@ export default function IndexPreviewPanel({
   scenesLoading,
   sceneDetailLoading,
   onSelectScene,
+  mapOverlay,
+  mapOverlayLoading,
+  mapOverlayError,
+  onAddIndexToMap,
+  onRemoveIndexFromMap,
+  onIndexOverlayOpacityChange,
+  onFitIndexOverlay,
 }: IndexPreviewPanelProps) {
   const indexKey = selectedIndex?.key ?? null;
   const computable = indexKey ? isComputableIndexKey(indexKey) : false;
@@ -85,6 +100,10 @@ export default function IndexPreviewPanel({
   } = useIndexCompute(selectedSceneId, indexKey);
 
   const disabled = loading || sceneDetailLoading || !canAct;
+  const overlayActive =
+    mapOverlay !== null &&
+    mapOverlay.sceneId === selectedSceneId &&
+    mapOverlay.indexKey === indexKey;
 
   return (
     <section className="index-preview-panel" aria-label="Preview de índices">
@@ -203,7 +222,69 @@ export default function IndexPreviewPanel({
         >
           {busyAction === "download-png" ? "Descargando..." : "Descargar PNG"}
         </button>
+        <button
+          type="button"
+          className="aoi-button aoi-button--secondary"
+          onClick={() => {
+            if (selectedSceneId && indexKey) {
+              onAddIndexToMap(selectedSceneId, indexKey);
+            }
+          }}
+          disabled={disabled || mapOverlayLoading}
+        >
+          {mapOverlayLoading ? "Agregando..." : "Agregar al mapa"}
+        </button>
       </div>
+
+      {mapOverlay && (
+        <div className="index-overlay-controls" aria-label="Capa de índice en el mapa">
+          <p className="aoi-geojson-label">
+            Capa activa: {mapOverlay.indexKey.toUpperCase()}
+          </p>
+          <label className="aoi-field-label" htmlFor="index-overlay-opacity">
+            Opacidad ({Math.round(mapOverlay.opacity * 100)}%)
+          </label>
+          <input
+            id="index-overlay-opacity"
+            className="index-overlay-opacity"
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={mapOverlay.opacity}
+            onChange={(event) =>
+              onIndexOverlayOpacityChange(Number(event.target.value))
+            }
+          />
+          <div className="aoi-actions index-preview-actions">
+            <button
+              type="button"
+              className="aoi-button aoi-button--secondary"
+              onClick={onFitIndexOverlay}
+            >
+              Centrar capa
+            </button>
+            <button
+              type="button"
+              className="aoi-button aoi-button--secondary"
+              onClick={onRemoveIndexFromMap}
+            >
+              Quitar capa
+            </button>
+          </div>
+          {!overlayActive && selectedSceneId && indexKey && (
+            <p className="aoi-hint" role="status">
+              Hay otra capa en el mapa. «Agregar al mapa» la reemplaza.
+            </p>
+          )}
+        </div>
+      )}
+
+      {mapOverlayError && (
+        <p className="aoi-error" role="alert">
+          {mapOverlayError}
+        </p>
+      )}
 
       {error && (
         <p className="aoi-error" role="alert">

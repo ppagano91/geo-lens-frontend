@@ -1,5 +1,6 @@
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
+import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
 import {
   detectSensorFromScene,
   getSensorLabel,
@@ -25,6 +26,13 @@ interface IndexPanelProps {
   onSelectIndex: (indexKey: string) => void;
   onSelectScene: (sceneId: string) => void;
   onCategoryFilterChange: (category: string) => void;
+  mapOverlay: ActiveIndexOverlay | null;
+  mapOverlayLoading: boolean;
+  mapOverlayError: string | null;
+  onAddIndexToMap: (sceneId: string, indexKey: string) => void;
+  onRemoveIndexFromMap: () => void;
+  onIndexOverlayOpacityChange: (opacity: number) => void;
+  onFitIndexOverlay: () => void;
 }
 
 const CATEGORY_OPTIONS = [
@@ -105,6 +113,13 @@ export default function IndexPanel({
   onSelectIndex,
   onSelectScene,
   onCategoryFilterChange,
+  mapOverlay,
+  mapOverlayLoading,
+  mapOverlayError,
+  onAddIndexToMap,
+  onRemoveIndexFromMap,
+  onIndexOverlayOpacityChange,
+  onFitIndexOverlay,
 }: IndexPanelProps) {
   const sceneSensor = selectedScene
     ? detectSensorFromScene(selectedScene)
@@ -131,6 +146,13 @@ export default function IndexPanel({
         scenesLoading={scenesLoading}
         sceneDetailLoading={sceneDetailLoading}
         onSelectScene={onSelectScene}
+        mapOverlay={mapOverlay}
+        mapOverlayLoading={mapOverlayLoading}
+        mapOverlayError={mapOverlayError}
+        onAddIndexToMap={onAddIndexToMap}
+        onRemoveIndexFromMap={onRemoveIndexFromMap}
+        onIndexOverlayOpacityChange={onIndexOverlayOpacityChange}
+        onFitIndexOverlay={onFitIndexOverlay}
       />
 
       <CompatibilityPanel

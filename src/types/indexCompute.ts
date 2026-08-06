@@ -60,6 +60,32 @@ export interface IndexPreviewResult {
   height: number;
 }
 
+/** Four [lng, lat] corners: top-left, top-right, bottom-right, bottom-left. */
+export type IndexMapOverlayCoordinates = [
+  [number, number],
+  [number, number],
+  [number, number],
+  [number, number],
+];
+
+export interface IndexMapOverlayBounds {
+  left: number;
+  bottom: number;
+  right: number;
+  top: number;
+}
+
+export interface IndexMapOverlayResult {
+  scene_id: string;
+  index_key: string;
+  image_url: string;
+  width: number;
+  height: number;
+  crs_original: string;
+  bounds_original: IndexMapOverlayBounds;
+  coordinates_wgs84: IndexMapOverlayCoordinates;
+}
+
 export function isComputableIndexKey(key: string): key is ComputableIndexKey {
   return (COMPUTABLE_INDEX_KEYS as readonly string[]).includes(
     key.trim().toLowerCase(),

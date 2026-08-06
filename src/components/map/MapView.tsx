@@ -12,7 +12,9 @@ import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
 import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
 import AoiLayer from "./AoiLayer";
+import IndexOverlayLayer from "./IndexOverlayLayer";
 import SceneFootprintLayer from "./SceneFootprintLayer";
+import type { IndexMapOverlayCoordinates } from "../../types/indexCompute";
 
 const INITIAL_CENTER: [number, number] = [-58.3816, -34.6037];
 const INITIAL_ZOOM = 10;
@@ -28,6 +30,10 @@ interface MapViewProps {
   sceneFootprint: SceneFootprintGeometry | null;
   sceneName: string | null;
   sceneFitBoundsTrigger: number;
+  indexOverlayImageUrl: string | null;
+  indexOverlayCoordinates: IndexMapOverlayCoordinates | null;
+  indexOverlayOpacity: number;
+  indexOverlayFitTrigger: number;
   onMapClick: (lng: number, lat: number) => void;
 }
 
@@ -40,6 +46,10 @@ export default function MapView({
   sceneFootprint,
   sceneName,
   sceneFitBoundsTrigger,
+  indexOverlayImageUrl,
+  indexOverlayCoordinates,
+  indexOverlayOpacity,
+  indexOverlayFitTrigger,
   onMapClick,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -211,6 +221,14 @@ export default function MapView({
         mapReady={status === "ready"}
         footprint={sceneFootprint}
         sceneName={sceneName}
+      />
+      <IndexOverlayLayer
+        map={mapInstance}
+        mapReady={status === "ready"}
+        imageUrl={indexOverlayImageUrl}
+        coordinates={indexOverlayCoordinates}
+        opacity={indexOverlayOpacity}
+        fitTrigger={indexOverlayFitTrigger}
       />
       <div ref={mapContainer} className="map-container" />
     </div>

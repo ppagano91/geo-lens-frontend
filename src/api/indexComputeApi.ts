@@ -3,6 +3,7 @@ import { ApiError, apiRequest } from "./client";
 import type {
   IndexComputeResult,
   IndexComputeSaveResult,
+  IndexMapOverlayResult,
   IndexPreviewResult,
 } from "../types/indexCompute";
 
@@ -69,6 +70,16 @@ export function createIndexPreview(
   return apiRequest<IndexPreviewResult>(indexPath(sceneId, indexKey, "preview"), {
     method: "POST",
   });
+}
+
+/** Metadata to paint the preview PNG as a MapLibre image overlay. */
+export function getIndexMapOverlay(
+  sceneId: string,
+  indexKey: string,
+): Promise<IndexMapOverlayResult> {
+  return apiRequest<IndexMapOverlayResult>(
+    indexPath(sceneId, indexKey, "map-overlay"),
+  );
 }
 
 /** Absolute URL for an existing preview PNG (GET; does not generate). */

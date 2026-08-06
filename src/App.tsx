@@ -8,6 +8,7 @@ import IngestPanel from "./components/panels/IngestPanel";
 import ScenePanel from "./components/panels/ScenePanel";
 import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
 import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
+import { useIndexMapOverlay } from "./hooks/useIndexMapOverlay";
 import { useLocalSceneIngest } from "./hooks/useLocalSceneIngest";
 import { useScenes } from "./hooks/useScenes";
 import { useSpectralIndices } from "./hooks/useSpectralIndices";
@@ -24,6 +25,7 @@ export default function App() {
   const scenes = useScenes();
   const spectralIndices = useSpectralIndices();
   const ingest = useLocalSceneIngest();
+  const indexOverlay = useIndexMapOverlay();
 
   const selectedSavedAoi = workspace.selectedSavedId
     ? workspace.saved.aois.find((aoi) => aoi.id === workspace.selectedSavedId)
@@ -123,6 +125,15 @@ export default function App() {
           onSelectIndex={spectralIndices.selectIndex}
           onSelectScene={scenes.selectScene}
           onCategoryFilterChange={spectralIndices.setCategoryFilter}
+          mapOverlay={indexOverlay.overlay}
+          mapOverlayLoading={indexOverlay.loading}
+          mapOverlayError={indexOverlay.error}
+          onAddIndexToMap={(sceneId, indexKey) =>
+            void indexOverlay.addToMap(sceneId, indexKey)
+          }
+          onRemoveIndexFromMap={indexOverlay.removeFromMap}
+          onIndexOverlayOpacityChange={indexOverlay.setOpacity}
+          onFitIndexOverlay={indexOverlay.fitToOverlay}
         />
       }
       map={<BasemapSelector value={basemapId} onChange={setBasemapId} />}
@@ -136,6 +147,10 @@ export default function App() {
         sceneFootprint={scenes.selectedScene?.footprint ?? null}
         sceneName={scenes.selectedScene?.name ?? null}
         sceneFitBoundsTrigger={scenes.fitBoundsTrigger}
+        indexOverlayImageUrl={indexOverlay.overlay?.imageUrl ?? null}
+        indexOverlayCoordinates={indexOverlay.overlay?.coordinates ?? null}
+        indexOverlayOpacity={indexOverlay.overlay?.opacity ?? 0.75}
+        indexOverlayFitTrigger={indexOverlay.fitTrigger}
         onMapClick={workspace.drawing.addVertex}
       />
     </AppLayout>

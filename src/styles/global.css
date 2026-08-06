@@ -704,6 +704,18 @@ body {
   background-color: #1a1a2e;
 }
 
+.index-overlay-controls {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.index-overlay-opacity {
+  display: block;
+  width: 100%;
+  margin: 0.35rem 0 0.65rem;
+}
+
 .compatibility-panel {
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
