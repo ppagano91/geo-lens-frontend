@@ -1,13 +1,20 @@
 import { useEffect, useRef } from "react";
 import type maplibregl from "maplibre-gl";
 import type { IndexMapOverlayCoordinates } from "../../types/indexCompute";
-
-const SOURCE_ID = "index-overlay";
-const LAYER_ID = "index-overlay-raster";
+import {
+  INDEX_OVERLAY_LAYER_ID,
+  INDEX_OVERLAY_SOURCE_ID,
+  addAppLayer,
+  ensureAppLayersOrder,
+  removeLayerIfExists,
+  removeSourceIfExists,
+} from "../../utils/mapLayers";
 
 export interface IndexOverlayLayerProps {
   map: maplibregl.Map | null;
   mapReady: boolean;
+  /** Bumps after basemap `setStyle` so sources/layers are re-attached. */
+  styleEpoch: number;
   imageUrl: string | null;
   coordinates: IndexMapOverlayCoordinates | null;
   opacity: number;
@@ -15,12 +22,8 @@ export interface IndexOverlayLayerProps {
 }
 
 function removeOverlay(map: maplibregl.Map) {
-  if (map.getLayer(LAYER_ID)) {
-    map.removeLayer(LAYER_ID);
-  }
-  if (map.getSource(SOURCE_ID)) {
-    map.removeSource(SOURCE_ID);
-  }
+  removeLayerIfExists(map, INDEX_OVERLAY_LAYER_ID);
+  removeSourceIfExists(map, INDEX_OVERLAY_SOURCE_ID);
 }
 
 function coordinatesBounds(
@@ -37,6 +40,7 @@ function coordinatesBounds(
 export default function IndexOverlayLayer({
   map,
   mapReady,
+  styleEpoch,
   imageUrl,
   coordinates,
   opacity,
@@ -56,34 +60,36 @@ export default function IndexOverlayLayer({
 
     removeOverlay(map);
 
-    map.addSource(SOURCE_ID, {
+    map.addSource(INDEX_OVERLAY_SOURCE_ID, {
       type: "image",
       url: imageUrl,
       coordinates,
     });
 
-    map.addLayer({
-      id: LAYER_ID,
+    addAppLayer(map, {
+      id: INDEX_OVERLAY_LAYER_ID,
       type: "raster",
-      source: SOURCE_ID,
+      source: INDEX_OVERLAY_SOURCE_ID,
       paint: {
         "raster-opacity": opacity,
         "raster-fade-duration": 0,
       },
     });
 
+    ensureAppLayersOrder(map);
+
     return () => {
       removeOverlay(map);
     };
-  }, [map, mapReady, imageUrl, coordinates]);
+  }, [map, mapReady, styleEpoch, imageUrl, coordinates]);
 
   useEffect(() => {
-    if (!map || !mapReady || !map.getLayer(LAYER_ID)) {
+    if (!map || !mapReady || !map.getLayer(INDEX_OVERLAY_LAYER_ID)) {
       return;
     }
 
-    map.setPaintProperty(LAYER_ID, "raster-opacity", opacity);
-  }, [map, mapReady, opacity]);
+    map.setPaintProperty(INDEX_OVERLAY_LAYER_ID, "raster-opacity", opacity);
+  }, [map, mapReady, styleEpoch, opacity]);
 
   useEffect(() => {
     if (

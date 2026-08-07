@@ -11,6 +11,7 @@ import type { AoiPolygonFeature } from "../../types/aoi";
 import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
 import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
+import { reattachAppLayersAfterBasemapChange } from "../../utils/mapLayers";
 import AoiLayer from "./AoiLayer";
 import IndexOverlayLayer from "./IndexOverlayLayer";
 import SceneFootprintLayer from "./SceneFootprintLayer";
@@ -58,6 +59,8 @@ export default function MapView({
   const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
   const [status, setStatus] = useState<MapStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  /** Increments on every basemap `style.load` so React re-adds custom layers. */
+  const [styleEpoch, setStyleEpoch] = useState(0);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) {
@@ -130,7 +133,10 @@ export default function MapView({
 
     const handleStyleLoad = () => {
       mapInstance.jumpTo({ center, zoom, bearing, pitch });
+      // Force layer effects to re-run even if React batches loading→ready.
+      setStyleEpoch((epoch) => epoch + 1);
       setStatus("ready");
+      reattachAppLayersAfterBasemapChange(mapInstance);
     };
 
     mapInstance.once("style.load", handleStyleLoad);
@@ -212,6 +218,7 @@ export default function MapView({
       <AoiLayer
         map={mapInstance}
         mapReady={status === "ready"}
+        styleEpoch={styleEpoch}
         isDrawing={isDrawing}
         draftVertices={draftVertices}
         completedAoi={completedAoi}
@@ -219,12 +226,14 @@ export default function MapView({
       <SceneFootprintLayer
         map={mapInstance}
         mapReady={status === "ready"}
+        styleEpoch={styleEpoch}
         footprint={sceneFootprint}
         sceneName={sceneName}
       />
       <IndexOverlayLayer
         map={mapInstance}
         mapReady={status === "ready"}
+        styleEpoch={styleEpoch}
         imageUrl={indexOverlayImageUrl}
         coordinates={indexOverlayCoordinates}
         opacity={indexOverlayOpacity}
