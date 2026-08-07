@@ -125,11 +125,18 @@ export default function App() {
           onSelectIndex={spectralIndices.selectIndex}
           onSelectScene={scenes.selectScene}
           onCategoryFilterChange={spectralIndices.setCategoryFilter}
+          savedAois={workspace.saved.aois}
+          selectedAoiId={workspace.selectedSavedId}
+          selectedAoiName={selectedSavedAoi?.name ?? null}
+          onSelectAoi={workspace.handleSelectSavedAoi}
           mapOverlay={indexOverlay.overlay}
           mapOverlayLoading={indexOverlay.loading}
           mapOverlayError={indexOverlay.error}
           onAddIndexToMap={(sceneId, indexKey) =>
             void indexOverlay.addToMap(sceneId, indexKey)
+          }
+          onAddCropToMap={(sceneId, indexKey, aoiId) =>
+            void indexOverlay.addCropToMap(sceneId, indexKey, aoiId)
           }
           onRemoveIndexFromMap={indexOverlay.removeFromMap}
           onIndexOverlayOpacityChange={indexOverlay.setOpacity}

@@ -86,6 +86,47 @@ export interface IndexMapOverlayResult {
   coordinates_wgs84: IndexMapOverlayCoordinates;
 }
 
+export interface IndexAoiCropRequest {
+  aoi_id: string;
+  overwrite?: boolean;
+  generate_preview?: boolean;
+}
+
+export interface IndexAoiCropRasterInfo {
+  width: number;
+  height: number;
+  crs: string | null;
+  dtype: string;
+  nodata: number;
+}
+
+export interface IndexAoiCropOutputInfo {
+  geotiff_asset_path: string;
+  png_asset_path: string | null;
+}
+
+export interface IndexAoiCropResult {
+  scene_id: string;
+  index_key: string;
+  aoi_id: string;
+  status: string;
+  raster: IndexAoiCropRasterInfo;
+  stats: IndexStats;
+  output: IndexAoiCropOutputInfo;
+}
+
+export interface IndexAoiCropMapOverlayResult {
+  scene_id: string;
+  index_key: string;
+  aoi_id: string;
+  image_url: string;
+  width: number;
+  height: number;
+  crs_original: string;
+  bounds_original: IndexMapOverlayBounds;
+  coordinates_wgs84: IndexMapOverlayCoordinates;
+}
+
 export function isComputableIndexKey(key: string): key is ComputableIndexKey {
   return (COMPUTABLE_INDEX_KEYS as readonly string[]).includes(
     key.trim().toLowerCase(),

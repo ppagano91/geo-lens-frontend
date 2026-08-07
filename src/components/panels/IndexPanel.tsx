@@ -1,5 +1,6 @@
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
+import type { AoiRecord } from "../../types/aoi";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
 import {
   detectSensorFromScene,
@@ -26,10 +27,15 @@ interface IndexPanelProps {
   onSelectIndex: (indexKey: string) => void;
   onSelectScene: (sceneId: string) => void;
   onCategoryFilterChange: (category: string) => void;
+  savedAois: AoiRecord[];
+  selectedAoiId: string | null;
+  selectedAoiName: string | null;
+  onSelectAoi: (aoiId: string) => void;
   mapOverlay: ActiveIndexOverlay | null;
   mapOverlayLoading: boolean;
   mapOverlayError: string | null;
   onAddIndexToMap: (sceneId: string, indexKey: string) => void;
+  onAddCropToMap: (sceneId: string, indexKey: string, aoiId: string) => void;
   onRemoveIndexFromMap: () => void;
   onIndexOverlayOpacityChange: (opacity: number) => void;
   onFitIndexOverlay: () => void;
@@ -113,10 +119,15 @@ export default function IndexPanel({
   onSelectIndex,
   onSelectScene,
   onCategoryFilterChange,
+  savedAois,
+  selectedAoiId,
+  selectedAoiName,
+  onSelectAoi,
   mapOverlay,
   mapOverlayLoading,
   mapOverlayError,
   onAddIndexToMap,
+  onAddCropToMap,
   onRemoveIndexFromMap,
   onIndexOverlayOpacityChange,
   onFitIndexOverlay,
@@ -146,10 +157,15 @@ export default function IndexPanel({
         scenesLoading={scenesLoading}
         sceneDetailLoading={sceneDetailLoading}
         onSelectScene={onSelectScene}
+        savedAois={savedAois}
+        selectedAoiId={selectedAoiId}
+        selectedAoiName={selectedAoiName}
+        onSelectAoi={onSelectAoi}
         mapOverlay={mapOverlay}
         mapOverlayLoading={mapOverlayLoading}
         mapOverlayError={mapOverlayError}
         onAddIndexToMap={onAddIndexToMap}
+        onAddCropToMap={onAddCropToMap}
         onRemoveIndexFromMap={onRemoveIndexFromMap}
         onIndexOverlayOpacityChange={onIndexOverlayOpacityChange}
         onFitIndexOverlay={onFitIndexOverlay}

@@ -1,5 +1,8 @@
+import { useState } from "react";
+import { useIndexAoiCrop } from "../../hooks/useIndexAoiCrop";
 import { useIndexCompute } from "../../hooks/useIndexCompute";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
+import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import {
   isComputableIndexKey,
@@ -15,10 +18,15 @@ interface IndexPreviewPanelProps {
   scenesLoading: boolean;
   sceneDetailLoading: boolean;
   onSelectScene: (sceneId: string) => void;
+  savedAois: AoiRecord[];
+  selectedAoiId: string | null;
+  selectedAoiName: string | null;
+  onSelectAoi: (aoiId: string) => void;
   mapOverlay: ActiveIndexOverlay | null;
   mapOverlayLoading: boolean;
   mapOverlayError: string | null;
   onAddIndexToMap: (sceneId: string, indexKey: string) => void;
+  onAddCropToMap: (sceneId: string, indexKey: string, aoiId: string) => void;
   onRemoveIndexFromMap: () => void;
   onIndexOverlayOpacityChange: (opacity: number) => void;
   onFitIndexOverlay: () => void;
@@ -67,10 +75,15 @@ export default function IndexPreviewPanel({
   scenesLoading,
   sceneDetailLoading,
   onSelectScene,
+  savedAois,
+  selectedAoiId,
+  selectedAoiName,
+  onSelectAoi,
   mapOverlay,
   mapOverlayLoading,
   mapOverlayError,
   onAddIndexToMap,
+  onAddCropToMap,
   onRemoveIndexFromMap,
   onIndexOverlayOpacityChange,
   onFitIndexOverlay,
@@ -99,11 +112,24 @@ export default function IndexPreviewPanel({
     onPreviewImageLoad,
   } = useIndexCompute(selectedSceneId, indexKey);
 
+  const crop = useIndexAoiCrop(selectedSceneId, indexKey, selectedAoiId);
+  const [cropOverwrite, setCropOverwrite] = useState(false);
+
   const disabled = loading || sceneDetailLoading || !canAct;
-  const overlayActive =
+  const cropDisabled =
+    disabled || crop.loading || !selectedAoiId || mapOverlayLoading;
+
+  const overlayActiveFull =
     mapOverlay !== null &&
     mapOverlay.sceneId === selectedSceneId &&
-    mapOverlay.indexKey === indexKey;
+    mapOverlay.indexKey === indexKey &&
+    mapOverlay.aoiId == null;
+
+  const overlayActiveCrop =
+    mapOverlay !== null &&
+    mapOverlay.sceneId === selectedSceneId &&
+    mapOverlay.indexKey === indexKey &&
+    mapOverlay.aoiId === selectedAoiId;
 
   return (
     <section className="index-preview-panel" aria-label="Preview de índices">
@@ -232,14 +258,161 @@ export default function IndexPreviewPanel({
           }}
           disabled={disabled || mapOverlayLoading}
         >
-          {mapOverlayLoading ? "Agregando..." : "Agregar al mapa"}
+          {mapOverlayLoading && mapOverlay?.aoiId == null
+            ? "Agregando..."
+            : "Agregar al mapa"}
         </button>
+      </div>
+
+      <div className="index-aoi-crop" aria-label="Recorte por AOI">
+        <p className="aoi-geojson-label">Recorte por AOI</p>
+        <p className="aoi-hint" role="status">
+          Recorta el índice derivado ya guardado (no las bandas originales).
+          Primero ejecutá Calcular y guardar.
+        </p>
+
+        <div className="index-filter">
+          <label className="aoi-field-label" htmlFor="index-preview-aoi">
+            AOI
+          </label>
+          <select
+            id="index-preview-aoi"
+            className="aoi-input"
+            value={selectedAoiId ?? ""}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (value) {
+                onSelectAoi(value);
+              }
+            }}
+            disabled={disabled || crop.loading}
+          >
+            <option value="">
+              {savedAois.length === 0
+                ? "No hay AOIs guardados"
+                : "Seleccioná un AOI"}
+            </option>
+            {savedAois.map((aoi) => (
+              <option key={aoi.id} value={aoi.id}>
+                {aoi.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <dl className="scene-detail-fields">
+          <div className="scene-detail-row">
+            <dt>AOI</dt>
+            <dd>{selectedAoiName ?? "Ninguno"}</dd>
+          </div>
+        </dl>
+
+        <div className="aoi-actions index-preview-actions">
+          <button
+            type="button"
+            className="aoi-button"
+            onClick={() => void crop.cropByAoi({ overwrite: cropOverwrite })}
+            disabled={cropDisabled}
+          >
+            {crop.busyAction === "crop" ? "Recortando..." : "Recortar por AOI"}
+          </button>
+          <label className="aoi-field-label" htmlFor="index-crop-overwrite">
+            <input
+              id="index-crop-overwrite"
+              type="checkbox"
+              checked={cropOverwrite}
+              onChange={(event) => setCropOverwrite(event.target.checked)}
+              disabled={cropDisabled}
+            />{" "}
+            Sobrescribir si existe
+          </label>
+          <button
+            type="button"
+            className="aoi-button aoi-button--secondary"
+            onClick={() => {
+              if (selectedSceneId && indexKey && selectedAoiId) {
+                onAddCropToMap(selectedSceneId, indexKey, selectedAoiId);
+              }
+            }}
+            disabled={cropDisabled}
+          >
+            {mapOverlayLoading && mapOverlay?.aoiId != null
+              ? "Agregando..."
+              : "Agregar recorte al mapa"}
+          </button>
+          <button
+            type="button"
+            className="aoi-button aoi-button--secondary"
+            onClick={() => void crop.downloadGeotiff()}
+            disabled={cropDisabled}
+          >
+            {crop.busyAction === "download-tif"
+              ? "Descargando..."
+              : "Descargar GeoTIFF recortado"}
+          </button>
+          <button
+            type="button"
+            className="aoi-button aoi-button--secondary"
+            onClick={() => void crop.downloadPng()}
+            disabled={cropDisabled}
+          >
+            {crop.busyAction === "download-png"
+              ? "Descargando..."
+              : "Descargar PNG recortado"}
+          </button>
+        </div>
+
+        {crop.error && (
+          <p className="aoi-error" role="alert">
+            {crop.error}
+          </p>
+        )}
+
+        {crop.successMessage && !crop.error && (
+          <p
+            className="compatibility-status compatibility-status--ok"
+            role="status"
+          >
+            {crop.successMessage}
+          </p>
+        )}
+
+        {crop.cropResult && (
+          <div className="index-preview-stats">
+            <p className="aoi-geojson-label">
+              Recorte ({crop.cropResult.index_key.toUpperCase()} ·{" "}
+              {crop.cropResult.status})
+            </p>
+            <dl className="scene-detail-fields">
+              <div className="scene-detail-row">
+                <dt>Tamaño</dt>
+                <dd>
+                  {crop.cropResult.raster.width}×{crop.cropResult.raster.height}
+                </dd>
+              </div>
+              <div className="scene-detail-row">
+                <dt>CRS</dt>
+                <dd>{crop.cropResult.raster.crs ?? "—"}</dd>
+              </div>
+            </dl>
+            <StatsBlock stats={crop.cropResult.stats} />
+            <p className="aoi-hint" role="status">
+              GeoTIFF: {crop.cropResult.output.geotiff_asset_path}
+            </p>
+            {crop.cropResult.output.png_asset_path && (
+              <p className="aoi-hint" role="status">
+                PNG: {crop.cropResult.output.png_asset_path}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {mapOverlay && (
         <div className="index-overlay-controls" aria-label="Capa de índice en el mapa">
           <p className="aoi-geojson-label">
             Capa activa: {mapOverlay.indexKey.toUpperCase()}
+            {mapOverlay.aoiId ? " (recorte AOI)" : ""}
           </p>
           <label className="aoi-field-label" htmlFor="index-overlay-opacity">
             Opacidad ({Math.round(mapOverlay.opacity * 100)}%)
@@ -272,9 +445,9 @@ export default function IndexPreviewPanel({
               Quitar capa
             </button>
           </div>
-          {!overlayActive && selectedSceneId && indexKey && (
+          {!overlayActiveFull && !overlayActiveCrop && selectedSceneId && indexKey && (
             <p className="aoi-hint" role="status">
-              Hay otra capa en el mapa. «Agregar al mapa» la reemplaza.
+              Hay otra capa en el mapa. Agregar índice o recorte la reemplaza.
             </p>
           )}
         </div>

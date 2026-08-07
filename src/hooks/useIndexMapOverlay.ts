@@ -1,8 +1,12 @@
 import { useCallback, useState } from "react";
-import { getIndexMapOverlay } from "../api/indexComputeApi";
+import {
+  getIndexAoiCropMapOverlay,
+  getIndexMapOverlay,
+} from "../api/indexComputeApi";
 import { ApiError } from "../api/client";
 import { API_BASE_URL } from "../config/env";
 import type {
+  IndexAoiCropMapOverlayResult,
   IndexMapOverlayCoordinates,
   IndexMapOverlayResult,
 } from "../types/indexCompute";
@@ -10,6 +14,8 @@ import type {
 export interface ActiveIndexOverlay {
   sceneId: string;
   indexKey: string;
+  /** Present when the active overlay is an AOI crop (Fase 9F). */
+  aoiId: string | null;
   imageUrl: string;
   coordinates: IndexMapOverlayCoordinates;
   width: number;
@@ -41,13 +47,15 @@ function toAbsoluteImageUrl(imageUrl: string, cacheBust: number): string {
 }
 
 function toActiveOverlay(
-  result: IndexMapOverlayResult,
+  result: IndexMapOverlayResult | IndexAoiCropMapOverlayResult,
   opacity: number,
   cacheBust: number,
+  aoiId: string | null,
 ): ActiveIndexOverlay {
   return {
     sceneId: result.scene_id,
     indexKey: result.index_key,
+    aoiId,
     imageUrl: toAbsoluteImageUrl(result.image_url, cacheBust),
     coordinates: result.coordinates_wgs84 as IndexMapOverlayCoordinates,
     width: result.width,
@@ -74,6 +82,7 @@ export function useIndexMapOverlay() {
           result,
           current?.opacity ?? DEFAULT_OPACITY,
           Date.now(),
+          null,
         ),
       );
       setFitTrigger((value) => value + 1);
@@ -88,6 +97,40 @@ export function useIndexMapOverlay() {
       setLoading(false);
     }
   }, []);
+
+  const addCropToMap = useCallback(
+    async (sceneId: string, indexKey: string, aoiId: string) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getIndexAoiCropMapOverlay(
+          sceneId,
+          indexKey,
+          aoiId,
+        );
+        setOverlay((current) =>
+          toActiveOverlay(
+            result,
+            current?.opacity ?? DEFAULT_OPACITY,
+            Date.now(),
+            aoiId,
+          ),
+        );
+        setFitTrigger((value) => value + 1);
+      } catch (err) {
+        setError(
+          formatApiError(
+            err,
+            "No se pudo agregar el recorte al mapa. Ejecutá «Recortar por AOI» primero.",
+          ),
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   const removeFromMap = useCallback(() => {
     setOverlay(null);
@@ -114,6 +157,7 @@ export function useIndexMapOverlay() {
     error,
     fitTrigger,
     addToMap,
+    addCropToMap,
     removeFromMap,
     setOpacity,
     fitToOverlay,
