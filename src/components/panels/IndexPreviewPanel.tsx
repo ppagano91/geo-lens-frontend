@@ -1,4 +1,11 @@
 import { useState } from "react";
+import {
+  Crosshair,
+  Download,
+  ImageDown,
+  Loader2,
+  X,
+} from "lucide-react";
 import { useIndexAoiCrop } from "../../hooks/useIndexAoiCrop";
 import { useIndexCompute } from "../../hooks/useIndexCompute";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
@@ -9,6 +16,7 @@ import {
   type IndexStats,
 } from "../../types/indexCompute";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
+import IconButton from "../ui/IconButton";
 
 interface IndexPreviewPanelProps {
   scenes: SceneListItem[];
@@ -230,24 +238,38 @@ export default function IndexPreviewPanel({
         >
           Ver preview
         </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={() => void downloadGeotiff()}
-          disabled={disabled}
-        >
-          {busyAction === "download-tif"
-            ? "Descargando..."
-            : "Descargar GeoTIFF"}
-        </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={() => void downloadPng()}
-          disabled={disabled}
-        >
-          {busyAction === "download-png" ? "Descargando..." : "Descargar PNG"}
-        </button>
+        <div className="aoi-icon-actions" role="group" aria-label="Descargas del índice">
+          <IconButton
+            label={
+              busyAction === "download-tif"
+                ? "Descargando GeoTIFF..."
+                : "Descargar GeoTIFF"
+            }
+            onClick={() => void downloadGeotiff()}
+            disabled={disabled}
+          >
+            {busyAction === "download-tif" ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <Download size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+          <IconButton
+            label={
+              busyAction === "download-png"
+                ? "Descargando PNG..."
+                : "Descargar PNG"
+            }
+            onClick={() => void downloadPng()}
+            disabled={disabled}
+          >
+            {busyAction === "download-png" ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <ImageDown size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+        </div>
         <button
           type="button"
           className="aoi-button aoi-button--secondary"
@@ -340,26 +362,42 @@ export default function IndexPreviewPanel({
               ? "Agregando..."
               : "Agregar recorte al mapa"}
           </button>
-          <button
-            type="button"
-            className="aoi-button aoi-button--secondary"
-            onClick={() => void crop.downloadGeotiff()}
-            disabled={cropDisabled}
+          <div
+            className="aoi-icon-actions"
+            role="group"
+            aria-label="Descargas del recorte AOI"
           >
-            {crop.busyAction === "download-tif"
-              ? "Descargando..."
-              : "Descargar GeoTIFF recortado"}
-          </button>
-          <button
-            type="button"
-            className="aoi-button aoi-button--secondary"
-            onClick={() => void crop.downloadPng()}
-            disabled={cropDisabled}
-          >
-            {crop.busyAction === "download-png"
-              ? "Descargando..."
-              : "Descargar PNG recortado"}
-          </button>
+            <IconButton
+              label={
+                crop.busyAction === "download-tif"
+                  ? "Descargando GeoTIFF recortado..."
+                  : "Descargar GeoTIFF recortado"
+              }
+              onClick={() => void crop.downloadGeotiff()}
+              disabled={cropDisabled}
+            >
+              {crop.busyAction === "download-tif" ? (
+                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+              ) : (
+                <Download size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <IconButton
+              label={
+                crop.busyAction === "download-png"
+                  ? "Descargando PNG recortado..."
+                  : "Descargar PNG recortado"
+              }
+              onClick={() => void crop.downloadPng()}
+              disabled={cropDisabled}
+            >
+              {crop.busyAction === "download-png" ? (
+                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+              ) : (
+                <ImageDown size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
         </div>
 
         {crop.error && (
@@ -429,21 +467,13 @@ export default function IndexPreviewPanel({
               onIndexOverlayOpacityChange(Number(event.target.value))
             }
           />
-          <div className="aoi-actions index-preview-actions">
-            <button
-              type="button"
-              className="aoi-button aoi-button--secondary"
-              onClick={onFitIndexOverlay}
-            >
-              Centrar capa
-            </button>
-            <button
-              type="button"
-              className="aoi-button aoi-button--secondary"
-              onClick={onRemoveIndexFromMap}
-            >
-              Quitar capa
-            </button>
+          <div className="aoi-icon-actions" role="group" aria-label="Controles de capa">
+            <IconButton label="Centrar capa" onClick={onFitIndexOverlay}>
+              <Crosshair size={16} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
+            <IconButton label="Quitar capa" onClick={onRemoveIndexFromMap}>
+              <X size={16} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
           </div>
           {!overlayActiveFull && !overlayActiveCrop && selectedSceneId && indexKey && (
             <p className="aoi-hint" role="status">

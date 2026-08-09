@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CheckCircle2, Undo2, XCircle } from "lucide-react";
 import type { AoiPolygonFeature, AoiRecord } from "../../types/aoi";
 import { AOI_DRAWING_HELP } from "../../hooks/useAoiDrawing";
 import {
@@ -8,7 +9,9 @@ import {
   IconX,
 } from "../ui/ActionIcons";
 import ConfirmModal from "../ui/ConfirmModal";
+import HelpTooltip from "../ui/HelpTooltip";
 import IconActionButton from "../ui/IconActionButton";
+import IconButton from "../ui/IconButton";
 
 interface AoiPanelProps {
   statusMessage: string;
@@ -150,30 +153,30 @@ export default function AoiPanel({
         >
           Iniciar dibujo
         </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={onUndoVertex}
-          disabled={!canUndo || saving}
-        >
-          Deshacer punto
-        </button>
-        <button
-          type="button"
-          className="aoi-button"
-          onClick={onFinishDrawing}
-          disabled={!canFinish || saving}
-        >
-          Finalizar AOI
-        </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={onCancelDrawing}
-          disabled={!isDrawing || saving}
-        >
-          Cancelar dibujo
-        </button>
+        <div className="aoi-icon-actions" role="group" aria-label="Controles de dibujo">
+          <IconButton
+            label="Deshacer último punto"
+            onClick={onUndoVertex}
+            disabled={!canUndo || saving}
+          >
+            <Undo2 size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+          <IconButton
+            label="Finalizar AOI"
+            tone="primary"
+            onClick={onFinishDrawing}
+            disabled={!canFinish || saving}
+          >
+            <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+          <IconButton
+            label="Cancelar dibujo"
+            onClick={onCancelDrawing}
+            disabled={!isDrawing || saving}
+          >
+            <XCircle size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+        </div>
         <button
           type="button"
           className="aoi-button aoi-button--secondary"
@@ -202,10 +205,16 @@ export default function AoiPanel({
 
       {isDrawing && (
         <div className="aoi-drawing-hints">
-          <p className="aoi-hint">
-            Puntos actuales: <strong>{pointCount}</strong>
-          </p>
-          <p className="aoi-hint">{AOI_DRAWING_HELP}</p>
+          <div className="aoi-drawing-hints-row">
+            <p className="aoi-hint">
+              Puntos actuales: <strong>{pointCount}</strong>
+            </p>
+            <HelpTooltip
+              text={AOI_DRAWING_HELP}
+              label="Ayuda de dibujo AOI"
+              placement="bottom"
+            />
+          </div>
           {!canFinish && (
             <p className="aoi-hint">
               Se necesitan al menos 3 puntos para finalizar.
