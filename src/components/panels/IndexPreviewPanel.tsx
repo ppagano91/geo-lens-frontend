@@ -1,8 +1,14 @@
 import { useState } from "react";
 import {
+  Calculator,
+  Crop,
   Crosshair,
   Download,
+  Eye,
+  HardDriveDownload,
   ImageDown,
+  ImagePlus,
+  Layers,
   Loader2,
   X,
 } from "lucide-react";
@@ -203,41 +209,64 @@ export default function IndexPreviewPanel({
         </p>
       )}
 
-      <div className="aoi-actions index-preview-actions">
-        <button
-          type="button"
-          className="aoi-button"
-          onClick={() => void compute()}
-          disabled={disabled}
-        >
-          {busyAction === "compute" ? "Calculando..." : "Calcular"}
-        </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={() => void computeAndSave()}
-          disabled={disabled}
-        >
-          {busyAction === "compute-and-save"
-            ? "Guardando..."
-            : "Calcular y guardar"}
-        </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={() => void generatePreview()}
-          disabled={disabled}
-        >
-          {busyAction === "preview" ? "Generando..." : "Generar preview"}
-        </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={showPreview}
-          disabled={disabled}
-        >
-          Ver preview
-        </button>
+      <div className="aoi-icon-toolbar index-preview-actions" aria-label="Acciones de índice">
+        <div className="aoi-icon-actions" role="group" aria-label="Cálculo">
+          <IconButton
+            label={
+              busyAction === "compute" ? "Calculando índice..." : "Calcular índice"
+            }
+            tone="primary"
+            onClick={() => void compute()}
+            disabled={disabled}
+          >
+            {busyAction === "compute" ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <Calculator size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+          <IconButton
+            label={
+              busyAction === "compute-and-save"
+                ? "Calculando y guardando GeoTIFF..."
+                : "Calcular y guardar GeoTIFF"
+            }
+            onClick={() => void computeAndSave()}
+            disabled={disabled}
+          >
+            {busyAction === "compute-and-save" ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <HardDriveDownload size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+        </div>
+
+        <div className="aoi-icon-actions" role="group" aria-label="Preview">
+          <IconButton
+            label={
+              busyAction === "preview"
+                ? "Generando preview PNG..."
+                : "Generar preview PNG"
+            }
+            onClick={() => void generatePreview()}
+            disabled={disabled}
+          >
+            {busyAction === "preview" ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <ImagePlus size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+          <IconButton
+            label="Ver preview"
+            onClick={showPreview}
+            disabled={disabled}
+          >
+            <Eye size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+        </div>
+
         <div className="aoi-icon-actions" role="group" aria-label="Descargas del índice">
           <IconButton
             label={
@@ -270,20 +299,28 @@ export default function IndexPreviewPanel({
             )}
           </IconButton>
         </div>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={() => {
-            if (selectedSceneId && indexKey) {
-              onAddIndexToMap(selectedSceneId, indexKey);
+
+        <div className="aoi-icon-actions" role="group" aria-label="Mapa">
+          <IconButton
+            label={
+              mapOverlayLoading && mapOverlay?.aoiId == null
+                ? "Agregando al mapa..."
+                : "Agregar al mapa"
             }
-          }}
-          disabled={disabled || mapOverlayLoading}
-        >
-          {mapOverlayLoading && mapOverlay?.aoiId == null
-            ? "Agregando..."
-            : "Agregar al mapa"}
-        </button>
+            onClick={() => {
+              if (selectedSceneId && indexKey) {
+                onAddIndexToMap(selectedSceneId, indexKey);
+              }
+            }}
+            disabled={disabled || mapOverlayLoading}
+          >
+            {mapOverlayLoading && mapOverlay?.aoiId == null ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <Layers size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+        </div>
       </div>
 
       <div className="index-aoi-crop" aria-label="Recorte por AOI">
@@ -329,39 +366,59 @@ export default function IndexPreviewPanel({
           </div>
         </dl>
 
-        <div className="aoi-actions index-preview-actions">
-          <button
-            type="button"
-            className="aoi-button"
-            onClick={() => void crop.cropByAoi({ overwrite: cropOverwrite })}
-            disabled={cropDisabled}
-          >
-            {crop.busyAction === "crop" ? "Recortando..." : "Recortar por AOI"}
-          </button>
-          <label className="aoi-field-label" htmlFor="index-crop-overwrite">
-            <input
-              id="index-crop-overwrite"
-              type="checkbox"
-              checked={cropOverwrite}
-              onChange={(event) => setCropOverwrite(event.target.checked)}
-              disabled={cropDisabled}
-            />{" "}
-            Sobrescribir si existe
-          </label>
-          <button
-            type="button"
-            className="aoi-button aoi-button--secondary"
-            onClick={() => {
-              if (selectedSceneId && indexKey && selectedAoiId) {
-                onAddCropToMap(selectedSceneId, indexKey, selectedAoiId);
+        <div className="aoi-icon-toolbar index-preview-actions">
+          <div className="aoi-icon-actions" role="group" aria-label="Recorte">
+            <IconButton
+              label={
+                crop.busyAction === "crop"
+                  ? "Recortando por AOI..."
+                  : "Recortar por AOI"
               }
-            }}
-            disabled={cropDisabled}
-          >
-            {mapOverlayLoading && mapOverlay?.aoiId != null
-              ? "Agregando..."
-              : "Agregar recorte al mapa"}
-          </button>
+              text={crop.busyAction === "crop" ? undefined : "Recortar"}
+              tone="primary"
+              onClick={() => void crop.cropByAoi({ overwrite: cropOverwrite })}
+              disabled={cropDisabled}
+            >
+              {crop.busyAction === "crop" ? (
+                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+              ) : (
+                <Crop size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <label className="aoi-field-label index-crop-overwrite" htmlFor="index-crop-overwrite">
+              <input
+                id="index-crop-overwrite"
+                type="checkbox"
+                checked={cropOverwrite}
+                onChange={(event) => setCropOverwrite(event.target.checked)}
+                disabled={cropDisabled}
+              />{" "}
+              Sobrescribir
+            </label>
+          </div>
+
+          <div className="aoi-icon-actions" role="group" aria-label="Mapa del recorte">
+            <IconButton
+              label={
+                mapOverlayLoading && mapOverlay?.aoiId != null
+                  ? "Agregando recorte al mapa..."
+                  : "Agregar recorte al mapa"
+              }
+              onClick={() => {
+                if (selectedSceneId && indexKey && selectedAoiId) {
+                  onAddCropToMap(selectedSceneId, indexKey, selectedAoiId);
+                }
+              }}
+              disabled={cropDisabled}
+            >
+              {mapOverlayLoading && mapOverlay?.aoiId != null ? (
+                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+              ) : (
+                <Layers size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
+
           <div
             className="aoi-icon-actions"
             role="group"

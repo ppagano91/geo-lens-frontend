@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { CheckCircle2, Undo2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Eraser,
+  Loader2,
+  PenLine,
+  RefreshCw,
+  Save,
+  Undo2,
+  XCircle,
+} from "lucide-react";
 import type { AoiPolygonFeature, AoiRecord } from "../../types/aoi";
 import { AOI_DRAWING_HELP } from "../../hooks/useAoiDrawing";
 import {
@@ -144,16 +153,17 @@ export default function AoiPanel({
         />
       </div>
 
-      <div className="aoi-actions">
-        <button
-          type="button"
-          className="aoi-button"
-          onClick={onStartDrawing}
-          disabled={isDrawing || saving}
-        >
-          Iniciar dibujo
-        </button>
-        <div className="aoi-icon-actions" role="group" aria-label="Controles de dibujo">
+      <div className="aoi-icon-toolbar" aria-label="Acciones de AOI">
+        <div className="aoi-icon-actions" role="group" aria-label="Dibujo">
+          <IconButton
+            label="Iniciar dibujo"
+            // text="Dibujar"
+            tone="primary"
+            onClick={onStartDrawing}
+            disabled={isDrawing || saving}
+          >
+            <PenLine size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
           <IconButton
             label="Deshacer último punto"
             onClick={onUndoVertex}
@@ -163,7 +173,6 @@ export default function AoiPanel({
           </IconButton>
           <IconButton
             label="Finalizar AOI"
-            tone="primary"
             onClick={onFinishDrawing}
             disabled={!canFinish || saving}
           >
@@ -177,30 +186,39 @@ export default function AoiPanel({
             <XCircle size={16} strokeWidth={2} aria-hidden="true" />
           </IconButton>
         </div>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={onClearAoi}
-          disabled={!hasAoi || saving || isDrawing}
-        >
-          Limpiar AOI
-        </button>
-        <button
-          type="button"
-          className="aoi-button"
-          onClick={onSaveAoi}
-          disabled={!canSave}
-        >
-          {saving ? "Guardando..." : "Guardar AOI"}
-        </button>
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={onRefreshList}
-          disabled={listLoading || saving}
-        >
-          {listLoading ? "Actualizando..." : "Refrescar lista"}
-        </button>
+
+        <div className="aoi-icon-actions" role="group" aria-label="Persistencia">
+          <IconButton
+            label="Limpiar AOI"
+            onClick={onClearAoi}
+            disabled={!hasAoi || saving || isDrawing}
+          >
+            <Eraser size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+          <IconButton
+            label={saving ? "Guardando AOI..." : "Guardar AOI"}
+            tone="primary"
+            onClick={onSaveAoi}
+            disabled={!canSave}
+          >
+            {saving ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <Save size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+          <IconButton
+            label={listLoading ? "Actualizando lista..." : "Refrescar lista"}
+            onClick={onRefreshList}
+            disabled={listLoading || saving}
+          >
+            {listLoading ? (
+              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+            ) : (
+              <RefreshCw size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+        </div>
       </div>
 
       {isDrawing && (
