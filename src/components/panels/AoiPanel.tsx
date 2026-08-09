@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AoiPolygonFeature, AoiRecord } from "../../types/aoi";
+import { AOI_DRAWING_HELP } from "../../hooks/useAoiDrawing";
 import {
   IconCheck,
   IconEye,
@@ -13,6 +14,8 @@ interface AoiPanelProps {
   statusMessage: string;
   isDrawing: boolean;
   canFinish: boolean;
+  canUndo: boolean;
+  pointCount: number;
   hasAoi: boolean;
   completedAoi: AoiPolygonFeature | null;
   aoiName: string;
@@ -28,6 +31,8 @@ interface AoiPanelProps {
   onAoiDescriptionChange: (value: string) => void;
   onStartDrawing: () => void;
   onFinishDrawing: () => void;
+  onCancelDrawing: () => void;
+  onUndoVertex: () => void;
   onClearAoi: () => void;
   onSaveAoi: () => void;
   onRefreshList: () => void;
@@ -49,6 +54,8 @@ export default function AoiPanel({
   statusMessage,
   isDrawing,
   canFinish,
+  canUndo,
+  pointCount,
   hasAoi,
   completedAoi,
   aoiName,
@@ -64,6 +71,8 @@ export default function AoiPanel({
   onAoiDescriptionChange,
   onStartDrawing,
   onFinishDrawing,
+  onCancelDrawing,
+  onUndoVertex,
   onClearAoi,
   onSaveAoi,
   onRefreshList,
@@ -112,6 +121,7 @@ export default function AoiPanel({
           onChange={(event) => onAoiNameChange(event.target.value)}
           placeholder="Ej: Parque local"
           maxLength={255}
+          disabled={isDrawing}
         />
       </div>
 
@@ -127,6 +137,7 @@ export default function AoiPanel({
           placeholder="Notas sobre el área"
           rows={2}
           maxLength={1024}
+          disabled={isDrawing}
         />
       </div>
 
@@ -141,17 +152,33 @@ export default function AoiPanel({
         </button>
         <button
           type="button"
+          className="aoi-button aoi-button--secondary"
+          onClick={onUndoVertex}
+          disabled={!canUndo || saving}
+        >
+          Deshacer punto
+        </button>
+        <button
+          type="button"
           className="aoi-button"
           onClick={onFinishDrawing}
-          disabled={!isDrawing || saving}
+          disabled={!canFinish || saving}
         >
           Finalizar AOI
         </button>
         <button
           type="button"
           className="aoi-button aoi-button--secondary"
+          onClick={onCancelDrawing}
+          disabled={!isDrawing || saving}
+        >
+          Cancelar dibujo
+        </button>
+        <button
+          type="button"
+          className="aoi-button aoi-button--secondary"
           onClick={onClearAoi}
-          disabled={!hasAoi || saving}
+          disabled={!hasAoi || saving || isDrawing}
         >
           Limpiar AOI
         </button>
@@ -173,10 +200,18 @@ export default function AoiPanel({
         </button>
       </div>
 
-      {isDrawing && !canFinish && (
-        <p className="aoi-hint">
-          Hacé click en el mapa para agregar vértices (mínimo 3).
-        </p>
+      {isDrawing && (
+        <div className="aoi-drawing-hints">
+          <p className="aoi-hint">
+            Puntos actuales: <strong>{pointCount}</strong>
+          </p>
+          <p className="aoi-hint">{AOI_DRAWING_HELP}</p>
+          {!canFinish && (
+            <p className="aoi-hint">
+              Se necesitan al menos 3 puntos para finalizar.
+            </p>
+          )}
+        </div>
       )}
 
       {completedAoi && (
@@ -227,7 +262,7 @@ export default function AoiPanel({
                     <IconActionButton
                       label={`Ver AOI ${aoi.name}`}
                       onClick={() => onSelectSavedAoi(aoi.id)}
-                      disabled={isDeleting || saving}
+                      disabled={isDeleting || saving || isDrawing}
                     >
                       <IconEye />
                     </IconActionButton>
@@ -236,7 +271,7 @@ export default function AoiPanel({
                         label={`Deseleccionar AOI ${aoi.name}`}
                         tone="active"
                         onClick={onDeselectSavedAoi}
-                        disabled={isDeleting || saving}
+                        disabled={isDeleting || saving || isDrawing}
                       >
                         <IconX />
                       </IconActionButton>
@@ -244,7 +279,7 @@ export default function AoiPanel({
                       <IconActionButton
                         label={`Seleccionar AOI ${aoi.name}`}
                         onClick={() => onSelectSavedAoi(aoi.id)}
-                        disabled={isDeleting || saving}
+                        disabled={isDeleting || saving || isDrawing}
                       >
                         <IconCheck />
                       </IconActionButton>
@@ -253,7 +288,7 @@ export default function AoiPanel({
                       label={`Dar de baja AOI ${aoi.name}`}
                       tone="danger"
                       onClick={() => setPendingDelete(aoi)}
-                      disabled={isDeleting || saving}
+                      disabled={isDeleting || saving || isDrawing}
                     >
                       <IconTrash />
                     </IconActionButton>

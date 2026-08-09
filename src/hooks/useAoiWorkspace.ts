@@ -104,6 +104,11 @@ export function useAoiWorkspace() {
     drawing.startDrawing();
   }, [clearMessages, drawing]);
 
+  const handleCancelDrawing = useCallback(() => {
+    drawing.cancelDrawing();
+    clearMessages();
+  }, [clearMessages, drawing]);
+
   const statusMessage = saveSuccessMessage ?? drawing.statusMessage;
 
   const canSave =
@@ -136,5 +141,6 @@ export function useAoiWorkspace() {
     handleDeleteSavedAoi,
     handleClearAoi,
     handleStartDrawing,
+    handleCancelDrawing,
   };
 }

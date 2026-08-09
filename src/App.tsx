@@ -31,6 +31,13 @@ export default function App() {
     ? workspace.saved.aois.find((aoi) => aoi.id === workspace.selectedSavedId)
     : undefined;
 
+  const handleActiveTabChange = (tabId: SidebarTabId) => {
+    if (tabId !== "aoi" && workspace.drawing.isDrawing) {
+      workspace.handleCancelDrawing();
+    }
+    setActiveTab(tabId);
+  };
+
   const handleIngestSubmit = async () => {
     const result = await ingest.ingest();
     if (!result) {
@@ -48,12 +55,14 @@ export default function App() {
   return (
     <AppLayout
       activeTab={activeTab}
-      onActiveTabChange={setActiveTab}
+      onActiveTabChange={handleActiveTabChange}
       aoi={
         <AoiPanel
           statusMessage={workspace.statusMessage}
           isDrawing={workspace.drawing.isDrawing}
           canFinish={workspace.drawing.canFinish}
+          canUndo={workspace.drawing.canUndo}
+          pointCount={workspace.drawing.pointCount}
           hasAoi={workspace.drawing.hasAoi}
           completedAoi={workspace.drawing.completedAoi}
           aoiName={workspace.aoiName}
@@ -69,6 +78,8 @@ export default function App() {
           onAoiDescriptionChange={workspace.setAoiDescription}
           onStartDrawing={workspace.handleStartDrawing}
           onFinishDrawing={workspace.drawing.finishDrawing}
+          onCancelDrawing={workspace.handleCancelDrawing}
+          onUndoVertex={workspace.drawing.undoLastVertex}
           onClearAoi={workspace.handleClearAoi}
           onSaveAoi={() => void workspace.handleSaveAoi()}
           onRefreshList={() => void workspace.saved.refreshAois()}
@@ -149,6 +160,9 @@ export default function App() {
         basemapId={basemapId}
         isDrawing={workspace.drawing.isDrawing}
         draftVertices={workspace.drawing.draftVertices}
+        pointCount={workspace.drawing.pointCount}
+        canFinish={workspace.drawing.canFinish}
+        canUndo={workspace.drawing.canUndo}
         completedAoi={workspace.drawing.completedAoi}
         fitBoundsTrigger={workspace.fitBoundsTrigger}
         sceneFootprint={scenes.selectedScene?.footprint ?? null}
@@ -159,6 +173,9 @@ export default function App() {
         indexOverlayOpacity={indexOverlay.overlay?.opacity ?? 0.75}
         indexOverlayFitTrigger={indexOverlay.fitTrigger}
         onMapClick={workspace.drawing.addVertex}
+        onFinishDrawing={workspace.drawing.finishDrawing}
+        onCancelDrawing={workspace.handleCancelDrawing}
+        onUndoVertex={workspace.drawing.undoLastVertex}
       />
     </AppLayout>
   );
