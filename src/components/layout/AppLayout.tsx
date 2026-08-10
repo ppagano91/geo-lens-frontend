@@ -10,6 +10,7 @@ interface AppLayoutProps {
   ingest: ReactNode;
   indices: ReactNode;
   composiciones: ReactNode;
+  resultados: ReactNode;
   map: ReactNode;
   activeTab: SidebarTabId;
   onActiveTabChange: (tabId: SidebarTabId) => void;
@@ -22,6 +23,7 @@ export default function AppLayout({
   ingest,
   indices,
   composiciones,
+  resultados,
   map,
   activeTab,
   onActiveTabChange,
@@ -36,6 +38,7 @@ export default function AppLayout({
           ingest={ingest}
           indices={indices}
           composiciones={composiciones}
+          resultados={resultados}
           map={map}
           activeTab={activeTab}
           onActiveTabChange={onActiveTabChange}

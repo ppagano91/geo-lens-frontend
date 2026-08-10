@@ -12,6 +12,7 @@ interface SidebarProps {
   ingest: ReactNode;
   indices: ReactNode;
   composiciones: ReactNode;
+  resultados: ReactNode;
   map: ReactNode;
   activeTab?: SidebarTabId;
   onActiveTabChange?: (tabId: SidebarTabId) => void;
@@ -23,6 +24,7 @@ export default function Sidebar({
   ingest,
   indices,
   composiciones,
+  resultados,
   map,
   activeTab: controlledTab,
   onActiveTabChange,
@@ -48,6 +50,7 @@ export default function Sidebar({
     ingest,
     indices,
     composiciones,
+    resultados,
     map,
   };
 
@@ -65,10 +68,10 @@ export default function Sidebar({
       </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 9H.1: RGB por AOI</p>
+        <p className="sidebar-phase">Fase 9I: Catálogo de derivados</p>
         <p className="sidebar-note">
-          Composiciones RGB de escena completa o recortadas por AOI (aprox. SCP
-          / Band Set).
+          Productos generados quedan registrados en DB (paths + metadata); los
+          archivos siguen en DATA_ROOT.
         </p>
       </div>
     </aside>

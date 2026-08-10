@@ -3,16 +3,19 @@ import AppLayout from "./components/layout/AppLayout";
 import BasemapSelector from "./components/map/BasemapSelector";
 import MapView from "./components/map/MapView";
 import AoiPanel from "./components/panels/AoiPanel";
+import DerivedAssetsPanel from "./components/panels/DerivedAssetsPanel";
 import IndexPanel from "./components/panels/IndexPanel";
 import IngestPanel from "./components/panels/IngestPanel";
 import RgbCompositePanel from "./components/panels/RgbCompositePanel";
 import ScenePanel from "./components/panels/ScenePanel";
 import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
 import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
+import { useDerivedAssets } from "./hooks/useDerivedAssets";
 import { useIndexMapOverlay } from "./hooks/useIndexMapOverlay";
 import { useLocalSceneIngest } from "./hooks/useLocalSceneIngest";
 import { useScenes } from "./hooks/useScenes";
 import { useSpectralIndices } from "./hooks/useSpectralIndices";
+import type { DerivedAssetRead } from "./types/derivedAsset";
 import {
   DEFAULT_SIDEBAR_TAB,
   type SidebarTabId,
@@ -27,6 +30,7 @@ export default function App() {
   const spectralIndices = useSpectralIndices();
   const ingest = useLocalSceneIngest();
   const indexOverlay = useIndexMapOverlay();
+  const derived = useDerivedAssets(scenes.selectedSceneId);
 
   const selectedSavedAoi = workspace.selectedSavedId
     ? workspace.saved.aois.find((aoi) => aoi.id === workspace.selectedSavedId)
@@ -51,6 +55,37 @@ export default function App() {
   const handleUseInIndices = async (sceneId: string) => {
     await scenes.selectScene(sceneId);
     setActiveTab("indices");
+  };
+
+  const handleAddDerivedToMap = (asset: DerivedAssetRead) => {
+    switch (asset.asset_type) {
+      case "index":
+        void indexOverlay.addToMap(asset.scene_id, asset.product_key);
+        break;
+      case "index_aoi_crop":
+        if (asset.aoi_id) {
+          void indexOverlay.addCropToMap(
+            asset.scene_id,
+            asset.product_key,
+            asset.aoi_id,
+          );
+        }
+        break;
+      case "rgb_composite":
+        void indexOverlay.addRgbToMap(asset.scene_id, asset.product_key);
+        break;
+      case "rgb_composite_aoi":
+        if (asset.aoi_id) {
+          void indexOverlay.addRgbAoiToMap(
+            asset.scene_id,
+            asset.aoi_id,
+            asset.product_key,
+          );
+        }
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -179,6 +214,24 @@ export default function App() {
           onRemoveOverlayFromMap={indexOverlay.removeFromMap}
           onOverlayOpacityChange={indexOverlay.setOpacity}
           onFitOverlay={indexOverlay.fitToOverlay}
+        />
+      }
+      resultados={
+        <DerivedAssetsPanel
+          scenes={scenes.scenes}
+          selectedSceneId={scenes.selectedSceneId}
+          scenesLoading={scenes.listLoading}
+          onSelectScene={(sceneId) => void scenes.selectScene(sceneId)}
+          savedAois={workspace.saved.aois}
+          assets={derived.assets}
+          listLoading={derived.listLoading}
+          busyAssetId={derived.busyAssetId}
+          error={derived.error}
+          successMessage={derived.successMessage}
+          onRefresh={() => void derived.refreshAssets()}
+          onAddToMap={handleAddDerivedToMap}
+          onDownload={(asset) => void derived.downloadAsset(asset)}
+          mapOverlayLoading={indexOverlay.loading}
         />
       }
       map={<BasemapSelector value={basemapId} onChange={setBasemapId} />}

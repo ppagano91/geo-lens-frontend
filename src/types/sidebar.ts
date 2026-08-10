@@ -4,6 +4,7 @@ export type SidebarTabId =
   | "ingest"
   | "indices"
   | "composiciones"
+  | "resultados"
   | "map";
 
 export interface SidebarTab {
@@ -17,6 +18,7 @@ export const SIDEBAR_TABS: SidebarTab[] = [
   { id: "ingest", label: "Ingesta" },
   { id: "indices", label: "Índices" },
   { id: "composiciones", label: "Composiciones" },
+  { id: "resultados", label: "Resultados" },
   { id: "map", label: "Mapa" },
 ];
 
