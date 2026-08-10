@@ -38,6 +38,10 @@ export interface RgbCompositePreviewRequest {
   overwrite?: boolean;
 }
 
+export interface RgbCompositeAoiPreviewRequest extends RgbCompositePreviewRequest {
+  aoi_id: string;
+}
+
 export interface RgbCompositeOutputInfo {
   asset_path: string;
 }
@@ -52,6 +56,10 @@ export interface RgbCompositePreviewResult {
   height: number;
   crs: string | null;
   output: RgbCompositeOutputInfo;
+}
+
+export interface RgbCompositeAoiPreviewResult extends RgbCompositePreviewResult {
+  aoi_id: string;
 }
 
 export interface RgbCompositeMapOverlayBounds {
@@ -78,6 +86,10 @@ export interface RgbCompositeMapOverlayResult {
   crs_original: string;
   bounds_original: RgbCompositeMapOverlayBounds;
   coordinates_wgs84: RgbMapOverlayCoordinates;
+}
+
+export interface RgbCompositeAoiMapOverlayResult extends RgbCompositeMapOverlayResult {
+  aoi_id: string;
 }
 
 export function isRgbPresetKey(value: string): value is RgbPresetKey {

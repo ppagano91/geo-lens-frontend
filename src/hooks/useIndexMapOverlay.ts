@@ -3,7 +3,7 @@ import {
   getIndexAoiCropMapOverlay,
   getIndexMapOverlay,
 } from "../api/indexComputeApi";
-import { getRgbCompositeMapOverlay } from "../api/rgbCompositeApi";
+import { getRgbAoiCompositeMapOverlay, getRgbCompositeMapOverlay } from "../api/rgbCompositeApi";
 import { ApiError } from "../api/client";
 import { API_BASE_URL } from "../config/env";
 import type {
@@ -11,7 +11,10 @@ import type {
   IndexMapOverlayCoordinates,
   IndexMapOverlayResult,
 } from "../types/indexCompute";
-import type { RgbCompositeMapOverlayResult } from "../types/rgbComposite";
+import type {
+  RgbCompositeAoiMapOverlayResult,
+  RgbCompositeMapOverlayResult,
+} from "../types/rgbComposite";
 
 export type ActiveOverlayKind = "index" | "rgb";
 
@@ -56,7 +59,8 @@ function toActiveOverlay(
   result:
     | IndexMapOverlayResult
     | IndexAoiCropMapOverlayResult
-    | RgbCompositeMapOverlayResult,
+    | RgbCompositeMapOverlayResult
+    | RgbCompositeAoiMapOverlayResult,
   opacity: number,
   cacheBust: number,
   aoiId: string | null,
@@ -177,6 +181,42 @@ export function useIndexMapOverlay() {
     }
   }, []);
 
+  const addRgbAoiToMap = useCallback(
+    async (sceneId: string, aoiId: string, preset: string) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getRgbAoiCompositeMapOverlay(
+          sceneId,
+          aoiId,
+          preset,
+        );
+        setOverlay((current) =>
+          toActiveOverlay(
+            result,
+            current?.opacity ?? DEFAULT_OPACITY,
+            Date.now(),
+            aoiId,
+            "rgb",
+            result.preset,
+          ),
+        );
+        setFitTrigger((value) => value + 1);
+      } catch (err) {
+        setError(
+          formatApiError(
+            err,
+            "No se pudo agregar la composición AOI al mapa. Generá el PNG primero.",
+          ),
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   const removeFromMap = useCallback(() => {
     setOverlay(null);
     setError(null);
@@ -204,6 +244,7 @@ export function useIndexMapOverlay() {
     addToMap,
     addCropToMap,
     addRgbToMap,
+    addRgbAoiToMap,
     removeFromMap,
     setOpacity,
     fitToOverlay,

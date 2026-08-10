@@ -65,10 +65,10 @@ export default function Sidebar({
       </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 9H: Composiciones RGB</p>
+        <p className="sidebar-phase">Fase 9H.1: RGB por AOI</p>
         <p className="sidebar-note">
-          Combiná bandas en true color / falso color y visualizalas en el mapa
-          (aprox. SCP / Band Set).
+          Composiciones RGB de escena completa o recortadas por AOI (aprox. SCP
+          / Band Set).
         </p>
       </div>
     </aside>

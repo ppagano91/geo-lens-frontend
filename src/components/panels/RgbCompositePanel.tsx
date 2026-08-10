@@ -1,16 +1,16 @@
 import { useState } from "react";
 import {
   Aperture,
+  Crop,
   Crosshair,
   Download,
-  ImagePlus,
-  Layers,
   LayersPlus,
   Loader2,
   X,
 } from "lucide-react";
 import { useRgbComposite } from "../../hooks/useRgbComposite";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
+import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import {
   RGB_PRESET_KEYS,
@@ -32,10 +32,15 @@ interface RgbCompositePanelProps {
   scenesLoading: boolean;
   sceneDetailLoading: boolean;
   onSelectScene: (sceneId: string) => void;
+  savedAois: AoiRecord[];
+  selectedAoiId: string | null;
+  selectedAoiName: string | null;
+  onSelectAoi: (aoiId: string) => void;
   mapOverlay: ActiveIndexOverlay | null;
   mapOverlayLoading: boolean;
   mapOverlayError: string | null;
   onAddRgbToMap: (sceneId: string, preset: string) => void;
+  onAddRgbAoiToMap: (sceneId: string, aoiId: string, preset: string) => void;
   onRemoveOverlayFromMap: () => void;
   onOverlayOpacityChange: (opacity: number) => void;
   onFitOverlay: () => void;
@@ -61,10 +66,15 @@ export default function RgbCompositePanel({
   scenesLoading,
   sceneDetailLoading,
   onSelectScene,
+  savedAois,
+  selectedAoiId,
+  selectedAoiName,
+  onSelectAoi,
   mapOverlay,
   mapOverlayLoading,
   mapOverlayError,
   onAddRgbToMap,
+  onAddRgbAoiToMap,
   onRemoveOverlayFromMap,
   onOverlayOpacityChange,
   onFitOverlay,
@@ -77,28 +87,42 @@ export default function RgbCompositePanel({
     error,
     successMessage,
     previewResult,
+    aoiPreviewResult,
     previewUrl,
+    aoiPreviewUrl,
     imageError,
     generate,
+    generateByAoi,
     downloadPng,
+    downloadAoiPng,
     onPreviewImageError,
     onPreviewImageLoad,
-  } = useRgbComposite(selectedSceneId, preset);
+  } = useRgbComposite(selectedSceneId, preset, selectedAoiId);
 
   const sensor = selectedScene ? detectSensorFromScene(selectedScene) : null;
   const bandsUsed = sensor ? resolvePresetBands(sensor, preset) : null;
   const canAct = Boolean(selectedSceneId && !sceneDetailLoading);
-  const overlayIsThisRgb =
+  const canActAoi = Boolean(canAct && selectedAoiId);
+  const hasAois = savedAois.length > 0;
+
+  const overlayIsFullRgb =
     mapOverlay?.kind === "rgb" &&
     mapOverlay.sceneId === selectedSceneId &&
-    mapOverlay.indexKey === preset;
+    mapOverlay.indexKey === preset &&
+    mapOverlay.aoiId == null;
+
+  const overlayIsAoiRgb =
+    mapOverlay?.kind === "rgb" &&
+    mapOverlay.sceneId === selectedSceneId &&
+    mapOverlay.indexKey === preset &&
+    mapOverlay.aoiId === selectedAoiId;
 
   return (
     <section className="index-preview-panel" aria-label="Composiciones RGB">
       <p className="aoi-geojson-label">Composiciones RGB</p>
       <p className="aoi-hint">
-        Primera aproximación a un módulo tipo SCP / Band Set: combiná tres
-        bandas en un PNG visual y agregalo al mapa.
+        Combiná tres bandas (escena completa o recorte por AOI) y agregalas al
+        mapa.
       </p>
 
       <label className="aoi-field-label" htmlFor="rgb-scene-select">
@@ -129,6 +153,41 @@ export default function RgbCompositePanel({
       {sensor && (
         <p className="aoi-hint" role="status">
           Sensor detectado: {getSensorLabel(sensor)}
+        </p>
+      )}
+
+      <label className="aoi-field-label" htmlFor="rgb-aoi-select">
+        AOI
+      </label>
+      {hasAois ? (
+        <>
+          <select
+            id="rgb-aoi-select"
+            className="aoi-select"
+            value={selectedAoiId ?? ""}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (value) {
+                onSelectAoi(value);
+              }
+            }}
+          >
+            <option value="">Seleccionar AOI</option>
+            {savedAois.map((aoi) => (
+              <option key={aoi.id} value={aoi.id}>
+                {aoi.name}
+              </option>
+            ))}
+          </select>
+          {selectedAoiName && (
+            <p className="aoi-hint" role="status">
+              AOI seleccionado: {selectedAoiName}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="aoi-hint" role="status" id="rgb-aoi-select">
+          No hay AOIs guardados. Dibujá y guardá uno en la pestaña AOI.
         </p>
       )}
 
@@ -174,15 +233,21 @@ export default function RgbCompositePanel({
         </div>
       )}
 
-      <div className="aoi-icon-toolbar" role="toolbar" aria-label="Composición RGB">
+      <p className="aoi-geojson-label">Generar Composición</p>
+      <div
+        className="aoi-icon-toolbar"
+        role="toolbar"
+        aria-label="Composición RGB escena completa"
+      >
         <div className="aoi-icon-actions" role="group" aria-label="Generar">
           <IconButton
+            className="composition-button"
             label={
               busyAction === "generate"
-                ? "Generando composición…"
-                : "Generar composición"
+                ? "Generando…"
+                : "Generar Composición"
             }
-            text="Generar composición"
+            text="Por Escena"
             tone="primary"
             onClick={() => void generate()}
             disabled={!canAct || loading}
@@ -203,7 +268,7 @@ export default function RgbCompositePanel({
         <div className="aoi-icon-actions" role="group" aria-label="Mapa y descarga">
           <IconButton
             label={
-              mapOverlayLoading && overlayIsThisRgb
+              mapOverlayLoading && overlayIsFullRgb
                 ? "Agregando al mapa…"
                 : "Agregar al mapa"
             }
@@ -214,7 +279,7 @@ export default function RgbCompositePanel({
             }}
             disabled={!canAct || mapOverlayLoading || !previewResult}
           >
-            {mapOverlayLoading && overlayIsThisRgb ? (
+            {mapOverlayLoading && overlayIsFullRgb ? (
               <Loader2
                 size={16}
                 strokeWidth={2}
@@ -227,9 +292,7 @@ export default function RgbCompositePanel({
           </IconButton>
           <IconButton
             label={
-              busyAction === "download"
-                ? "Descargando PNG…"
-                : "Descargar PNG"
+              busyAction === "download" ? "Descargando PNG…" : "Descargar PNG"
             }
             onClick={() => void downloadPng()}
             disabled={!canAct || loading || !previewResult}
@@ -245,13 +308,140 @@ export default function RgbCompositePanel({
               <Download size={16} strokeWidth={2} aria-hidden="true" />
             )}
           </IconButton>
-          {!previewResult && canAct && (
-            <span className="aoi-hint" role="status">
-              Generá la composición para habilitar mapa y descarga.
-            </span>
-          )}
         </div>
       </div>
+
+      {previewResult && (
+        <div className="index-preview-stats">
+          <p className="aoi-geojson-label">
+            Completa ({previewResult.preset} · {previewResult.status})
+          </p>
+          <p className="aoi-hint" role="status">
+            {previewResult.width}×{previewResult.height} ·{" "}
+            {previewResult.output.asset_path}
+          </p>
+        </div>
+      )}
+
+      {previewUrl && (
+        <div className="index-preview-image-wrap">
+          <img
+            className="index-preview-image"
+            src={previewUrl}
+            alt={`Composición RGB ${RGB_PRESET_LABELS[preset]}`}
+            onError={onPreviewImageError}
+            onLoad={onPreviewImageLoad}
+          />
+        </div>
+      )}
+
+      {/* <p className="aoi-geojson-label">Por AOI</p> */}
+      <div
+        className="aoi-icon-toolbar"
+        role="toolbar"
+        aria-label="Composición RGB por AOI"
+      >
+        <div className="aoi-icon-actions" role="group" aria-label="Generar AOI">
+          <IconButton
+            className="composition-button"
+            label={
+              busyAction === "generate-aoi"
+                ? "Generando composición por AOI…"
+                : "Generar composición por AOI"
+            }
+            text="Por AOI"
+            tone="primary"
+            onClick={() => void generateByAoi()}
+            disabled={!canActAoi || loading || !hasAois}
+          >
+            {busyAction === "generate-aoi" ? (
+              <Loader2
+                size={16}
+                strokeWidth={2}
+                className="icon-spin"
+                aria-hidden="true"
+              />
+            ) : (
+              <Crop size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+        </div>
+
+        <div
+          className="aoi-icon-actions"
+          role="group"
+          aria-label="Mapa y descarga AOI"
+        >
+          <IconButton
+            label={
+              mapOverlayLoading && overlayIsAoiRgb
+                ? "Agregando recorte al mapa…"
+                : "Agregar recorte al mapa"
+            }
+            onClick={() => {
+              if (selectedSceneId && selectedAoiId) {
+                onAddRgbAoiToMap(selectedSceneId, selectedAoiId, preset);
+              }
+            }}
+            disabled={!canActAoi || mapOverlayLoading || !aoiPreviewResult}
+          >
+            {mapOverlayLoading && overlayIsAoiRgb ? (
+              <Loader2
+                size={16}
+                strokeWidth={2}
+                className="icon-spin"
+                aria-hidden="true"
+              />
+            ) : (
+              <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+          <IconButton
+            label={
+              busyAction === "download-aoi"
+                ? "Descargando PNG AOI…"
+                : "Descargar PNG AOI"
+            }
+            onClick={() => void downloadAoiPng()}
+            disabled={!canActAoi || loading || !aoiPreviewResult}
+          >
+            {busyAction === "download-aoi" ? (
+              <Loader2
+                size={16}
+                strokeWidth={2}
+                className="icon-spin"
+                aria-hidden="true"
+              />
+            ) : (
+              <Download size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+          </IconButton>
+        </div>
+      </div>
+
+      {aoiPreviewResult && (
+        <div className="index-preview-stats">
+          <p className="aoi-geojson-label">
+            AOI ({aoiPreviewResult.preset} · {aoiPreviewResult.status})
+          </p>
+          <p className="aoi-hint" role="status">
+            {aoiPreviewResult.width}×{aoiPreviewResult.height} ·{" "}
+            {aoiPreviewResult.output.asset_path}
+          </p>
+        </div>
+      )}
+
+      {aoiPreviewUrl && (
+        <div className="index-preview-image-wrap">
+          <img
+            className="index-preview-image"
+            src={aoiPreviewUrl}
+            alt={`Composición RGB AOI ${RGB_PRESET_LABELS[preset]}`}
+            onError={onPreviewImageError}
+            onLoad={onPreviewImageLoad}
+          />
+        </div>
+      )}
 
       {error && (
         <p className="aoi-error" role="alert">
@@ -268,57 +458,10 @@ export default function RgbCompositePanel({
         </p>
       )}
 
-      {previewResult && (
-        <div className="index-preview-stats">
-          <p className="aoi-geojson-label">
-            Resultado ({previewResult.preset} · {previewResult.status})
-          </p>
-          <dl className="scene-detail-fields">
-            <div className="scene-detail-row">
-              <dt>Sensor</dt>
-              <dd>{previewResult.sensor}</dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Tamaño</dt>
-              <dd>
-                {previewResult.width}×{previewResult.height}
-              </dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>CRS</dt>
-              <dd>{previewResult.crs ?? "—"}</dd>
-            </div>
-          </dl>
-          <p className="aoi-hint" role="status">
-            PNG: {previewResult.output.asset_path}
-          </p>
-          <ul className="index-band-list">
-            {Object.entries(previewResult.bands_used).map(([channel, key]) => (
-              <li key={channel}>
-                <span className="index-band-role">{channel}</span>
-                <span className="index-band-key">{key}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {imageError && (
         <p className="aoi-error" role="alert">
           {imageError}
         </p>
-      )}
-
-      {previewUrl && (
-        <div className="index-preview-image-wrap">
-          <img
-            className="index-preview-image"
-            src={previewUrl}
-            alt={`Composición RGB ${RGB_PRESET_LABELS[preset]}`}
-            onError={onPreviewImageError}
-            onLoad={onPreviewImageLoad}
-          />
-        </div>
       )}
 
       {mapOverlay && (
@@ -355,7 +498,7 @@ export default function RgbCompositePanel({
               <X size={16} strokeWidth={2} aria-hidden="true" />
             </IconButton>
           </div>
-          {!overlayIsThisRgb && (
+          {!overlayIsFullRgb && !overlayIsAoiRgb && (
             <p className="aoi-hint" role="status">
               Hay otra capa en el mapa. Agregar esta composición la reemplaza.
             </p>
@@ -366,14 +509,6 @@ export default function RgbCompositePanel({
       {mapOverlayError && (
         <p className="aoi-error" role="alert">
           {mapOverlayError}
-        </p>
-      )}
-
-      {!previewResult && (
-        <p className="aoi-hint" role="status">
-          <ImagePlus size={14} strokeWidth={2} aria-hidden="true" /> Stretch
-          percentile 2–98; nodata transparente. Sin stack GeoTIFF ni crop AOI
-          todavía.
         </p>
       )}
     </section>

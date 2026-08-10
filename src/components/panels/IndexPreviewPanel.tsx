@@ -8,7 +8,6 @@ import {
   HardDriveDownload,
   ImageDown,
   ImagePlus,
-  Layers,  
   LayersPlus,
   Loader2,
   X,

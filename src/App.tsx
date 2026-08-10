@@ -163,11 +163,18 @@ export default function App() {
           scenesLoading={scenes.listLoading}
           sceneDetailLoading={scenes.detailLoading}
           onSelectScene={scenes.selectScene}
+          savedAois={workspace.saved.aois}
+          selectedAoiId={workspace.selectedSavedId}
+          selectedAoiName={selectedSavedAoi?.name ?? null}
+          onSelectAoi={workspace.handleSelectSavedAoi}
           mapOverlay={indexOverlay.overlay}
           mapOverlayLoading={indexOverlay.loading}
           mapOverlayError={indexOverlay.error}
           onAddRgbToMap={(sceneId, preset) =>
             void indexOverlay.addRgbToMap(sceneId, preset)
+          }
+          onAddRgbAoiToMap={(sceneId, aoiId, preset) =>
+            void indexOverlay.addRgbAoiToMap(sceneId, aoiId, preset)
           }
           onRemoveOverlayFromMap={indexOverlay.removeFromMap}
           onOverlayOpacityChange={indexOverlay.setOpacity}

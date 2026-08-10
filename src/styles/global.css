@@ -278,11 +278,6 @@ body {
   margin-bottom: 0.25rem;
 }
 
-.aoi-icon-toolbar > .aoi-icon-actions:not(:first-child) {
-  padding-left: 0.75rem;
-  border-left: 1px solid #e2e6ee;
-}
-
 .index-crop-overwrite {
   display: inline-flex;
   align-items: center;
@@ -1237,3 +1232,6 @@ body {
   color: #9a6700;
 }
 
+.composition-button{
+  min-width: 7.5rem
+}
