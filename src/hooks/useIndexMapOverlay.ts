@@ -3,6 +3,7 @@ import {
   getIndexAoiCropMapOverlay,
   getIndexMapOverlay,
 } from "../api/indexComputeApi";
+import { getRgbCompositeMapOverlay } from "../api/rgbCompositeApi";
 import { ApiError } from "../api/client";
 import { API_BASE_URL } from "../config/env";
 import type {
@@ -10,9 +11,14 @@ import type {
   IndexMapOverlayCoordinates,
   IndexMapOverlayResult,
 } from "../types/indexCompute";
+import type { RgbCompositeMapOverlayResult } from "../types/rgbComposite";
+
+export type ActiveOverlayKind = "index" | "rgb";
 
 export interface ActiveIndexOverlay {
+  kind: ActiveOverlayKind;
   sceneId: string;
+  /** Index key (ndvi, …) or RGB preset (true_color, …). */
   indexKey: string;
   /** Present when the active overlay is an AOI crop (Fase 9F). */
   aoiId: string | null;
@@ -47,14 +53,20 @@ function toAbsoluteImageUrl(imageUrl: string, cacheBust: number): string {
 }
 
 function toActiveOverlay(
-  result: IndexMapOverlayResult | IndexAoiCropMapOverlayResult,
+  result:
+    | IndexMapOverlayResult
+    | IndexAoiCropMapOverlayResult
+    | RgbCompositeMapOverlayResult,
   opacity: number,
   cacheBust: number,
   aoiId: string | null,
+  kind: ActiveOverlayKind,
+  key: string,
 ): ActiveIndexOverlay {
   return {
+    kind,
     sceneId: result.scene_id,
-    indexKey: result.index_key,
+    indexKey: key,
     aoiId,
     imageUrl: toAbsoluteImageUrl(result.image_url, cacheBust),
     coordinates: result.coordinates_wgs84 as IndexMapOverlayCoordinates,
@@ -83,6 +95,8 @@ export function useIndexMapOverlay() {
           current?.opacity ?? DEFAULT_OPACITY,
           Date.now(),
           null,
+          "index",
+          result.index_key,
         ),
       );
       setFitTrigger((value) => value + 1);
@@ -115,6 +129,8 @@ export function useIndexMapOverlay() {
             current?.opacity ?? DEFAULT_OPACITY,
             Date.now(),
             aoiId,
+            "index",
+            result.index_key,
           ),
         );
         setFitTrigger((value) => value + 1);
@@ -131,6 +147,35 @@ export function useIndexMapOverlay() {
     },
     [],
   );
+
+  const addRgbToMap = useCallback(async (sceneId: string, preset: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await getRgbCompositeMapOverlay(sceneId, preset);
+      setOverlay((current) =>
+        toActiveOverlay(
+          result,
+          current?.opacity ?? DEFAULT_OPACITY,
+          Date.now(),
+          null,
+          "rgb",
+          result.preset,
+        ),
+      );
+      setFitTrigger((value) => value + 1);
+    } catch (err) {
+      setError(
+        formatApiError(
+          err,
+          "No se pudo agregar la composición al mapa. Generá el PNG primero.",
+        ),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const removeFromMap = useCallback(() => {
     setOverlay(null);
@@ -158,6 +203,7 @@ export function useIndexMapOverlay() {
     fitTrigger,
     addToMap,
     addCropToMap,
+    addRgbToMap,
     removeFromMap,
     setOpacity,
     fitToOverlay,

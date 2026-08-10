@@ -5,6 +5,7 @@ import MapView from "./components/map/MapView";
 import AoiPanel from "./components/panels/AoiPanel";
 import IndexPanel from "./components/panels/IndexPanel";
 import IngestPanel from "./components/panels/IngestPanel";
+import RgbCompositePanel from "./components/panels/RgbCompositePanel";
 import ScenePanel from "./components/panels/ScenePanel";
 import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
 import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
@@ -152,6 +153,25 @@ export default function App() {
           onRemoveIndexFromMap={indexOverlay.removeFromMap}
           onIndexOverlayOpacityChange={indexOverlay.setOpacity}
           onFitIndexOverlay={indexOverlay.fitToOverlay}
+        />
+      }
+      composiciones={
+        <RgbCompositePanel
+          scenes={scenes.scenes}
+          selectedScene={scenes.selectedScene}
+          selectedSceneId={scenes.selectedSceneId}
+          scenesLoading={scenes.listLoading}
+          sceneDetailLoading={scenes.detailLoading}
+          onSelectScene={scenes.selectScene}
+          mapOverlay={indexOverlay.overlay}
+          mapOverlayLoading={indexOverlay.loading}
+          mapOverlayError={indexOverlay.error}
+          onAddRgbToMap={(sceneId, preset) =>
+            void indexOverlay.addRgbToMap(sceneId, preset)
+          }
+          onRemoveOverlayFromMap={indexOverlay.removeFromMap}
+          onOverlayOpacityChange={indexOverlay.setOpacity}
+          onFitOverlay={indexOverlay.fitToOverlay}
         />
       }
       map={<BasemapSelector value={basemapId} onChange={setBasemapId} />}

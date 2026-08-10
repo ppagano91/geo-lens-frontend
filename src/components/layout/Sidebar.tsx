@@ -11,6 +11,7 @@ interface SidebarProps {
   scenes: ReactNode;
   ingest: ReactNode;
   indices: ReactNode;
+  composiciones: ReactNode;
   map: ReactNode;
   activeTab?: SidebarTabId;
   onActiveTabChange?: (tabId: SidebarTabId) => void;
@@ -21,6 +22,7 @@ export default function Sidebar({
   scenes,
   ingest,
   indices,
+  composiciones,
   map,
   activeTab: controlledTab,
   onActiveTabChange,
@@ -45,6 +47,7 @@ export default function Sidebar({
     scenes,
     ingest,
     indices,
+    composiciones,
     map,
   };
 
@@ -62,10 +65,10 @@ export default function Sidebar({
       </div>
 
       <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 9B: Ingesta local / Band Set</p>
+        <p className="sidebar-phase">Fase 9H: Composiciones RGB</p>
         <p className="sidebar-note">
-          Registrá carpetas Landsat 8 bajo DATA_ROOT y calculá índices sin seed
-          SQL.
+          Combiná bandas en true color / falso color y visualizalas en el mapa
+          (aprox. SCP / Band Set).
         </p>
       </div>
     </aside>

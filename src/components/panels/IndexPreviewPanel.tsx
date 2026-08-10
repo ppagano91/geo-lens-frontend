@@ -8,7 +8,8 @@ import {
   HardDriveDownload,
   ImageDown,
   ImagePlus,
-  Layers,
+  Layers,  
+  LayersPlus,
   Loader2,
   X,
 } from "lucide-react";
@@ -135,12 +136,14 @@ export default function IndexPreviewPanel({
 
   const overlayActiveFull =
     mapOverlay !== null &&
+    mapOverlay.kind === "index" &&
     mapOverlay.sceneId === selectedSceneId &&
     mapOverlay.indexKey === indexKey &&
     mapOverlay.aoiId == null;
 
   const overlayActiveCrop =
     mapOverlay !== null &&
+    mapOverlay.kind === "index" &&
     mapOverlay.sceneId === selectedSceneId &&
     mapOverlay.indexKey === indexKey &&
     mapOverlay.aoiId === selectedAoiId;
@@ -317,7 +320,7 @@ export default function IndexPreviewPanel({
             {mapOverlayLoading && mapOverlay?.aoiId == null ? (
               <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
             ) : (
-              <Layers size={16} strokeWidth={2} aria-hidden="true" />
+              <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
             )}
           </IconButton>
         </div>
@@ -414,7 +417,7 @@ export default function IndexPreviewPanel({
               {mapOverlayLoading && mapOverlay?.aoiId != null ? (
                 <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
               ) : (
-                <Layers size={16} strokeWidth={2} aria-hidden="true" />
+                <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
               )}
             </IconButton>
           </div>
@@ -506,7 +509,9 @@ export default function IndexPreviewPanel({
       {mapOverlay && (
         <div className="index-overlay-controls" aria-label="Capa de índice en el mapa">
           <p className="aoi-geojson-label">
-            Capa activa: {mapOverlay.indexKey.toUpperCase()}
+            Capa activa:{" "}
+            {mapOverlay.kind === "rgb" ? "RGB " : ""}
+            {mapOverlay.indexKey.toUpperCase()}
             {mapOverlay.aoiId ? " (recorte AOI)" : ""}
           </p>
           <label className="aoi-field-label" htmlFor="index-overlay-opacity">
