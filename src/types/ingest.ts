@@ -1,6 +1,6 @@
-/** Tipos para POST /api/v1/ingest/local-scene y /upload-scene (Fase 9A–9D). */
+/** Tipos para POST /api/v1/ingest/local-scene y /upload-scene (Fase 9A–9K). */
 
-export type LocalSceneSource = "landsat-8";
+export type LocalSceneSource = "landsat-8" | "sentinel-2";
 
 export type IngestMode = "local" | "upload";
 
@@ -79,7 +79,17 @@ export const DEFAULT_INGEST_FORM: LocalSceneIngestFormValues = {
 export const LOCAL_SCENE_SOURCES: ReadonlyArray<{
   value: LocalSceneSource;
   label: string;
-}> = [{ value: "landsat-8", label: "Landsat 8" }];
+}> = [
+  { value: "landsat-8", label: "Landsat 8" },
+  { value: "sentinel-2", label: "Sentinel-2" },
+];
+
+/** Expected band hints shown in the ingest form (by source). */
+export const INGEST_SOURCE_BAND_HINTS: Record<LocalSceneSource, string> = {
+  "landsat-8": "SR_B2…SR_B7 (.tif/.tiff). Opcional: MTL.txt.",
+  "sentinel-2":
+    "B02, B03, B04, B08 a 10 m (.tif/.tiff). B11/B12 a 20 m se omiten si no están alineadas.",
+};
 
 export const INGEST_MODES: ReadonlyArray<{
   value: IngestMode;

@@ -15,6 +15,7 @@ import {
   compatibleIndicesLabel,
   formatIngestApiError,
   formatSelectedFilesLabel,
+  hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
   validateLocalSceneIngestForm,
 } from "../src/utils/ingest";
@@ -172,5 +173,70 @@ assert.equal(raster.crs, "EPSG:32621");
 assert.equal(raster.width, 148);
 assert.equal(raster.height, 179);
 assert.equal(compatibleIndicesLabel(mockResult), "NDVI, NDWI");
+
+const sentinelForm: LocalSceneIngestFormValues = {
+  mode: "upload",
+  scenePath: "",
+  files: [
+    {
+      name: "B04.tif",
+      size: 64,
+      lastModified: 1,
+    } as File,
+  ],
+  source: "sentinel-2",
+  name: "S2 demo",
+  overwrite: false,
+};
+assert.equal(validateLocalSceneIngestForm(sentinelForm), null);
+assert.match(
+  validateLocalSceneIngestForm({ ...sentinelForm, files: [] }) ?? "",
+  /B02\/B03\/B04\/B08/,
+);
+
+const sentinelResult: LocalSceneIngestResult = {
+  ...mockResult,
+  source: "sentinel-2",
+  sensor: "sentinel-2",
+  name: "S2 demo",
+  bands: [
+    {
+      band_key: "B04",
+      band_name: "Red",
+      asset_path: "uploaded/scenes/x/B04.tif",
+      width: 100,
+      height: 100,
+      crs: "EPSG:32721",
+      dtype: "uint16",
+      nodata: "0",
+    },
+  ],
+  warnings: [
+    {
+      code: "sentinel_swir_skipped",
+      title: "SWIR Sentinel-2 omitidas",
+      description: "B11/B12 a 20 m no se usan hasta resolver resampling.",
+      items: ["B11.tif"],
+      severity: "warning",
+    },
+  ],
+  available_indices: [
+    {
+      index_key: "ndvi",
+      display_name: "NDVI",
+      compatible: true,
+      missing_roles: [],
+    },
+    {
+      index_key: "nbr",
+      display_name: "NBR",
+      compatible: false,
+      missing_roles: ["swir2"],
+    },
+  ],
+  metadata: { platform: "Sentinel-2" },
+};
+assert.equal(hasSentinelSwirResolutionWarning(sentinelResult), true);
+assert.equal(compatibleIndicesLabel(sentinelResult), "NDVI");
 
 console.log("verify_local_scene_ingest: ok");

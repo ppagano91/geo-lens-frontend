@@ -3,11 +3,16 @@ import type {
   LocalSceneIngestFormValues,
   LocalSceneIngestResult,
 } from "../../types/ingest";
-import { INGEST_MODES, LOCAL_SCENE_SOURCES } from "../../types/ingest";
+import {
+  INGEST_MODES,
+  INGEST_SOURCE_BAND_HINTS,
+  LOCAL_SCENE_SOURCES,
+} from "../../types/ingest";
 import {
   compatibleIndicesLabel,
   formatAcquisitionDate,
   formatSelectedFilesLabel,
+  hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
 } from "../../utils/ingest";
 
@@ -37,6 +42,9 @@ export default function IngestPanel({
 }: IngestPanelProps) {
   const raster = result ? summarizeIngestRaster(result.bands) : null;
   const isUpload = form.mode === "upload";
+  const bandHint = INGEST_SOURCE_BAND_HINTS[form.source];
+  const swirWarning =
+    result != null && hasSentinelSwirResolutionWarning(result);
 
   const handleModeChange = (mode: IngestMode) => {
     onFormChange("mode", mode);
@@ -51,7 +59,7 @@ export default function IngestPanel({
       <p className="sidebar-label">Ingesta / Band Set</p>
       <p className="aoi-hint">
         {isUpload
-          ? "Subí bandas Landsat 8 desde tu máquina. La app las guarda en storage interno y registra la escena (sin conocer DATA_ROOT)."
+          ? "Subí bandas Landsat 8 o Sentinel-2 desde tu máquina. La app las guarda en storage interno y registra la escena (sin conocer DATA_ROOT)."
           : "Registrá una carpeta de bandas GeoTIFF ya presente bajo DATA_ROOT (modo admin/dev)."}
       </p>
 
@@ -122,8 +130,7 @@ export default function IngestPanel({
               disabled={submitting}
             />
             <p className="aoi-hint">
-              Esperados: SR_B2…SR_B7 (.tif/.tiff). Opcional: MTL.txt.{" "}
-              {formatSelectedFilesLabel(form.files)}
+              Esperados: {bandHint} {formatSelectedFilesLabel(form.files)}
             </p>
             {form.files.length > 0 && (
               <ul className="ingest-file-list">
@@ -146,13 +153,17 @@ export default function IngestPanel({
               type="text"
               value={form.scenePath}
               onChange={(event) => onFormChange("scenePath", event.target.value)}
-              placeholder="sample/scenes/landsat8_lc08_225084"
+              placeholder={
+                form.source === "sentinel-2"
+                  ? "sample/scenes/sentinel2_10m"
+                  : "sample/scenes/landsat8_lc08_225084"
+              }
               disabled={submitting}
               autoComplete="off"
               spellCheck={false}
             />
             <p className="aoi-hint">
-              Relativa a DATA_ROOT. Ejemplo: sample/scenes/landsat8_lc08_225084
+              Relativa a DATA_ROOT. Bandas esperadas: {bandHint}
             </p>
           </div>
         )}
@@ -191,7 +202,11 @@ export default function IngestPanel({
             type="text"
             value={form.name}
             onChange={(event) => onFormChange("name", event.target.value)}
-            placeholder="Ej: Landsat 8 LC08 225/084"
+            placeholder={
+              form.source === "sentinel-2"
+                ? "Ej: Sentinel-2 L2A tile"
+                : "Ej: Landsat 8 LC08 225/084"
+            }
             maxLength={255}
             disabled={submitting}
           />
@@ -287,6 +302,12 @@ export default function IngestPanel({
           {result.warnings.length > 0 && (
             <div className="ingest-warnings">
               <p className="aoi-field-label">Advertencias</p>
+              {swirWarning && (
+                <p className="aoi-hint" role="status">
+                  B11/B12 a 20 m no se usan hasta resampling; NBR/NDMI quedan
+                  incompatibles si esas bandas no están alineadas a 10 m.
+                </p>
+              )}
               <ul className="ingest-warning-list">
                 {result.warnings.map((warning, index) => (
                   <li

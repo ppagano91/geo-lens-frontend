@@ -51,12 +51,19 @@ function fileExtension(filename: string): string {
   return filename.slice(idx).toLowerCase();
 }
 
+function expectedBandsHint(source: LocalSceneIngestFormValues["source"]): string {
+  if (source === "sentinel-2") {
+    return "B02/B03/B04/B08";
+  }
+  return "SR_B2…SR_B7";
+}
+
 export function validateLocalSceneIngestForm(
   form: LocalSceneIngestFormValues,
 ): string | null {
   if (form.mode === "upload") {
     if (form.files.length === 0) {
-      return "Seleccioná al menos un archivo GeoTIFF (SR_B2…SR_B7).";
+      return `Seleccioná al menos un archivo GeoTIFF (${expectedBandsHint(form.source)}).`;
     }
 
     const invalid = form.files.filter(
@@ -75,7 +82,7 @@ export function validateLocalSceneIngestForm(
       return ext === ".tif" || ext === ".tiff";
     });
     if (!hasGeotiff) {
-      return "Incluí al menos un GeoTIFF (.tif/.tiff) con las bandas SR_B*.";
+      return `Incluí al menos un GeoTIFF (.tif/.tiff) con las bandas ${expectedBandsHint(form.source)}.`;
     }
   } else if (!form.scenePath.trim()) {
     return "Indicá la ruta relativa de la carpeta (scene_path) bajo DATA_ROOT.";
@@ -86,6 +93,17 @@ export function validateLocalSceneIngestForm(
   }
 
   return null;
+}
+
+/** True when ingest warned that Sentinel SWIR bands were skipped (20 m). */
+export function hasSentinelSwirResolutionWarning(
+  result: LocalSceneIngestResult,
+): boolean {
+  return result.warnings.some(
+    (warning) =>
+      warning.code === "sentinel_swir_not_aligned" ||
+      warning.code === "sentinel_swir_skipped",
+  );
 }
 
 export function summarizeIngestRaster(
