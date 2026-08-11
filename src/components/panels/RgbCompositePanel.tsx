@@ -12,6 +12,7 @@ import { useRgbComposite } from "../../hooks/useRgbComposite";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
+import type { DerivedAssetRead } from "../../types/derivedAsset";
 import {
   RGB_PRESET_KEYS,
   RGB_PRESET_LABELS,
@@ -23,6 +24,7 @@ import {
   getBandMap,
   getSensorLabel,
 } from "../../utils/sensors";
+import ExistingDerivedNotice from "./ExistingDerivedNotice";
 import IconButton from "../ui/IconButton";
 
 interface RgbCompositePanelProps {
@@ -44,6 +46,13 @@ interface RgbCompositePanelProps {
   onRemoveOverlayFromMap: () => void;
   onOverlayOpacityChange: (opacity: number) => void;
   onFitOverlay: () => void;
+  findExistingDerived: (
+    assetType: string,
+    productKey: string,
+    aoiId?: string | null,
+  ) => DerivedAssetRead | null;
+  onViewInResults: () => void;
+  onDerivedCatalogChanged: () => void;
 }
 
 function resolvePresetBands(
@@ -78,6 +87,9 @@ export default function RgbCompositePanel({
   onRemoveOverlayFromMap,
   onOverlayOpacityChange,
   onFitOverlay,
+  findExistingDerived,
+  onViewInResults,
+  onDerivedCatalogChanged,
 }: RgbCompositePanelProps) {
   const [preset, setPreset] = useState<RgbPresetKey>("true_color");
 
@@ -104,6 +116,19 @@ export default function RgbCompositePanel({
   const canAct = Boolean(selectedSceneId && !sceneDetailLoading);
   const canActAoi = Boolean(canAct && selectedAoiId);
   const hasAois = savedAois.length > 0;
+
+  const existingFull = selectedSceneId
+    ? findExistingDerived("rgb_composite", preset, null)
+    : null;
+  const existingAoi =
+    selectedSceneId && selectedAoiId
+      ? findExistingDerived("rgb_composite_aoi", preset, selectedAoiId)
+      : null;
+
+  const runAndRefresh = async (work: () => void | Promise<void>) => {
+    await work();
+    onDerivedCatalogChanged();
+  };
 
   const overlayIsFullRgb =
     mapOverlay?.kind === "rgb" &&
@@ -234,6 +259,11 @@ export default function RgbCompositePanel({
       )}
 
       <p className="aoi-geojson-label">Generar Composición</p>
+      <ExistingDerivedNotice
+        existing={existingFull}
+        onViewInResults={onViewInResults}
+        regenerateHint="Podés regenerar la composición para sobrescribir el PNG."
+      />
       <div
         className="aoi-icon-toolbar"
         role="toolbar"
@@ -245,11 +275,13 @@ export default function RgbCompositePanel({
             label={
               busyAction === "generate"
                 ? "Generando…"
-                : "Generar Composición"
+                : existingFull
+                  ? "Regenerar composición"
+                  : "Generar Composición"
             }
-            text="Por Escena"
+            text={existingFull ? "Regenerar" : "Por Escena"}
             tone="primary"
-            onClick={() => void generate()}
+            onClick={() => void runAndRefresh(generate)}
             disabled={!canAct || loading}
           >
             {busyAction === "generate" ? (
@@ -336,6 +368,11 @@ export default function RgbCompositePanel({
       )}
 
       {/* <p className="aoi-geojson-label">Por AOI</p> */}
+      <ExistingDerivedNotice
+        existing={existingAoi}
+        onViewInResults={onViewInResults}
+        regenerateHint="Podés regenerar la composición AOI para sobrescribir el PNG."
+      />
       <div
         className="aoi-icon-toolbar"
         role="toolbar"
@@ -347,11 +384,13 @@ export default function RgbCompositePanel({
             label={
               busyAction === "generate-aoi"
                 ? "Generando composición por AOI…"
-                : "Generar composición por AOI"
+                : existingAoi
+                  ? "Regenerar composición por AOI"
+                  : "Generar composición por AOI"
             }
-            text="Por AOI"
+            text={existingAoi ? "Regenerar" : "Por AOI"}
             tone="primary"
-            onClick={() => void generateByAoi()}
+            onClick={() => void runAndRefresh(generateByAoi)}
             disabled={!canActAoi || loading || !hasAois}
           >
             {busyAction === "generate-aoi" ? (

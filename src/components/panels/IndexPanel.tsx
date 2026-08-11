@@ -2,6 +2,7 @@ import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
 import type { AoiRecord } from "../../types/aoi";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
+import type { DerivedAssetRead } from "../../types/derivedAsset";
 import {
   detectSensorFromScene,
   getSensorLabel,
@@ -39,6 +40,13 @@ interface IndexPanelProps {
   onRemoveIndexFromMap: () => void;
   onIndexOverlayOpacityChange: (opacity: number) => void;
   onFitIndexOverlay: () => void;
+  findExistingDerived: (
+    assetType: string,
+    productKey: string,
+    aoiId?: string | null,
+  ) => DerivedAssetRead | null;
+  onViewInResults: () => void;
+  onDerivedCatalogChanged: () => void;
 }
 
 const CATEGORY_OPTIONS = [
@@ -131,6 +139,9 @@ export default function IndexPanel({
   onRemoveIndexFromMap,
   onIndexOverlayOpacityChange,
   onFitIndexOverlay,
+  findExistingDerived,
+  onViewInResults,
+  onDerivedCatalogChanged,
 }: IndexPanelProps) {
   const sceneSensor = selectedScene
     ? detectSensorFromScene(selectedScene)
@@ -169,6 +180,9 @@ export default function IndexPanel({
         onRemoveIndexFromMap={onRemoveIndexFromMap}
         onIndexOverlayOpacityChange={onIndexOverlayOpacityChange}
         onFitIndexOverlay={onFitIndexOverlay}
+        findExistingDerived={findExistingDerived}
+        onViewInResults={onViewInResults}
+        onDerivedCatalogChanged={onDerivedCatalogChanged}
       />
 
       <CompatibilityPanel

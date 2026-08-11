@@ -29,6 +29,40 @@ export interface DerivedAssetRead {
   updated_at: string;
 }
 
+export interface DerivedAssetExistsResult {
+  asset_id: string;
+  asset_exists: boolean;
+  preview_exists: boolean;
+  georef_exists: boolean;
+  missing_paths: string[];
+}
+
+export interface ListDerivedAssetsOptions {
+  assetType?: string;
+  productKey?: string;
+  aoiId?: string;
+  includeInactive?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export type DerivedAoiFilter = "all" | "with_aoi" | "without_aoi";
+export type DerivedActiveFilter = "active" | "inactive" | "all";
+
+export interface DerivedAssetListFilters {
+  assetType: string;
+  productKey: string;
+  aoiFilter: DerivedAoiFilter;
+  activeFilter: DerivedActiveFilter;
+}
+
+export const DEFAULT_DERIVED_ASSET_FILTERS: DerivedAssetListFilters = {
+  assetType: "",
+  productKey: "",
+  aoiFilter: "all",
+  activeFilter: "active",
+};
+
 export const DERIVED_ASSET_TYPE_LABELS: Record<DerivedAssetType, string> = {
   index: "Índice",
   index_aoi_crop: "Índice (AOI)",
@@ -45,4 +79,14 @@ export function derivedAssetTypeLabel(assetType: string): string {
     return DERIVED_ASSET_TYPE_LABELS[assetType];
   }
   return assetType;
+}
+
+/** Primary product file is present on disk (unknown when not checked yet). */
+export function isPrimaryFilePresent(
+  existence: DerivedAssetExistsResult | undefined,
+): boolean | null {
+  if (!existence) {
+    return null;
+  }
+  return existence.asset_exists;
 }

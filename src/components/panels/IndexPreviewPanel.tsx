@@ -17,11 +17,13 @@ import { useIndexCompute } from "../../hooks/useIndexCompute";
 import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
+import type { DerivedAssetRead } from "../../types/derivedAsset";
 import {
   isComputableIndexKey,
   type IndexStats,
 } from "../../types/indexCompute";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
+import ExistingDerivedNotice from "./ExistingDerivedNotice";
 import IconButton from "../ui/IconButton";
 
 interface IndexPreviewPanelProps {
@@ -44,6 +46,13 @@ interface IndexPreviewPanelProps {
   onRemoveIndexFromMap: () => void;
   onIndexOverlayOpacityChange: (opacity: number) => void;
   onFitIndexOverlay: () => void;
+  findExistingDerived: (
+    assetType: string,
+    productKey: string,
+    aoiId?: string | null,
+  ) => DerivedAssetRead | null;
+  onViewInResults: () => void;
+  onDerivedCatalogChanged: () => void;
 }
 
 function formatStat(value: number | null | undefined): string {
@@ -101,6 +110,9 @@ export default function IndexPreviewPanel({
   onRemoveIndexFromMap,
   onIndexOverlayOpacityChange,
   onFitIndexOverlay,
+  findExistingDerived,
+  onViewInResults,
+  onDerivedCatalogChanged,
 }: IndexPreviewPanelProps) {
   const indexKey = selectedIndex?.key ?? null;
   const computable = indexKey ? isComputableIndexKey(indexKey) : false;
@@ -132,6 +144,20 @@ export default function IndexPreviewPanel({
   const disabled = loading || sceneDetailLoading || !canAct;
   const cropDisabled =
     disabled || crop.loading || !selectedAoiId || mapOverlayLoading;
+
+  const existingFull =
+    selectedSceneId && indexKey
+      ? findExistingDerived("index", indexKey, null)
+      : null;
+  const existingCrop =
+    selectedSceneId && indexKey && selectedAoiId
+      ? findExistingDerived("index_aoi_crop", indexKey, selectedAoiId)
+      : null;
+
+  const runAndRefresh = async (work: () => void | Promise<void>) => {
+    await work();
+    onDerivedCatalogChanged();
+  };
 
   const overlayActiveFull =
     mapOverlay !== null &&
@@ -211,6 +237,12 @@ export default function IndexPreviewPanel({
         </p>
       )}
 
+      <ExistingDerivedNotice
+        existing={existingFull}
+        onViewInResults={onViewInResults}
+        regenerateHint="Podés regenerar con «Calcular y guardar» para sobrescribir."
+      />
+
       <div className="aoi-icon-toolbar index-preview-actions" aria-label="Acciones de índice">
         <div className="aoi-icon-actions" role="group" aria-label="Cálculo">
           <IconButton
@@ -231,9 +263,11 @@ export default function IndexPreviewPanel({
             label={
               busyAction === "compute-and-save"
                 ? "Calculando y guardando GeoTIFF..."
-                : "Calcular y guardar GeoTIFF"
+                : existingFull
+                  ? "Regenerar GeoTIFF"
+                  : "Calcular y guardar GeoTIFF"
             }
-            onClick={() => void computeAndSave()}
+            onClick={() => void runAndRefresh(computeAndSave)}
             disabled={disabled}
           >
             {busyAction === "compute-and-save" ? (
@@ -332,6 +366,12 @@ export default function IndexPreviewPanel({
           Primero ejecutá Calcular y guardar.
         </p>
 
+        <ExistingDerivedNotice
+          existing={existingCrop}
+          onViewInResults={onViewInResults}
+          regenerateHint="Podés regenerar el recorte (marcá sobrescribir si hace falta)."
+        />
+
         <div className="index-filter">
           <label className="aoi-field-label" htmlFor="index-preview-aoi">
             AOI
@@ -374,11 +414,17 @@ export default function IndexPreviewPanel({
               label={
                 crop.busyAction === "crop"
                   ? "Recortando por AOI..."
-                  : "Recortar por AOI"
+                  : existingCrop
+                    ? "Regenerar recorte AOI"
+                    : "Recortar por AOI"
               }
               text={crop.busyAction === "crop" ? undefined : "Recortar"}
               tone="primary"
-              onClick={() => void crop.cropByAoi({ overwrite: cropOverwrite })}
+              onClick={() =>
+                void runAndRefresh(() =>
+                  crop.cropByAoi({ overwrite: cropOverwrite || Boolean(existingCrop) }),
+                )
+              }
               disabled={cropDisabled}
             >
               {crop.busyAction === "crop" ? (

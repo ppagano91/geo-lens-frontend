@@ -57,6 +57,11 @@ export default function App() {
     setActiveTab("indices");
   };
 
+  const handleViewInResults = () => {
+    void derived.refreshAssets();
+    setActiveTab("resultados");
+  };
+
   const handleAddDerivedToMap = (asset: DerivedAssetRead) => {
     switch (asset.asset_type) {
       case "index":
@@ -188,6 +193,9 @@ export default function App() {
           onRemoveIndexFromMap={indexOverlay.removeFromMap}
           onIndexOverlayOpacityChange={indexOverlay.setOpacity}
           onFitIndexOverlay={indexOverlay.fitToOverlay}
+          findExistingDerived={derived.findExisting}
+          onViewInResults={handleViewInResults}
+          onDerivedCatalogChanged={() => void derived.refreshAssets()}
         />
       }
       composiciones={
@@ -214,6 +222,9 @@ export default function App() {
           onRemoveOverlayFromMap={indexOverlay.removeFromMap}
           onOverlayOpacityChange={indexOverlay.setOpacity}
           onFitOverlay={indexOverlay.fitToOverlay}
+          findExistingDerived={derived.findExisting}
+          onViewInResults={handleViewInResults}
+          onDerivedCatalogChanged={() => void derived.refreshAssets()}
         />
       }
       resultados={
@@ -224,6 +235,10 @@ export default function App() {
           onSelectScene={(sceneId) => void scenes.selectScene(sceneId)}
           savedAois={workspace.saved.aois}
           assets={derived.assets}
+          allAssets={derived.allAssets}
+          existenceById={derived.existenceById}
+          filters={derived.filters}
+          onFiltersChange={derived.updateFilters}
           listLoading={derived.listLoading}
           busyAssetId={derived.busyAssetId}
           error={derived.error}
@@ -231,6 +246,8 @@ export default function App() {
           onRefresh={() => void derived.refreshAssets()}
           onAddToMap={handleAddDerivedToMap}
           onDownload={(asset) => void derived.downloadAsset(asset)}
+          onSoftDelete={(assetId) => void derived.removeAsset(assetId)}
+          onRestore={(assetId) => void derived.restoreAsset(assetId)}
           mapOverlayLoading={indexOverlay.loading}
         />
       }
