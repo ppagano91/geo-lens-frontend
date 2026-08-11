@@ -34,6 +34,7 @@ interface IndexPanelProps {
   onSelectAoi: (aoiId: string) => void;
   mapOverlay: ActiveIndexOverlay | null;
   mapOverlayLoading: boolean;
+  mapOverlayLoadingAssetId?: string | null;
   mapOverlayError: string | null;
   onAddIndexToMap: (sceneId: string, indexKey: string) => void;
   onAddCropToMap: (sceneId: string, indexKey: string, aoiId: string) => void;
@@ -133,6 +134,7 @@ export default function IndexPanel({
   onSelectAoi,
   mapOverlay,
   mapOverlayLoading,
+  mapOverlayLoadingAssetId = null,
   mapOverlayError,
   onAddIndexToMap,
   onAddCropToMap,
@@ -174,6 +176,7 @@ export default function IndexPanel({
         onSelectAoi={onSelectAoi}
         mapOverlay={mapOverlay}
         mapOverlayLoading={mapOverlayLoading}
+        mapOverlayLoadingAssetId={mapOverlayLoadingAssetId}
         mapOverlayError={mapOverlayError}
         onAddIndexToMap={onAddIndexToMap}
         onAddCropToMap={onAddCropToMap}

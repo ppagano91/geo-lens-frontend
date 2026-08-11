@@ -9,7 +9,10 @@ import {
   X,
 } from "lucide-react";
 import { useRgbComposite } from "../../hooks/useRgbComposite";
-import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
+import {
+  panelRasterOverlayId,
+  type ActiveIndexOverlay,
+} from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
@@ -40,6 +43,7 @@ interface RgbCompositePanelProps {
   onSelectAoi: (aoiId: string) => void;
   mapOverlay: ActiveIndexOverlay | null;
   mapOverlayLoading: boolean;
+  mapOverlayLoadingAssetId?: string | null;
   mapOverlayError: string | null;
   onAddRgbToMap: (sceneId: string, preset: string) => void;
   onAddRgbAoiToMap: (sceneId: string, aoiId: string, preset: string) => void;
@@ -81,6 +85,7 @@ export default function RgbCompositePanel({
   onSelectAoi,
   mapOverlay,
   mapOverlayLoading,
+  mapOverlayLoadingAssetId = null,
   mapOverlayError,
   onAddRgbToMap,
   onAddRgbAoiToMap,
@@ -131,16 +136,31 @@ export default function RgbCompositePanel({
   };
 
   const overlayIsFullRgb =
-    mapOverlay?.kind === "rgb" &&
+    mapOverlay?.kind === "rgb_composite" &&
     mapOverlay.sceneId === selectedSceneId &&
-    mapOverlay.indexKey === preset &&
+    mapOverlay.productKey === preset &&
     mapOverlay.aoiId == null;
 
   const overlayIsAoiRgb =
-    mapOverlay?.kind === "rgb" &&
+    mapOverlay?.kind === "rgb_composite_aoi" &&
     mapOverlay.sceneId === selectedSceneId &&
-    mapOverlay.indexKey === preset &&
+    mapOverlay.productKey === preset &&
     mapOverlay.aoiId === selectedAoiId;
+
+  const fullOverlayId = selectedSceneId
+    ? panelRasterOverlayId("rgb_composite", selectedSceneId, preset, null)
+    : null;
+  const aoiOverlayId =
+    selectedSceneId && selectedAoiId
+      ? panelRasterOverlayId(
+          "rgb_composite_aoi",
+          selectedSceneId,
+          preset,
+          selectedAoiId,
+        )
+      : null;
+  const loadingFullRgb = mapOverlayLoadingAssetId === fullOverlayId;
+  const loadingAoiRgb = mapOverlayLoadingAssetId === aoiOverlayId;
 
   return (
     <section className="index-preview-panel" aria-label="Composiciones RGB">
@@ -300,7 +320,7 @@ export default function RgbCompositePanel({
         <div className="aoi-icon-actions" role="group" aria-label="Mapa y descarga">
           <IconButton
             label={
-              mapOverlayLoading && overlayIsFullRgb
+              loadingFullRgb
                 ? "Agregando al mapa…"
                 : "Agregar al mapa"
             }
@@ -311,7 +331,7 @@ export default function RgbCompositePanel({
             }}
             disabled={!canAct || mapOverlayLoading || !previewResult}
           >
-            {mapOverlayLoading && overlayIsFullRgb ? (
+            {loadingFullRgb ? (
               <Loader2
                 size={16}
                 strokeWidth={2}
@@ -413,7 +433,7 @@ export default function RgbCompositePanel({
         >
           <IconButton
             label={
-              mapOverlayLoading && overlayIsAoiRgb
+              loadingAoiRgb
                 ? "Agregando recorte al mapa…"
                 : "Agregar recorte al mapa"
             }
@@ -424,7 +444,7 @@ export default function RgbCompositePanel({
             }}
             disabled={!canActAoi || mapOverlayLoading || !aoiPreviewResult}
           >
-            {mapOverlayLoading && overlayIsAoiRgb ? (
+            {loadingAoiRgb ? (
               <Loader2
                 size={16}
                 strokeWidth={2}
@@ -510,8 +530,8 @@ export default function RgbCompositePanel({
         >
           <p className="aoi-geojson-label">
             Capa activa:{" "}
-            {mapOverlay.kind === "rgb" ? "RGB " : ""}
-            {mapOverlay.indexKey.toUpperCase()}
+            {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
+            {mapOverlay.productKey.toUpperCase()}
             {mapOverlay.aoiId ? " (recorte AOI)" : ""}
           </p>
           <label className="aoi-field-label" htmlFor="rgb-overlay-opacity">

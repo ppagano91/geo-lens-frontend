@@ -37,6 +37,7 @@ interface MapViewProps {
   sceneFootprint: SceneFootprintGeometry | null;
   sceneName: string | null;
   sceneFitBoundsTrigger: number;
+  indexOverlayAssetId: string | null;
   indexOverlayImageUrl: string | null;
   indexOverlayCoordinates: IndexMapOverlayCoordinates | null;
   indexOverlayOpacity: number;
@@ -59,6 +60,7 @@ export default function MapView({
   sceneFootprint,
   sceneName,
   sceneFitBoundsTrigger,
+  indexOverlayAssetId,
   indexOverlayImageUrl,
   indexOverlayCoordinates,
   indexOverlayOpacity,
@@ -415,6 +417,7 @@ export default function MapView({
         map={mapInstance}
         mapReady={status === "ready"}
         styleEpoch={styleEpoch}
+        overlayAssetId={indexOverlayAssetId}
         imageUrl={indexOverlayImageUrl}
         coordinates={indexOverlayCoordinates}
         opacity={indexOverlayOpacity}

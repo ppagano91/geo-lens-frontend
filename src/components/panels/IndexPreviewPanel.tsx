@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { useIndexAoiCrop } from "../../hooks/useIndexAoiCrop";
 import { useIndexCompute } from "../../hooks/useIndexCompute";
-import type { ActiveIndexOverlay } from "../../hooks/useIndexMapOverlay";
+import {
+  panelRasterOverlayId,
+  type ActiveIndexOverlay,
+} from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
@@ -40,6 +43,7 @@ interface IndexPreviewPanelProps {
   onSelectAoi: (aoiId: string) => void;
   mapOverlay: ActiveIndexOverlay | null;
   mapOverlayLoading: boolean;
+  mapOverlayLoadingAssetId?: string | null;
   mapOverlayError: string | null;
   onAddIndexToMap: (sceneId: string, indexKey: string) => void;
   onAddCropToMap: (sceneId: string, indexKey: string, aoiId: string) => void;
@@ -104,6 +108,7 @@ export default function IndexPreviewPanel({
   onSelectAoi,
   mapOverlay,
   mapOverlayLoading,
+  mapOverlayLoadingAssetId = null,
   mapOverlayError,
   onAddIndexToMap,
   onAddCropToMap,
@@ -117,6 +122,22 @@ export default function IndexPreviewPanel({
   const indexKey = selectedIndex?.key ?? null;
   const computable = indexKey ? isComputableIndexKey(indexKey) : false;
   const canAct = Boolean(selectedSceneId && indexKey && computable);
+
+  const fullOverlayId =
+    selectedSceneId && indexKey
+      ? panelRasterOverlayId("index", selectedSceneId, indexKey, null)
+      : null;
+  const cropOverlayId =
+    selectedSceneId && indexKey && selectedAoiId
+      ? panelRasterOverlayId(
+          "index_aoi_crop",
+          selectedSceneId,
+          indexKey,
+          selectedAoiId,
+        )
+      : null;
+  const loadingFullOverlay = mapOverlayLoadingAssetId === fullOverlayId;
+  const loadingCropOverlay = mapOverlayLoadingAssetId === cropOverlayId;
 
   const {
     busyAction,
@@ -163,14 +184,14 @@ export default function IndexPreviewPanel({
     mapOverlay !== null &&
     mapOverlay.kind === "index" &&
     mapOverlay.sceneId === selectedSceneId &&
-    mapOverlay.indexKey === indexKey &&
+    mapOverlay.productKey === indexKey &&
     mapOverlay.aoiId == null;
 
   const overlayActiveCrop =
     mapOverlay !== null &&
-    mapOverlay.kind === "index" &&
+    mapOverlay.kind === "index_aoi_crop" &&
     mapOverlay.sceneId === selectedSceneId &&
-    mapOverlay.indexKey === indexKey &&
+    mapOverlay.productKey === indexKey &&
     mapOverlay.aoiId === selectedAoiId;
 
   return (
@@ -339,7 +360,7 @@ export default function IndexPreviewPanel({
         <div className="aoi-icon-actions" role="group" aria-label="Mapa">
           <IconButton
             label={
-              mapOverlayLoading && mapOverlay?.aoiId == null
+              loadingFullOverlay
                 ? "Agregando al mapa..."
                 : "Agregar al mapa"
             }
@@ -350,7 +371,7 @@ export default function IndexPreviewPanel({
             }}
             disabled={disabled || mapOverlayLoading}
           >
-            {mapOverlayLoading && mapOverlay?.aoiId == null ? (
+            {loadingFullOverlay ? (
               <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
             ) : (
               <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
@@ -448,7 +469,7 @@ export default function IndexPreviewPanel({
           <div className="aoi-icon-actions" role="group" aria-label="Mapa del recorte">
             <IconButton
               label={
-                mapOverlayLoading && mapOverlay?.aoiId != null
+                loadingCropOverlay
                   ? "Agregando recorte al mapa..."
                   : "Agregar recorte al mapa"
               }
@@ -459,7 +480,7 @@ export default function IndexPreviewPanel({
               }}
               disabled={cropDisabled}
             >
-              {mapOverlayLoading && mapOverlay?.aoiId != null ? (
+              {loadingCropOverlay ? (
                 <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
               ) : (
                 <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
@@ -555,8 +576,8 @@ export default function IndexPreviewPanel({
         <div className="index-overlay-controls" aria-label="Capa de índice en el mapa">
           <p className="aoi-geojson-label">
             Capa activa:{" "}
-            {mapOverlay.kind === "rgb" ? "RGB " : ""}
-            {mapOverlay.indexKey.toUpperCase()}
+            {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
+            {mapOverlay.productKey.toUpperCase()}
             {mapOverlay.aoiId ? " (recorte AOI)" : ""}
           </p>
           <label className="aoi-field-label" htmlFor="index-overlay-opacity">

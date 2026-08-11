@@ -39,11 +39,14 @@ interface DerivedAssetsPanelProps {
   error: string | null;
   successMessage?: string | null;
   onRefresh: () => void;
-  onAddToMap: (asset: DerivedAssetRead) => void;
+  onToggleOnMap: (asset: DerivedAssetRead) => void;
   onDownload: (asset: DerivedAssetRead) => void;
   onSoftDelete: (assetId: string) => void;
   onRestore: (assetId: string) => void;
-  mapOverlayLoading?: boolean;
+  /** Derived asset id currently on the map (single slot). */
+  activeOverlayAssetId?: string | null;
+  /** Derived asset id whose map-overlay request is in flight. */
+  loadingOverlayAssetId?: string | null;
 }
 
 function formatDateTime(value: string): string {
@@ -126,11 +129,12 @@ export default function DerivedAssetsPanel({
   error,
   successMessage = null,
   onRefresh,
-  onAddToMap,
+  onToggleOnMap,
   onDownload,
   onSoftDelete,
   onRestore,
-  mapOverlayLoading = false,
+  activeOverlayAssetId = null,
+  loadingOverlayAssetId = null,
 }: DerivedAssetsPanelProps) {
   const [metadataAssetId, setMetadataAssetId] = useState<string | null>(null);
 
@@ -301,7 +305,9 @@ export default function DerivedAssetsPanel({
       ) : (
         <ul className="aoi-saved-items results-asset-list">
           {assets.map((asset) => {
-            const busy = busyAssetId === asset.id || mapOverlayLoading;
+            const isOverlayActive = activeOverlayAssetId === asset.id;
+            const isOverlayLoading = loadingOverlayAssetId === asset.id;
+            const busy = busyAssetId === asset.id || isOverlayLoading;
             const existence = existenceById[asset.id];
             const fileMissing = existence ? !existence.asset_exists : false;
             return (
@@ -352,12 +358,20 @@ export default function DerivedAssetsPanel({
                 </div>
                 <div className="aoi-icon-actions">
                   <IconButton
-                    label="Agregar al mapa"
-                    onClick={() => onAddToMap(asset)}
-                    disabled={busy || !asset.is_active || fileMissing}
-                    tone="primary"
+                    label={
+                      isOverlayLoading
+                        ? "Cargando en el mapa..."
+                        : isOverlayActive
+                          ? "Quitar del mapa"
+                          : "Agregar al mapa"
+                    }
+                    onClick={() => onToggleOnMap(asset)}
+                    disabled={
+                      busyAssetId === asset.id || !asset.is_active || fileMissing
+                    }
+                    tone={isOverlayActive ? "primary" : "default"}
                   >
-                    {busy ? (
+                    {isOverlayLoading ? (
                       <Loader2 size={16} className="icon-spin" aria-hidden />
                     ) : (
                       <MapIcon size={16} aria-hidden />

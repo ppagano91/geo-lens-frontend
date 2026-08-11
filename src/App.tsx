@@ -62,35 +62,8 @@ export default function App() {
     setActiveTab("resultados");
   };
 
-  const handleAddDerivedToMap = (asset: DerivedAssetRead) => {
-    switch (asset.asset_type) {
-      case "index":
-        void indexOverlay.addToMap(asset.scene_id, asset.product_key);
-        break;
-      case "index_aoi_crop":
-        if (asset.aoi_id) {
-          void indexOverlay.addCropToMap(
-            asset.scene_id,
-            asset.product_key,
-            asset.aoi_id,
-          );
-        }
-        break;
-      case "rgb_composite":
-        void indexOverlay.addRgbToMap(asset.scene_id, asset.product_key);
-        break;
-      case "rgb_composite_aoi":
-        if (asset.aoi_id) {
-          void indexOverlay.addRgbAoiToMap(
-            asset.scene_id,
-            asset.aoi_id,
-            asset.product_key,
-          );
-        }
-        break;
-      default:
-        break;
-    }
+  const handleToggleDerivedOnMap = (asset: DerivedAssetRead) => {
+    void indexOverlay.toggleDerivedAsset(asset);
   };
 
   return (
@@ -183,6 +156,7 @@ export default function App() {
           onSelectAoi={workspace.handleSelectSavedAoi}
           mapOverlay={indexOverlay.overlay}
           mapOverlayLoading={indexOverlay.loading}
+          mapOverlayLoadingAssetId={indexOverlay.loadingAssetId}
           mapOverlayError={indexOverlay.error}
           onAddIndexToMap={(sceneId, indexKey) =>
             void indexOverlay.addToMap(sceneId, indexKey)
@@ -212,6 +186,7 @@ export default function App() {
           onSelectAoi={workspace.handleSelectSavedAoi}
           mapOverlay={indexOverlay.overlay}
           mapOverlayLoading={indexOverlay.loading}
+          mapOverlayLoadingAssetId={indexOverlay.loadingAssetId}
           mapOverlayError={indexOverlay.error}
           onAddRgbToMap={(sceneId, preset) =>
             void indexOverlay.addRgbToMap(sceneId, preset)
@@ -244,11 +219,12 @@ export default function App() {
           error={derived.error}
           successMessage={derived.successMessage}
           onRefresh={() => void derived.refreshAssets()}
-          onAddToMap={handleAddDerivedToMap}
+          onToggleOnMap={handleToggleDerivedOnMap}
           onDownload={(asset) => void derived.downloadAsset(asset)}
           onSoftDelete={(assetId) => void derived.removeAsset(assetId)}
           onRestore={(assetId) => void derived.restoreAsset(assetId)}
-          mapOverlayLoading={indexOverlay.loading}
+          activeOverlayAssetId={indexOverlay.overlay?.assetId ?? null}
+          loadingOverlayAssetId={indexOverlay.loadingAssetId}
         />
       }
       map={<BasemapSelector value={basemapId} onChange={setBasemapId} />}
@@ -265,6 +241,7 @@ export default function App() {
         sceneFootprint={scenes.selectedScene?.footprint ?? null}
         sceneName={scenes.selectedScene?.name ?? null}
         sceneFitBoundsTrigger={scenes.fitBoundsTrigger}
+        indexOverlayAssetId={indexOverlay.overlay?.assetId ?? null}
         indexOverlayImageUrl={indexOverlay.overlay?.imageUrl ?? null}
         indexOverlayCoordinates={indexOverlay.overlay?.coordinates ?? null}
         indexOverlayOpacity={indexOverlay.overlay?.opacity ?? 0.75}

@@ -115,3 +115,81 @@ export function removeSourceIfExists(
   }
   map.removeSource(sourceId);
 }
+
+/** WGS84 corners for MapLibre `image` sources: TL, TR, BR, BL. */
+export type ImageOverlayCoordinates = [
+  [number, number],
+  [number, number],
+  [number, number],
+  [number, number],
+];
+
+export interface ReplaceImageOverlayOptions {
+  url: string;
+  coordinates: ImageOverlayCoordinates;
+  opacity?: number;
+  sourceId?: string;
+  layerId?: string;
+}
+
+/**
+ * Idempotent single-slot raster overlay (indices / RGB / Resultados).
+ *
+ * Always removes the previous layer/source before adding the new one so a
+ * product swap never keeps stale image metadata and never throws
+ * ``Source "index-overlay" already exists``.
+ */
+export function replaceImageOverlay(
+  map: maplibregl.Map,
+  options: ReplaceImageOverlayOptions,
+): void {
+  if (!map.isStyleLoaded()) {
+    return;
+  }
+
+  const sourceId = options.sourceId ?? INDEX_OVERLAY_SOURCE_ID;
+  const layerId = options.layerId ?? INDEX_OVERLAY_LAYER_ID;
+  const opacity = options.opacity ?? 0.75;
+
+  removeLayerIfExists(map, layerId);
+  removeSourceIfExists(map, sourceId);
+
+  // If a concurrent path left the source, force another remove before add.
+  if (map.getSource(sourceId)) {
+    removeLayerIfExists(map, layerId);
+    removeSourceIfExists(map, sourceId);
+  }
+
+  if (map.getSource(sourceId)) {
+    // Last resort: never call addSource on an existing id.
+    return;
+  }
+
+  map.addSource(sourceId, {
+    type: "image",
+    url: options.url,
+    coordinates: options.coordinates,
+  });
+
+  addAppLayer(map, {
+    id: layerId,
+    type: "raster",
+    source: sourceId,
+    paint: {
+      "raster-opacity": opacity,
+      "raster-fade-duration": 0,
+    },
+  });
+
+  ensureAppLayersOrder(map);
+}
+
+/** Remove the single-slot raster overlay layer + source if present. */
+export function clearImageOverlay(
+  map: maplibregl.Map,
+  sourceId: string = INDEX_OVERLAY_SOURCE_ID,
+  layerId: string = INDEX_OVERLAY_LAYER_ID,
+): void {
+  removeLayerIfExists(map, layerId);
+  removeSourceIfExists(map, sourceId);
+}
