@@ -66,6 +66,20 @@ export default function RadiometryBadge({
                 : "no"}
             </dd>
           </div>
+          {radiometry.source_product_id ? (
+            <div className="scene-detail-row">
+              <dt>Product ID</dt>
+              <dd title={radiometry.source_product_id}>
+                {radiometry.source_product_id}
+              </dd>
+            </div>
+          ) : null}
+          {radiometry.radiometry_source ? (
+            <div className="scene-detail-row">
+              <dt>Origen</dt>
+              <dd>{radiometry.radiometry_source}</dd>
+            </div>
+          ) : null}
         </dl>
       ) : null}
       {(unknown || radiometry.warning) && (

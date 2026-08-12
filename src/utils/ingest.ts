@@ -1,13 +1,20 @@
 import { ApiError } from "../api/client";
 import type {
   IngestedBandInfo,
+  IngestProductLevel,
   LocalSceneIngestFormValues,
   LocalSceneIngestRequest,
   LocalSceneIngestResult,
   UploadSceneIngestRequest,
 } from "../types/ingest";
 
-const UPLOAD_ALLOWED_EXTENSIONS = new Set([".tif", ".tiff", ".txt"]);
+const UPLOAD_ALLOWED_EXTENSIONS = new Set([
+  ".tif",
+  ".tiff",
+  ".txt",
+  ".xml",
+  ".safe",
+]);
 
 /** CRS / tamaño de referencia (primera banda; todas deben coincidir tras validación backend). */
 export interface IngestRasterSummary {
@@ -16,17 +23,40 @@ export interface IngestRasterSummary {
   height: number | null;
 }
 
+function optionalProductLevel(
+  form: LocalSceneIngestFormValues,
+): IngestProductLevel | null {
+  if (form.source !== "sentinel-2") {
+    return null;
+  }
+  if (!form.sentinelProductLevel) {
+    return null;
+  }
+  return form.sentinelProductLevel;
+}
+
+function optionalSourceProductId(
+  form: LocalSceneIngestFormValues,
+): string | null {
+  const value = form.sourceProductId.trim();
+  return value.length > 0 ? value : null;
+}
+
 export function buildLocalSceneIngestPayload(
   form: LocalSceneIngestFormValues,
 ): LocalSceneIngestRequest {
   const scene_path = form.scenePath.trim();
   const name = form.name.trim();
+  const product_level = optionalProductLevel(form);
+  const source_product_id = optionalSourceProductId(form);
 
   return {
     scene_path,
     source: form.source,
     name: name.length > 0 ? name : null,
     overwrite: form.overwrite,
+    ...(product_level ? { product_level } : {}),
+    ...(source_product_id ? { source_product_id } : {}),
   };
 }
 
@@ -34,12 +64,16 @@ export function buildUploadSceneIngestPayload(
   form: LocalSceneIngestFormValues,
 ): UploadSceneIngestRequest {
   const name = form.name.trim();
+  const product_level = optionalProductLevel(form);
+  const source_product_id = optionalSourceProductId(form);
 
   return {
     files: form.files,
     source: form.source,
     name: name.length > 0 ? name : null,
     overwrite: form.overwrite,
+    ...(product_level ? { product_level } : {}),
+    ...(source_product_id ? { source_product_id } : {}),
   };
 }
 
@@ -73,7 +107,7 @@ export function validateLocalSceneIngestForm(
       return (
         "Extensiones no permitidas: " +
         invalid.map((file) => file.name).join(", ") +
-        ". Usá .tif, .tiff o .txt (MTL)."
+        ". Usá .tif, .tiff, .txt (MTL), .xml o .safe (metadata SAFE)."
       );
     }
 
@@ -93,6 +127,18 @@ export function validateLocalSceneIngestForm(
   }
 
   return null;
+}
+
+export function isAuxiliaryMetadataFile(filename: string): boolean {
+  const ext = fileExtension(filename);
+  const base = filename.replace(/\\/g, "/").split("/").pop()?.toUpperCase() ?? "";
+  if (ext === ".xml" || ext === ".safe") {
+    return true;
+  }
+  if (ext === ".txt" && base.includes("MTL")) {
+    return true;
+  }
+  return false;
 }
 
 /** True when ingest noted Sentinel SWIR 20 m detection and/or resampling. */

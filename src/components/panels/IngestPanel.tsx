@@ -2,11 +2,13 @@ import type {
   IngestMode,
   LocalSceneIngestFormValues,
   LocalSceneIngestResult,
+  SentinelProductLevelChoice,
 } from "../../types/ingest";
 import {
   INGEST_MODES,
   INGEST_SOURCE_BAND_HINTS,
   LOCAL_SCENE_SOURCES,
+  SENTINEL_PRODUCT_LEVEL_OPTIONS,
 } from "../../types/ingest";
 import {
   compatibleIndicesLabel,
@@ -15,6 +17,7 @@ import {
   getSentinelSwirBandBadge,
   hasSentinelSwirResampled,
   hasSentinelSwirResolutionWarning,
+  isAuxiliaryMetadataFile,
   summarizeIngestRaster,
 } from "../../utils/ingest";
 import {
@@ -133,7 +136,11 @@ export default function IngestPanel({
               className="aoi-input ingest-file-input"
               type="file"
               multiple
-              accept=".tif,.tiff,.TIF,.TIFF,.txt"
+              accept={
+                form.source === "sentinel-2"
+                  ? ".tif,.tiff,.TIF,.TIFF,.xml,.safe,.XML,.SAFE"
+                  : ".tif,.tiff,.TIF,.TIFF,.txt"
+              }
               onChange={(event) => {
                 const list = event.target.files;
                 onFormChange(
@@ -146,11 +153,20 @@ export default function IngestPanel({
             <p className="aoi-hint">
               Esperados: {bandHint} {formatSelectedFilesLabel(form.files)}
             </p>
+            {form.source === "sentinel-2" && (
+              <p className="aoi-hint">
+                Los XML / manifest.safe se guardan como metadata auxiliar (no
+                como bandas raster).
+              </p>
+            )}
             {form.files.length > 0 && (
               <ul className="ingest-file-list">
                 {form.files.map((file) => (
                   <li key={`${file.name}-${file.size}-${file.lastModified}`}>
                     {file.name}
+                    {isAuxiliaryMetadataFile(file.name) ? (
+                      <span className="ingest-file-meta-tag"> metadata</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -205,6 +221,66 @@ export default function IngestPanel({
             ))}
           </select>
         </div>
+
+        {form.source === "sentinel-2" && (
+          <>
+            <div className="aoi-field">
+              <label
+                className="aoi-field-label"
+                htmlFor="ingest-sentinel-level"
+              >
+                Nivel de producto Sentinel-2
+              </label>
+              <select
+                id="ingest-sentinel-level"
+                className="aoi-input"
+                value={form.sentinelProductLevel}
+                onChange={(event) =>
+                  onFormChange(
+                    "sentinelProductLevel",
+                    event.target.value as SentinelProductLevelChoice,
+                  )
+                }
+                disabled={submitting}
+              >
+                {SENTINEL_PRODUCT_LEVEL_OPTIONS.map((option) => (
+                  <option key={option.value || "auto"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="aoi-field">
+              <label
+                className="aoi-field-label"
+                htmlFor="ingest-source-product-id"
+              >
+                Product ID original (opcional)
+              </label>
+              <input
+                id="ingest-source-product-id"
+                className="aoi-input"
+                type="text"
+                value={form.sourceProductId}
+                onChange={(event) =>
+                  onFormChange("sourceProductId", event.target.value)
+                }
+                placeholder="S2B_MSIL1C_20181226T141039_N0207_R110_T20JLL_20181226T172720"
+                maxLength={255}
+                disabled={submitting}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="aoi-hint">
+                Si las bandas fueron convertidas desde JP2 a GeoTIFF y los
+                nombres quedaron como T20JLL_…_B02.tif, GeoLens puede no saber
+                si el producto original era L1C o L2A. En ese caso, indique el
+                nivel de producto o pegue el Product ID original.
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="aoi-field">
           <label className="aoi-field-label" htmlFor="ingest-name">
@@ -317,6 +393,11 @@ export default function IngestPanel({
             <div className="ingest-radiometry">
               <p className="aoi-field-label">Radiometría</p>
               <RadiometryBadge radiometry={radiometry} detailed />
+              {(result.metadata_files_detected?.length ?? 0) > 0 && (
+                <p className="aoi-hint" role="status">
+                  Metadata SAFE: {result.metadata_files_detected?.join(", ")}
+                </p>
+              )}
             </div>
           )}
 

@@ -1196,6 +1196,13 @@ body {
   opacity: 0.9;
 }
 
+.ingest-file-meta-tag {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5b6775;
+}
+
 .radiometry-block {
   margin: 0.5rem 0 0.75rem;
   min-width: 0;

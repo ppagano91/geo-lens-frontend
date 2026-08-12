@@ -26,6 +26,12 @@ export function uploadScene(
     formData.append("name", payload.name);
   }
   formData.append("overwrite", payload.overwrite ? "true" : "false");
+  if (payload.product_level) {
+    formData.append("product_level", payload.product_level);
+  }
+  if (payload.source_product_id) {
+    formData.append("source_product_id", payload.source_product_id);
+  }
 
   return apiRequest<LocalSceneIngestResult>("/api/v1/ingest/upload-scene", {
     method: "POST",

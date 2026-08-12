@@ -120,4 +120,4 @@ export function isUnknownRadiometry(info: RadiometryInfo | null): boolean {
 }
 
 export const UNKNOWN_RADIOMETRY_UI_WARNING =
-  "Radiometría no determinada automáticamente. Los resultados pueden requerir revisión.";
+  "Radiometría no determinada automáticamente. Indique MSIL1C/MSIL2A manualmente o cargue metadata SAFE.";
