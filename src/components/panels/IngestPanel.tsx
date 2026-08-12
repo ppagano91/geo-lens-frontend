@@ -12,6 +12,7 @@ import {
   compatibleIndicesLabel,
   formatAcquisitionDate,
   formatSelectedFilesLabel,
+  hasSentinelSwirResampled,
   hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
 } from "../../utils/ingest";
@@ -45,6 +46,7 @@ export default function IngestPanel({
   const bandHint = INGEST_SOURCE_BAND_HINTS[form.source];
   const swirWarning =
     result != null && hasSentinelSwirResolutionWarning(result);
+  const swirResampled = result != null && hasSentinelSwirResampled(result);
 
   const handleModeChange = (mode: IngestMode) => {
     onFormChange("mode", mode);
@@ -304,8 +306,9 @@ export default function IngestPanel({
               <p className="aoi-field-label">Advertencias</p>
               {swirWarning && (
                 <p className="aoi-hint" role="status">
-                  B11/B12 a 20 m no se usan hasta resampling; NBR/NDMI quedan
-                  incompatibles si esas bandas no están alineadas a 10 m.
+                  {swirResampled
+                    ? "B11/B12 a 20 m detectadas; resampling aplicado a la grilla 10 m. Bandas alineadas registradas (NBR/NDMI y composiciones SWIR habilitados cuando correspondan)."
+                    : "B11/B12 a 20 m detectadas; si no se pudieron alinear, NBR/NDMI pueden quedar incompatibles."}
                 </p>
               )}
               <ul className="ingest-warning-list">

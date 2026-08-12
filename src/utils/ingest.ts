@@ -95,14 +95,24 @@ export function validateLocalSceneIngestForm(
   return null;
 }
 
-/** True when ingest warned that Sentinel SWIR bands were skipped (20 m). */
+/** True when ingest noted Sentinel SWIR 20 m detection and/or resampling. */
 export function hasSentinelSwirResolutionWarning(
   result: LocalSceneIngestResult,
 ): boolean {
   return result.warnings.some(
     (warning) =>
+      warning.code === "sentinel_swir_20m_detected" ||
+      warning.code === "sentinel_swir_resampled" ||
+      // Legacy 9K codes (pre-resampling skip).
       warning.code === "sentinel_swir_not_aligned" ||
       warning.code === "sentinel_swir_skipped",
+  );
+}
+
+/** True when B11/B12 were resampled onto the 10 m grid (Fase 9L). */
+export function hasSentinelSwirResampled(result: LocalSceneIngestResult): boolean {
+  return result.warnings.some(
+    (warning) => warning.code === "sentinel_swir_resampled",
   );
 }
 

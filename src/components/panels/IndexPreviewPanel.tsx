@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Calculator,
   Crop,
@@ -158,7 +157,8 @@ export default function IndexPreviewPanel({
   } = useIndexCompute(selectedSceneId, indexKey);
 
   const crop = useIndexAoiCrop(selectedSceneId, indexKey, selectedAoiId);
-  const [cropOverwrite, setCropOverwrite] = useState(false);
+  // Overwrite checkbox UI is currently hidden; keep false until re-enabled.
+  const cropOverwrite = false;
 
   const disabled = loading || sceneDetailLoading || !canAct;
   const addFullToMapDisabled = disabled || mapOverlayLoading;

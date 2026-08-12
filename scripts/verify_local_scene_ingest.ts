@@ -15,6 +15,7 @@ import {
   compatibleIndicesLabel,
   formatIngestApiError,
   formatSelectedFilesLabel,
+  hasSentinelSwirResampled,
   hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
   validateLocalSceneIngestForm,
@@ -213,11 +214,18 @@ const sentinelResult: LocalSceneIngestResult = {
   ],
   warnings: [
     {
-      code: "sentinel_swir_skipped",
-      title: "SWIR Sentinel-2 omitidas",
-      description: "B11/B12 a 20 m no se usan hasta resolver resampling.",
+      code: "sentinel_swir_20m_detected",
+      title: "B11/B12 a 20 m detectadas",
+      description: "Se detectaron bandas SWIR a 20 m.",
       items: ["B11.tif"],
-      severity: "warning",
+      severity: "info",
+    },
+    {
+      code: "sentinel_swir_resampled",
+      title: "Resampling SWIR 20 m → 10 m aplicado",
+      description: "B11/B12 alineadas a la grilla 10 m.",
+      items: ["derived/scenes/x/aligned/B11_10m.tif"],
+      severity: "info",
     },
   ],
   available_indices: [
@@ -230,13 +238,14 @@ const sentinelResult: LocalSceneIngestResult = {
     {
       index_key: "nbr",
       display_name: "NBR",
-      compatible: false,
-      missing_roles: ["swir2"],
+      compatible: true,
+      missing_roles: [],
     },
   ],
   metadata: { platform: "Sentinel-2" },
 };
 assert.equal(hasSentinelSwirResolutionWarning(sentinelResult), true);
-assert.equal(compatibleIndicesLabel(sentinelResult), "NDVI");
+assert.equal(hasSentinelSwirResampled(sentinelResult), true);
+assert.equal(compatibleIndicesLabel(sentinelResult), "NDVI, NBR");
 
 console.log("verify_local_scene_ingest: ok");

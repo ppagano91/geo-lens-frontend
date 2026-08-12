@@ -88,7 +88,7 @@ export const LOCAL_SCENE_SOURCES: ReadonlyArray<{
 export const INGEST_SOURCE_BAND_HINTS: Record<LocalSceneSource, string> = {
   "landsat-8": "SR_B2…SR_B7 (.tif/.tiff). Opcional: MTL.txt.",
   "sentinel-2":
-    "B02, B03, B04, B08 a 10 m (.tif/.tiff). B11/B12 a 20 m se omiten si no están alineadas.",
+    "B02, B03, B04, B08 a 10 m (.tif/.tiff). B11/B12 a 20 m se resamplean a la grilla 10 m.",
 };
 
 export const INGEST_MODES: ReadonlyArray<{
