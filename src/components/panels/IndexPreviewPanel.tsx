@@ -136,8 +136,6 @@ export default function IndexPreviewPanel({
           selectedAoiId,
         )
       : null;
-  const loadingFullOverlay = mapOverlayLoadingAssetId === fullOverlayId;
-  const loadingCropOverlay = mapOverlayLoadingAssetId === cropOverlayId;
 
   const {
     busyAction,
@@ -163,8 +161,19 @@ export default function IndexPreviewPanel({
   const [cropOverwrite, setCropOverwrite] = useState(false);
 
   const disabled = loading || sceneDetailLoading || !canAct;
+  const addFullToMapDisabled = disabled || mapOverlayLoading;
   const cropDisabled =
     disabled || crop.loading || !selectedAoiId || mapOverlayLoading;
+
+  // Never treat null===null as loading; never spin on a disabled button.
+  const loadingFullOverlay =
+    !addFullToMapDisabled &&
+    fullOverlayId != null &&
+    mapOverlayLoadingAssetId === fullOverlayId;
+  const loadingCropOverlay =
+    !cropDisabled &&
+    cropOverlayId != null &&
+    mapOverlayLoadingAssetId === cropOverlayId;
 
   const existingFull =
     selectedSceneId && indexKey
@@ -369,7 +378,7 @@ export default function IndexPreviewPanel({
                 onAddIndexToMap(selectedSceneId, indexKey);
               }
             }}
-            disabled={disabled || mapOverlayLoading}
+            disabled={addFullToMapDisabled}
           >
             {loadingFullOverlay ? (
               <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
@@ -382,10 +391,10 @@ export default function IndexPreviewPanel({
 
       <div className="index-aoi-crop" aria-label="Recorte por AOI">
         <p className="aoi-geojson-label">Recorte por AOI</p>
-        <p className="aoi-hint" role="status">
+        {/* <p className="aoi-hint" role="status">
           Recorta el índice derivado ya guardado (no las bandas originales).
           Primero ejecutá Calcular y guardar.
-        </p>
+        </p> */}
 
         <ExistingDerivedNotice
           existing={existingCrop}
@@ -439,7 +448,7 @@ export default function IndexPreviewPanel({
                     ? "Regenerar recorte AOI"
                     : "Recortar por AOI"
               }
-              text={crop.busyAction === "crop" ? undefined : "Recortar"}
+              // text={crop.busyAction === "crop" ? undefined : "Recortar"}
               tone="primary"
               onClick={() =>
                 void runAndRefresh(() =>
@@ -454,7 +463,7 @@ export default function IndexPreviewPanel({
                 <Crop size={16} strokeWidth={2} aria-hidden="true" />
               )}
             </IconButton>
-            <label className="aoi-field-label index-crop-overwrite" htmlFor="index-crop-overwrite">
+            {/* <label className="aoi-field-label index-crop-overwrite" htmlFor="index-crop-overwrite">
               <input
                 id="index-crop-overwrite"
                 type="checkbox"
@@ -463,7 +472,7 @@ export default function IndexPreviewPanel({
                 disabled={cropDisabled}
               />{" "}
               Sobrescribir
-            </label>
+            </label> */}
           </div>
 
           <div className="aoi-icon-actions" role="group" aria-label="Mapa del recorte">

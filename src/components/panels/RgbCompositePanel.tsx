@@ -159,8 +159,20 @@ export default function RgbCompositePanel({
           selectedAoiId,
         )
       : null;
-  const loadingFullRgb = mapOverlayLoadingAssetId === fullOverlayId;
-  const loadingAoiRgb = mapOverlayLoadingAssetId === aoiOverlayId;
+
+  const addFullRgbDisabled = !canAct || mapOverlayLoading || !previewResult;
+  const addAoiRgbDisabled =
+    !canActAoi || mapOverlayLoading || !aoiPreviewResult;
+
+  // Never treat null===null as loading; never spin on a disabled button.
+  const loadingFullRgb =
+    !addFullRgbDisabled &&
+    fullOverlayId != null &&
+    mapOverlayLoadingAssetId === fullOverlayId;
+  const loadingAoiRgb =
+    !addAoiRgbDisabled &&
+    aoiOverlayId != null &&
+    mapOverlayLoadingAssetId === aoiOverlayId;
 
   return (
     <section className="index-preview-panel" aria-label="Composiciones RGB">
@@ -329,7 +341,7 @@ export default function RgbCompositePanel({
                 onAddRgbToMap(selectedSceneId, preset);
               }
             }}
-            disabled={!canAct || mapOverlayLoading || !previewResult}
+            disabled={addFullRgbDisabled}
           >
             {loadingFullRgb ? (
               <Loader2
@@ -442,7 +454,7 @@ export default function RgbCompositePanel({
                 onAddRgbAoiToMap(selectedSceneId, selectedAoiId, preset);
               }
             }}
-            disabled={!canActAoi || mapOverlayLoading || !aoiPreviewResult}
+            disabled={addAoiRgbDisabled}
           >
             {loadingAoiRgb ? (
               <Loader2

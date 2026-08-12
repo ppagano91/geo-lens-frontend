@@ -305,11 +305,14 @@ export default function DerivedAssetsPanel({
       ) : (
         <ul className="aoi-saved-items results-asset-list">
           {assets.map((asset) => {
-            const isOverlayActive = activeOverlayAssetId === asset.id;
-            const isOverlayLoading = loadingOverlayAssetId === asset.id;
-            const busy = busyAssetId === asset.id || isOverlayLoading;
             const existence = existenceById[asset.id];
             const fileMissing = existence ? !existence.asset_exists : false;
+            const isOverlayActive = activeOverlayAssetId === asset.id;
+            const mapButtonDisabled =
+              busyAssetId === asset.id || !asset.is_active || fileMissing;
+            const isOverlayLoading =
+              !mapButtonDisabled && loadingOverlayAssetId === asset.id;
+            const busy = busyAssetId === asset.id || isOverlayLoading;
             return (
               <li
                 key={asset.id}
@@ -366,9 +369,7 @@ export default function DerivedAssetsPanel({
                           : "Agregar al mapa"
                     }
                     onClick={() => onToggleOnMap(asset)}
-                    disabled={
-                      busyAssetId === asset.id || !asset.is_active || fileMissing
-                    }
+                    disabled={mapButtonDisabled}
                     tone={isOverlayActive ? "primary" : "default"}
                   >
                     {isOverlayLoading ? (
