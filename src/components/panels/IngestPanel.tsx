@@ -12,6 +12,7 @@ import {
   compatibleIndicesLabel,
   formatAcquisitionDate,
   formatSelectedFilesLabel,
+  getSentinelSwirBandBadge,
   hasSentinelSwirResampled,
   hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
@@ -301,16 +302,23 @@ export default function IngestPanel({
             )}
           </dl>
 
+          {(swirWarning || swirResampled) && (
+            <div
+              className={`ingest-swir-banner${swirResampled ? " ingest-swir-banner--ok" : ""}`}
+              role="status"
+            >
+              <p className="aoi-field-label">Resampling Sentinel-2</p>
+              <p className="ingest-swir-banner-text">
+                {swirResampled
+                  ? "B11/B12 a 20 m detectadas. Remuestreo bilinear aplicado a la grilla 10 m (referencia B08). Bandas alineadas registradas; NBR/NDMI y composiciones SWIR quedan habilitados cuando correspondan."
+                  : "B11/B12 a 20 m detectadas; si no se pudieron alinear, NBR/NDMI pueden quedar incompatibles."}
+              </p>
+            </div>
+          )}
+
           {result.warnings.length > 0 && (
             <div className="ingest-warnings">
               <p className="aoi-field-label">Advertencias</p>
-              {swirWarning && (
-                <p className="aoi-hint" role="status">
-                  {swirResampled
-                    ? "B11/B12 a 20 m detectadas; resampling aplicado a la grilla 10 m. Bandas alineadas registradas (NBR/NDMI y composiciones SWIR habilitados cuando correspondan)."
-                    : "B11/B12 a 20 m detectadas; si no se pudieron alinear, NBR/NDMI pueden quedar incompatibles."}
-                </p>
-              )}
               <ul className="ingest-warning-list">
                 {result.warnings.map((warning, index) => (
                   <li
@@ -347,22 +355,42 @@ export default function IngestPanel({
               Bandas registradas ({result.bands.length})
             </p>
             <ul className="scene-band-items">
-              {result.bands.map((band) => (
-                <li key={band.band_key} className="scene-band-item">
-                  <div className="scene-band-header">
-                    <strong className="scene-band-key">{band.band_key}</strong>
-                    <span className="scene-band-name">{band.band_name}</span>
-                  </div>
-                  <div className="scene-band-meta">
-                    {band.crs && <span>CRS: {band.crs}</span>}
-                    <span>
-                      {band.width} × {band.height}
-                    </span>
-                    {band.dtype && <span>Tipo: {band.dtype}</span>}
-                  </div>
-                  <p className="scene-band-path">{band.asset_path}</p>
-                </li>
-              ))}
+              {result.bands.map((band) => {
+                const swirBadge = getSentinelSwirBandBadge(band);
+                return (
+                  <li key={band.band_key} className="scene-band-item">
+                    <div className="scene-band-header">
+                      <strong className="scene-band-key">{band.band_key}</strong>
+                      <span className="scene-band-name">{band.band_name}</span>
+                    </div>
+                    {swirBadge ? (
+                      <div
+                        className={`ingest-band-badge ingest-band-badge--${swirBadge.kind}`}
+                      >
+                        <span className="ingest-band-badge-label">
+                          {swirBadge.label}
+                        </span>
+                        {swirBadge.kind === "resampled" ? (
+                          <span className="ingest-band-badge-details">
+                            Método: {swirBadge.method} · Referencia:{" "}
+                            {swirBadge.reference}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div className="scene-band-meta">
+                      {band.crs && <span>CRS: {band.crs}</span>}
+                      <span>
+                        {band.width} × {band.height}
+                      </span>
+                      {band.dtype && <span>Tipo: {band.dtype}</span>}
+                    </div>
+                    <p className="scene-band-path" title={band.asset_path}>
+                      {band.asset_path}
+                    </p>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

@@ -15,6 +15,7 @@ import {
   compatibleIndicesLabel,
   formatIngestApiError,
   formatSelectedFilesLabel,
+  getSentinelSwirBandBadge,
   hasSentinelSwirResampled,
   hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
@@ -211,6 +212,32 @@ const sentinelResult: LocalSceneIngestResult = {
       dtype: "uint16",
       nodata: "0",
     },
+    {
+      band_key: "B11",
+      band_name: "SWIR1",
+      asset_path: "derived/scenes/x/aligned/B11_10m.tif",
+      width: 100,
+      height: 100,
+      crs: "EPSG:32721",
+      dtype: "uint16",
+      nodata: "0",
+      metadata: {
+        aligned: true,
+        resampled: true,
+        resampling_method: "bilinear",
+        reference_band: "B08",
+      },
+    },
+    {
+      band_key: "B12",
+      band_name: "SWIR2",
+      asset_path: "uploaded/scenes/x/B12.tif",
+      width: 100,
+      height: 100,
+      crs: "EPSG:32721",
+      dtype: "uint16",
+      nodata: "0",
+    },
   ],
   warnings: [
     {
@@ -247,5 +274,17 @@ const sentinelResult: LocalSceneIngestResult = {
 assert.equal(hasSentinelSwirResolutionWarning(sentinelResult), true);
 assert.equal(hasSentinelSwirResampled(sentinelResult), true);
 assert.equal(compatibleIndicesLabel(sentinelResult), "NDVI, NBR");
+
+const b11Badge = getSentinelSwirBandBadge(sentinelResult.bands[1]!);
+assert.equal(b11Badge?.kind, "resampled");
+if (b11Badge?.kind === "resampled") {
+  assert.equal(b11Badge.label, "Resampleada 20 m → 10 m");
+  assert.equal(b11Badge.method, "bilinear");
+  assert.equal(b11Badge.reference, "B08");
+}
+const b12Badge = getSentinelSwirBandBadge(sentinelResult.bands[2]!);
+assert.equal(b12Badge?.kind, "original");
+assert.equal(b12Badge?.label, "Alineada originalmente");
+assert.equal(getSentinelSwirBandBadge(sentinelResult.bands[0]!), null);
 
 console.log("verify_local_scene_ingest: ok");

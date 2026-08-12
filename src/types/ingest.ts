@@ -27,6 +27,8 @@ export interface IngestedBandInfo {
   crs: string | null;
   dtype: string | null;
   nodata: string | null;
+  /** Optional band metadata (e.g. 9L alignment / resampling). */
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface AvailableIndexInfo {

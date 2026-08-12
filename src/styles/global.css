@@ -1139,6 +1139,63 @@ body {
   overflow: hidden;
 }
 
+.ingest-swir-banner {
+  padding: 0.55rem 0.65rem;
+  border-radius: 4px;
+  background-color: #fff8e8;
+  border: 1px solid #e6c86a;
+  min-width: 0;
+}
+
+.ingest-swir-banner--ok {
+  background-color: #eef7f0;
+  border-color: #b7d4be;
+}
+
+.ingest-swir-banner-text {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #3d4a40;
+}
+
+.ingest-swir-banner:not(.ingest-swir-banner--ok) .ingest-swir-banner-text {
+  color: #7a5c00;
+}
+
+.ingest-band-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.ingest-band-badge--resampled {
+  background-color: #eef7f0;
+  border: 1px solid #b7d4be;
+  color: #2f4a36;
+}
+
+.ingest-band-badge--original {
+  background-color: #f2f4f6;
+  border: 1px solid #d0d6dc;
+  color: #44505c;
+}
+
+.ingest-band-badge-label {
+  font-weight: 600;
+}
+
+.ingest-band-badge-details {
+  color: inherit;
+  opacity: 0.9;
+}
+
 .ingest-warning-list {
   margin: 0.35rem 0 0;
   padding: 0;

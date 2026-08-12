@@ -116,6 +116,72 @@ export function hasSentinelSwirResampled(result: LocalSceneIngestResult): boolea
   );
 }
 
+const SENTINEL_SWIR_KEYS = new Set(["B11", "B12"]);
+
+export type SentinelSwirBandBadge =
+  | {
+      kind: "resampled";
+      label: string;
+      method: string;
+      reference: string;
+    }
+  | {
+      kind: "original";
+      label: string;
+    };
+
+function readMetaString(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string,
+): string | null {
+  if (!metadata) {
+    return null;
+  }
+  const value = metadata[key];
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function isTruthyMeta(
+  metadata: Record<string, unknown> | null | undefined,
+  key: string,
+): boolean {
+  if (!metadata) {
+    return false;
+  }
+  return metadata[key] === true || metadata[key] === "true";
+}
+
+/** Badge info for Sentinel-2 SWIR bands in the ingest band list. */
+export function getSentinelSwirBandBadge(
+  band: IngestedBandInfo,
+): SentinelSwirBandBadge | null {
+  if (!SENTINEL_SWIR_KEYS.has(band.band_key)) {
+    return null;
+  }
+
+  const meta = band.metadata ?? null;
+  const resampled =
+    isTruthyMeta(meta, "resampled") ||
+    isTruthyMeta(meta, "aligned") ||
+    band.asset_path.includes("/aligned/");
+
+  if (resampled) {
+    return {
+      kind: "resampled",
+      label: "Resampleada 20 m → 10 m",
+      method: readMetaString(meta, "resampling_method") ?? "bilinear",
+      reference: readMetaString(meta, "reference_band") ?? "B08",
+    };
+  }
+
+  return {
+    kind: "original",
+    label: "Alineada originalmente",
+  };
+}
+
 export function summarizeIngestRaster(
   bands: IngestedBandInfo[],
 ): IngestRasterSummary {
