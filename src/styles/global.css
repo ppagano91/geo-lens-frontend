@@ -1196,6 +1196,62 @@ body {
   opacity: 0.9;
 }
 
+.radiometry-block {
+  margin: 0.5rem 0 0.75rem;
+  min-width: 0;
+}
+
+.radiometry-block--warn .radiometry-warning {
+  color: #7a5c00;
+}
+
+.radiometry-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.radiometry-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.18rem 0.45rem;
+  border-radius: 0.25rem;
+  background-color: #eef2f5;
+  border: 1px solid #d0d6dc;
+  color: #334155;
+}
+
+.radiometry-badge--ok {
+  background-color: #e7f3ea;
+  border-color: #b7d4be;
+  color: #2f4a36;
+}
+
+.radiometry-badge--muted {
+  font-weight: 500;
+  color: #5b6775;
+}
+
+.radiometry-details {
+  margin-top: 0.25rem;
+}
+
+.radiometry-warning {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #7a5c00;
+}
+
+.ingest-radiometry,
+.results-radiometry {
+  margin: 0.65rem 0 0.85rem;
+}
+
 .ingest-warning-list {
   margin: 0.35rem 0 0;
   padding: 0;

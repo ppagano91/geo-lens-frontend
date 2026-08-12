@@ -10,6 +10,12 @@ import {
 import ConfirmModal from "../ui/ConfirmModal";
 import IconActionButton from "../ui/IconActionButton";
 import CoveragePanel from "./CoveragePanel";
+import RadiometryBadge from "../ui/RadiometryBadge";
+import {
+  extractRadiometryFromMetadata,
+  productLevelLabel,
+  radiometryTypeLabel,
+} from "../../utils/radiometry";
 
 interface ScenePanelProps {
   scenes: SceneListItem[];
@@ -83,6 +89,9 @@ export default function ScenePanel({
   onDeleteScene,
 }: ScenePanelProps) {
   const [pendingDelete, setPendingDelete] = useState<SceneListItem | null>(null);
+  const sceneRadiometry = selectedScene
+    ? extractRadiometryFromMetadata(selectedScene.metadata)
+    : null;
 
   const handleConfirmDelete = async () => {
     if (!pendingDelete) {
@@ -224,6 +233,22 @@ export default function ScenePanel({
               <dd>{selectedScene.source}</dd>
             </div>
             <div className="scene-detail-row">
+              <dt>Sensor</dt>
+              <dd>{selectedScene.source}</dd>
+            </div>
+            <div className="scene-detail-row">
+              <dt>Nivel producto</dt>
+              <dd>
+                {productLevelLabel(sceneRadiometry?.product_level) ?? "—"}
+              </dd>
+            </div>
+            <div className="scene-detail-row">
+              <dt>Radiometría</dt>
+              <dd>
+                {radiometryTypeLabel(sceneRadiometry?.radiometry_type) ?? "—"}
+              </dd>
+            </div>
+            <div className="scene-detail-row">
               <dt>Fecha</dt>
               <dd>{formatDate(selectedScene.acquisition_date)}</dd>
             </div>
@@ -238,6 +263,10 @@ export default function ScenePanel({
               <dd>{selectedScene.bands.length}</dd>
             </div>
           </dl>
+
+          {sceneRadiometry && (
+            <RadiometryBadge radiometry={sceneRadiometry} />
+          )}
 
           {selectedScene.bands.length > 0 && (
             <div className="scene-bands">

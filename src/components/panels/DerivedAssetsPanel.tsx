@@ -21,6 +21,8 @@ import {
 } from "../../types/derivedAsset";
 import type { SceneListItem } from "../../types/scene";
 import IconButton from "../ui/IconButton";
+import RadiometryBadge from "../ui/RadiometryBadge";
+import { extractRadiometryFromMetadata } from "../../utils/radiometry";
 
 interface DerivedAssetsPanelProps {
   scenes: SceneListItem[];
@@ -141,6 +143,14 @@ export default function DerivedAssetsPanel({
   const metadataAsset = useMemo(
     () => assets.find((asset) => asset.id === metadataAssetId) ?? null,
     [assets, metadataAssetId],
+  );
+
+  const metadataRadiometry = useMemo(
+    () =>
+      extractRadiometryFromMetadata(
+        (metadataAsset?.metadata as Record<string, unknown> | null) ?? null,
+      ),
+    [metadataAsset],
   );
 
   const productOptions = useMemo(() => {
@@ -428,6 +438,12 @@ export default function DerivedAssetsPanel({
       {metadataAsset ? (
         <div className="results-metadata">
           <h3 className="aoi-geojson-label">Metadata</h3>
+          {metadataRadiometry && (
+            <div className="results-radiometry">
+              <p className="aoi-field-label">Radiometría</p>
+              <RadiometryBadge radiometry={metadataRadiometry} detailed />
+            </div>
+          )}
           <pre className="results-metadata-pre">
             {JSON.stringify(
               {

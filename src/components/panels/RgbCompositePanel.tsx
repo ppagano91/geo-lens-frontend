@@ -29,6 +29,8 @@ import {
 } from "../../utils/sensors";
 import ExistingDerivedNotice from "./ExistingDerivedNotice";
 import IconButton from "../ui/IconButton";
+import RadiometryBadge from "../ui/RadiometryBadge";
+import { normalizeRadiometry } from "../../utils/radiometry";
 
 interface RgbCompositePanelProps {
   scenes: SceneListItem[];
@@ -380,6 +382,11 @@ export default function RgbCompositePanel({
           <p className="aoi-geojson-label">
             Completa ({previewResult.preset} · {previewResult.status})
           </p>
+          {previewResult.radiometry && (
+            <RadiometryBadge
+              radiometry={normalizeRadiometry(previewResult.radiometry)}
+            />
+          )}
           <p className="aoi-hint" role="status">
             {previewResult.width}×{previewResult.height} ·{" "}
             {previewResult.output.asset_path}
@@ -495,6 +502,11 @@ export default function RgbCompositePanel({
           <p className="aoi-geojson-label">
             AOI ({aoiPreviewResult.preset} · {aoiPreviewResult.status})
           </p>
+          {aoiPreviewResult.radiometry && (
+            <RadiometryBadge
+              radiometry={normalizeRadiometry(aoiPreviewResult.radiometry)}
+            />
+          )}
           <p className="aoi-hint" role="status">
             {aoiPreviewResult.width}×{aoiPreviewResult.height} ·{" "}
             {aoiPreviewResult.output.asset_path}

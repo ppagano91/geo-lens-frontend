@@ -27,6 +27,8 @@ import {
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
 import ExistingDerivedNotice from "./ExistingDerivedNotice";
 import IconButton from "../ui/IconButton";
+import RadiometryBadge from "../ui/RadiometryBadge";
+import { normalizeRadiometry } from "../../utils/radiometry";
 
 interface IndexPreviewPanelProps {
   scenes: SceneListItem[];
@@ -643,6 +645,11 @@ export default function IndexPreviewPanel({
           <p className="aoi-geojson-label">
             Stats ({computeResult.index} · {computeResult.status})
           </p>
+          {computeResult.radiometry && (
+            <RadiometryBadge
+              radiometry={normalizeRadiometry(computeResult.radiometry)}
+            />
+          )}
           <StatsBlock stats={stats} />
           {"output" in computeResult && (
             <p className="aoi-hint" role="status">

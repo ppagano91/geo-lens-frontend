@@ -1,4 +1,6 @@
-/** Tipos para POST /api/v1/ingest/local-scene y /upload-scene (Fase 9A–9K). */
+/** Tipos para POST /api/v1/ingest/local-scene y /upload-scene (Fase 9A–9M). */
+
+import type { RadiometryInfo } from "../utils/radiometry";
 
 export type LocalSceneSource = "landsat-8" | "sentinel-2";
 
@@ -57,6 +59,7 @@ export interface LocalSceneIngestResult {
   warnings: IngestionWarning[];
   available_indices: AvailableIndexInfo[];
   metadata: Record<string, unknown> | null;
+  radiometry?: RadiometryInfo | null;
   overwritten: boolean;
 }
 

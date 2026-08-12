@@ -1,4 +1,6 @@
-/** RGB composite presets and API result types (Fase 9H). */
+/** RGB composite presets and API result types (Fase 9H / 9M). */
+
+import type { RadiometryInfo } from "../utils/radiometry";
 
 export const RGB_PRESET_KEYS = [
   "true_color",
@@ -56,6 +58,7 @@ export interface RgbCompositePreviewResult {
   height: number;
   crs: string | null;
   output: RgbCompositeOutputInfo;
+  radiometry?: RadiometryInfo | null;
 }
 
 export interface RgbCompositeAoiPreviewResult extends RgbCompositePreviewResult {

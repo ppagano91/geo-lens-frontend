@@ -17,6 +17,11 @@ import {
   hasSentinelSwirResolutionWarning,
   summarizeIngestRaster,
 } from "../../utils/ingest";
+import {
+  extractRadiometryFromMetadata,
+  normalizeRadiometry,
+} from "../../utils/radiometry";
+import RadiometryBadge from "../ui/RadiometryBadge";
 
 interface IngestPanelProps {
   form: LocalSceneIngestFormValues;
@@ -48,6 +53,12 @@ export default function IngestPanel({
   const swirWarning =
     result != null && hasSentinelSwirResolutionWarning(result);
   const swirResampled = result != null && hasSentinelSwirResampled(result);
+  const radiometry =
+    result?.radiometry != null
+      ? normalizeRadiometry(result.radiometry)
+      : result
+        ? extractRadiometryFromMetadata(result.metadata)
+        : null;
 
   const handleModeChange = (mode: IngestMode) => {
     onFormChange("mode", mode);
@@ -301,6 +312,13 @@ export default function IngestPanel({
               </div>
             )}
           </dl>
+
+          {radiometry && (
+            <div className="ingest-radiometry">
+              <p className="aoi-field-label">Radiometría</p>
+              <RadiometryBadge radiometry={radiometry} detailed />
+            </div>
+          )}
 
           {(swirWarning || swirResampled) && (
             <div

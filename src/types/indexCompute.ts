@@ -1,3 +1,5 @@
+import type { RadiometryInfo } from "../utils/radiometry";
+
 export const COMPUTABLE_INDEX_KEYS = ["ndvi", "ndwi", "nbr", "ndmi"] as const;
 
 export type ComputableIndexKey = (typeof COMPUTABLE_INDEX_KEYS)[number];
@@ -29,6 +31,7 @@ export interface IndexComputeResult {
   bands_used: Record<string, IndexBandUsed>;
   raster: IndexRasterInfo;
   stats: IndexStats;
+  radiometry?: RadiometryInfo | null;
 }
 
 export interface IndexOutputInfo {
@@ -113,6 +116,7 @@ export interface IndexAoiCropResult {
   raster: IndexAoiCropRasterInfo;
   stats: IndexStats;
   output: IndexAoiCropOutputInfo;
+  radiometry?: RadiometryInfo | null;
 }
 
 export interface IndexAoiCropMapOverlayResult {
