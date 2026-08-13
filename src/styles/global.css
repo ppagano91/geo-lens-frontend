@@ -117,8 +117,10 @@ body,
 #root {
   width: 100%;
   max-width: 100%;
-  height: 100%;
+  height: 100vh;
+  max-height: 100vh;
   overflow: hidden;
+  overflow-x: hidden;
   overscroll-behavior: none;
 }
 
@@ -372,11 +374,13 @@ body {
 
 .sidebar-main {
   width: var(--sidebar-panel-width);
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-panel);
+  overflow: hidden;
 }
 
 .sidebar-panel-toolbar {
@@ -430,7 +434,7 @@ body {
 }
 
 .app-content {
-  flex: 1;
+  flex: 1 1 0%;
   min-height: 0;
   min-width: 0;
   position: relative;
@@ -581,6 +585,7 @@ body {
 .icon-button--with-text {
   width: auto;
   min-width: 2.25rem;
+  max-width: 100%;
   padding: 0 0.55rem;
   gap: 0.35rem;
 }
@@ -1747,17 +1752,17 @@ body {
 
 /* v0.1-P1.1 — responsive layout (desktop / notebook / tablet; not full mobile) */
 
-@media (max-width: 1279px) {
+@media (max-width: 1440px) {
   :root {
-    --sidebar-nav-width: 8.25rem;
-    --sidebar-panel-width: 15.5rem;
+    --sidebar-nav-width: 8.5rem;
+    --sidebar-panel-width: 16rem;
   }
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1024px) {
   :root {
-    --sidebar-nav-width: 7.75rem;
-    --sidebar-panel-width: 14.75rem;
+    --sidebar-nav-width: 8rem;
+    --sidebar-panel-width: 15rem;
   }
 
   .app-header {
@@ -1773,9 +1778,7 @@ body {
   .ingest-mode-toggle {
     gap: 0.4rem;
   }
-}
 
-@media (max-width: 900px) {
   .app-sidebar {
     position: relative;
     z-index: 4;
@@ -1792,6 +1795,7 @@ body {
     bottom: 0;
     z-index: 5;
     width: min(18rem, calc(100vw - var(--sidebar-nav-width) - 0.75rem));
+    max-height: 100%;
     box-shadow: var(--shadow-modal);
     border-right: 1px solid var(--border);
   }
@@ -1810,7 +1814,7 @@ body {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .app-header {
     padding: 0.35rem 0.75rem;
   }
@@ -1821,5 +1825,13 @@ body {
 
   .sidebar-panel-toolbar {
     padding-left: 0.75rem;
+  }
+
+  .app-sidebar:not(.app-sidebar--panel-closed) .sidebar-main {
+    width: min(18rem, calc(100vw - var(--sidebar-nav-width) - 0.5rem));
+  }
+
+  .app-sidebar--collapsed:not(.app-sidebar--panel-closed) .sidebar-main {
+    width: min(18rem, calc(100vw - var(--sidebar-nav-collapsed) - 0.5rem));
   }
 }
