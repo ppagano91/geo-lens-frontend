@@ -1,10 +1,14 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 import { useSidebarCollapsed } from "../../hooks/useSidebarCollapsed";
 import {
   DEFAULT_SIDEBAR_TAB,
+  SIDEBAR_TABS,
+  type ActiveSidebarTab,
   type SidebarTabId,
 } from "../../types/sidebar";
+import IconButton from "../ui/IconButton";
 import SidebarNav from "./SidebarNav";
 
 interface SidebarProps {
@@ -15,8 +19,8 @@ interface SidebarProps {
   composiciones: ReactNode;
   resultados: ReactNode;
   map: ReactNode;
-  activeTab?: SidebarTabId;
-  onActiveTabChange?: (tabId: SidebarTabId) => void;
+  activeTab?: ActiveSidebarTab;
+  onActiveTabChange?: (tabId: ActiveSidebarTab) => void;
 }
 
 export default function Sidebar({
@@ -31,19 +35,27 @@ export default function Sidebar({
   onActiveTabChange,
 }: SidebarProps) {
   const [uncontrolledTab, setUncontrolledTab] =
-    useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
+    useState<ActiveSidebarTab>(DEFAULT_SIDEBAR_TAB);
   const { collapsed, toggleCollapsed } = useSidebarCollapsed();
 
   const isControlled =
     controlledTab !== undefined && onActiveTabChange !== undefined;
   const activeTab = isControlled ? controlledTab : uncontrolledTab;
 
-  const setActiveTab = (tabId: SidebarTabId) => {
+  const selectTab = (next: ActiveSidebarTab) => {
     if (isControlled) {
-      onActiveTabChange(tabId);
+      onActiveTabChange(next);
       return;
     }
-    setUncontrolledTab(tabId);
+    setUncontrolledTab(next);
+  };
+
+  const handleNavChange = (tabId: SidebarTabId) => {
+    selectTab(tabId === activeTab ? null : tabId);
+  };
+
+  const handleClosePanel = () => {
+    selectTab(null);
   };
 
   const sections: Record<SidebarTabId, ReactNode> = {
@@ -56,29 +68,49 @@ export default function Sidebar({
     resultados,
   };
 
+  const activeLabel = activeTab
+    ? SIDEBAR_TABS.find((tab) => tab.id === activeTab)?.label
+    : undefined;
+  const panelOpen = activeTab !== null;
+  const sidebarClass = [
+    "app-sidebar",
+    collapsed ? "app-sidebar--collapsed" : "",
+    panelOpen ? "" : "app-sidebar--panel-closed",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <aside
-      className={
-        collapsed ? "app-sidebar app-sidebar--collapsed" : "app-sidebar"
-      }
-    >
+    <aside className={sidebarClass}>
       <SidebarNav
         activeTab={activeTab}
         collapsed={collapsed}
-        onChange={setActiveTab}
+        onChange={handleNavChange}
         onToggleCollapsed={toggleCollapsed}
       />
 
-      <div className="sidebar-main">
-        <div
-          className="sidebar-section"
-          role="tabpanel"
-          id={`sidebar-panel-${activeTab}`}
-          aria-labelledby={`sidebar-tab-${activeTab}`}
-        >
-          {sections[activeTab]}
+      {panelOpen && activeTab ? (
+        <div className="sidebar-main">
+          <div className="sidebar-panel-toolbar">
+            <h2 className="sidebar-panel-title">{activeLabel}</h2>
+            <IconButton
+              label={`Cerrar ${activeLabel ?? "panel"}`}
+              tone="ghost"
+              onClick={handleClosePanel}
+            >
+              <X size={16} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
+          </div>
+          <div
+            className="sidebar-section"
+            role="tabpanel"
+            id={`sidebar-panel-${activeTab}`}
+            aria-labelledby={`sidebar-tab-${activeTab}`}
+          >
+            {sections[activeTab]}
+          </div>
         </div>
-      </div>
+      ) : null}
     </aside>
   );
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { SidebarTabId } from "../../types/sidebar";
+import type { ActiveSidebarTab } from "../../types/sidebar";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 
@@ -12,8 +12,8 @@ interface AppLayoutProps {
   composiciones: ReactNode;
   resultados: ReactNode;
   map: ReactNode;
-  activeTab: SidebarTabId;
-  onActiveTabChange: (tabId: SidebarTabId) => void;
+  activeTab: ActiveSidebarTab;
+  onActiveTabChange: (tabId: ActiveSidebarTab) => void;
 }
 
 export default function AppLayout({

@@ -140,8 +140,19 @@ export default function MapView({
       return;
     }
 
-    const observer = new ResizeObserver(() => {
+    const resizeMap = () => {
       mapInstance.resize();
+    };
+
+    const scheduleResize = () => {
+      resizeMap();
+      requestAnimationFrame(() => {
+        resizeMap();
+      });
+    };
+
+    const observer = new ResizeObserver(() => {
+      scheduleResize();
     });
     observer.observe(container);
     return () => observer.disconnect();

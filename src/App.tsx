@@ -18,13 +18,13 @@ import { useSpectralIndices } from "./hooks/useSpectralIndices";
 import type { DerivedAssetRead } from "./types/derivedAsset";
 import {
   DEFAULT_SIDEBAR_TAB,
-  type SidebarTabId,
+  type ActiveSidebarTab,
 } from "./types/sidebar";
 
 export default function App() {
   const [basemapId, setBasemapId] = useState(DEFAULT_BASEMAP_ID);
   const [activeTab, setActiveTab] =
-    useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
+    useState<ActiveSidebarTab>(DEFAULT_SIDEBAR_TAB);
   const workspace = useAoiWorkspace();
   const scenes = useScenes();
   const spectralIndices = useSpectralIndices();
@@ -36,7 +36,7 @@ export default function App() {
     ? workspace.saved.aois.find((aoi) => aoi.id === workspace.selectedSavedId)
     : undefined;
 
-  const handleActiveTabChange = (tabId: SidebarTabId) => {
+  const handleActiveTabChange = (tabId: ActiveSidebarTab) => {
     if (tabId !== "aoi" && workspace.drawing.isDrawing) {
       workspace.handleCancelDrawing();
     }

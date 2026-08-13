@@ -23,3 +23,12 @@ export const SIDEBAR_TABS: SidebarTab[] = [
 ];
 
 export const DEFAULT_SIDEBAR_TAB: SidebarTabId = "aoi";
+
+export type ActiveSidebarTab = SidebarTabId | null;
+
+export function sidebarTabActionLabel(
+  label: string,
+  isActive: boolean,
+): string {
+  return isActive ? `Cerrar ${label}` : `Abrir ${label}`;
+}

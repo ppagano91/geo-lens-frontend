@@ -10,8 +10,15 @@ import {
   Upload,
   type LucideIcon,
 } from "lucide-react";
-import type { SidebarTab, SidebarTabId } from "../../types/sidebar";
-import { SIDEBAR_TABS } from "../../types/sidebar";
+import type {
+  ActiveSidebarTab,
+  SidebarTab,
+  SidebarTabId,
+} from "../../types/sidebar";
+import {
+  SIDEBAR_TABS,
+  sidebarTabActionLabel,
+} from "../../types/sidebar";
 
 const TAB_ICONS: Record<SidebarTabId, LucideIcon> = {
   map: Map,
@@ -24,7 +31,7 @@ const TAB_ICONS: Record<SidebarTabId, LucideIcon> = {
 };
 
 interface SidebarNavProps {
-  activeTab: SidebarTabId;
+  activeTab: ActiveSidebarTab;
   collapsed: boolean;
   onChange: (tabId: SidebarTabId) => void;
   onToggleCollapsed: () => void;
@@ -38,7 +45,7 @@ export default function SidebarNav({
   onToggleCollapsed,
   tabs = SIDEBAR_TABS,
 }: SidebarNavProps) {
-  const collapseLabel = collapsed ? "Expandir panel" : "Colapsar panel";
+  const collapseLabel = collapsed ? "Expandir menú" : "Colapsar menú";
 
   return (
     <nav
@@ -51,6 +58,7 @@ export default function SidebarNav({
         onClick={onToggleCollapsed}
         aria-expanded={!collapsed}
         aria-label={collapseLabel}
+        title={collapseLabel}
         data-label={collapseLabel}
       >
         {collapsed ? (
@@ -65,6 +73,7 @@ export default function SidebarNav({
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
           const Icon = TAB_ICONS[tab.id];
+          const actionLabel = sidebarTabActionLabel(tab.label, isActive);
 
           return (
             <button
@@ -73,9 +82,10 @@ export default function SidebarNav({
               role="tab"
               id={`sidebar-tab-${tab.id}`}
               aria-selected={isActive}
-              aria-controls={`sidebar-panel-${tab.id}`}
-              aria-label={tab.label}
-              data-label={tab.label}
+              aria-controls={isActive ? `sidebar-panel-${tab.id}` : undefined}
+              aria-label={actionLabel}
+              title={actionLabel}
+              data-label={actionLabel}
               className={
                 isActive
                   ? "sidebar-nav-item sidebar-nav-item--active"
