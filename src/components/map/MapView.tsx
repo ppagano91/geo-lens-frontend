@@ -140,6 +140,8 @@ export default function MapView({
       return;
     }
 
+    let timeoutId: number | undefined;
+
     const resizeMap = () => {
       mapInstance.resize();
     };
@@ -149,13 +151,21 @@ export default function MapView({
       requestAnimationFrame(() => {
         resizeMap();
       });
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(resizeMap, 80);
     };
 
     const observer = new ResizeObserver(() => {
       scheduleResize();
     });
     observer.observe(container);
-    return () => observer.disconnect();
+    window.addEventListener("resize", scheduleResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", scheduleResize);
+      window.clearTimeout(timeoutId);
+    };
   }, [mapInstance]);
 
   useEffect(() => {
