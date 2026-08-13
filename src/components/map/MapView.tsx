@@ -135,6 +135,20 @@ export default function MapView({
 
   useEffect(() => {
     const mapInstance = map.current;
+    const container = mapContainer.current;
+    if (!mapInstance || !container) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      mapInstance.resize();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [mapInstance]);
+
+  useEffect(() => {
+    const mapInstance = map.current;
     if (!mapInstance || prevBasemapIdRef.current === basemapId) {
       return;
     }

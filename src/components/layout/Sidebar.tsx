@@ -1,10 +1,11 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { useSidebarCollapsed } from "../../hooks/useSidebarCollapsed";
 import {
   DEFAULT_SIDEBAR_TAB,
   type SidebarTabId,
 } from "../../types/sidebar";
-import SidebarTabs from "./SidebarTabs";
+import SidebarNav from "./SidebarNav";
 
 interface SidebarProps {
   aoi: ReactNode;
@@ -31,6 +32,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const [uncontrolledTab, setUncontrolledTab] =
     useState<SidebarTabId>(DEFAULT_SIDEBAR_TAB);
+  const { collapsed, toggleCollapsed } = useSidebarCollapsed();
 
   const isControlled =
     controlledTab !== undefined && onActiveTabChange !== undefined;
@@ -45,34 +47,37 @@ export default function Sidebar({
   };
 
   const sections: Record<SidebarTabId, ReactNode> = {
+    map,
     aoi,
     scenes,
     ingest,
     indices,
     composiciones,
     resultados,
-    map,
   };
 
   return (
-    <aside className="app-sidebar">
-      <SidebarTabs activeTab={activeTab} onChange={setActiveTab} />
+    <aside
+      className={
+        collapsed ? "app-sidebar app-sidebar--collapsed" : "app-sidebar"
+      }
+    >
+      <SidebarNav
+        activeTab={activeTab}
+        collapsed={collapsed}
+        onChange={setActiveTab}
+        onToggleCollapsed={toggleCollapsed}
+      />
 
-      <div
-        className="sidebar-section"
-        role="tabpanel"
-        id={`sidebar-panel-${activeTab}`}
-        aria-labelledby={`sidebar-tab-${activeTab}`}
-      >
-        {sections[activeTab]}
-      </div>
-
-      <div className="sidebar-info">
-        <p className="sidebar-phase">Fase 9I: Catálogo de derivados</p>
-        <p className="sidebar-note">
-          Productos generados quedan registrados en DB (paths + metadata); los
-          archivos siguen en DATA_ROOT.
-        </p>
+      <div className="sidebar-main">
+        <div
+          className="sidebar-section"
+          role="tabpanel"
+          id={`sidebar-panel-${activeTab}`}
+          aria-labelledby={`sidebar-tab-${activeTab}`}
+        >
+          {sections[activeTab]}
+        </div>
       </div>
     </aside>
   );

@@ -1,11 +1,11 @@
 export type SidebarTabId =
+  | "map"
   | "aoi"
   | "scenes"
   | "ingest"
   | "indices"
   | "composiciones"
-  | "resultados"
-  | "map";
+  | "resultados";
 
 export interface SidebarTab {
   id: SidebarTabId;
@@ -13,13 +13,13 @@ export interface SidebarTab {
 }
 
 export const SIDEBAR_TABS: SidebarTab[] = [
-  { id: "aoi", label: "AOI" },
+  { id: "map", label: "Mapa" },
+  { id: "aoi", label: "AOIs" },
   { id: "scenes", label: "Escenas" },
   { id: "ingest", label: "Ingesta" },
   { id: "indices", label: "Índices" },
   { id: "composiciones", label: "Composiciones" },
   { id: "resultados", label: "Resultados" },
-  { id: "map", label: "Mapa" },
 ];
 
 export const DEFAULT_SIDEBAR_TAB: SidebarTabId = "aoi";
