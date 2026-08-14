@@ -622,7 +622,9 @@ export default function MapView({
         opacity={indexOverlayOpacity}
         fitTrigger={indexOverlayFitTrigger}
       />
-      <MapCursorHud zoom={zoom} />
+      {/* <MapCursorHud 
+      zoom={zoom}
+      /> */}
       <div ref={mapContainer} className="map-container" />
     </div>
   );
