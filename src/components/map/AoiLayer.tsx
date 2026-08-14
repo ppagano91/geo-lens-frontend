@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type maplibregl from "maplibre-gl";
-import type { AoiPolygonFeature } from "../../types/aoi";
+import type { AoiDrawingMode, AoiPolygonFeature } from "../../types/aoi";
 import type { LngLat } from "../../utils/geojson";
 import { buildAoiMapData, buildVerticesData } from "../../utils/geojson";
 import {
@@ -21,6 +21,7 @@ interface AoiLayerProps {
   /** Bumps after basemap `setStyle` so sources/layers are re-attached. */
   styleEpoch: number;
   isDrawing: boolean;
+  drawingMode?: AoiDrawingMode;
   draftVertices: LngLat[];
   completedAoi: AoiPolygonFeature | null;
 }
@@ -44,6 +45,7 @@ export default function AoiLayer({
   mapReady,
   styleEpoch,
   isDrawing,
+  drawingMode = "polygon",
   draftVertices,
   completedAoi,
 }: AoiLayerProps) {
@@ -119,12 +121,20 @@ export default function AoiLayer({
     ) as maplibregl.GeoJSONSource | undefined;
 
     polygonSource?.setData(
-      buildAoiMapData(draftVertices, completedAoi, isDrawing),
+      buildAoiMapData(draftVertices, completedAoi, isDrawing, drawingMode),
     );
     verticesSource?.setData(
-      buildVerticesData(draftVertices, completedAoi, isDrawing),
+      buildVerticesData(draftVertices, completedAoi, isDrawing, drawingMode),
     );
-  }, [map, mapReady, styleEpoch, draftVertices, completedAoi, isDrawing]);
+  }, [
+    map,
+    mapReady,
+    styleEpoch,
+    draftVertices,
+    completedAoi,
+    isDrawing,
+    drawingMode,
+  ]);
 
   return null;
 }

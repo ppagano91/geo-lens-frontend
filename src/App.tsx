@@ -77,6 +77,7 @@ export default function App() {
         <AoiPanel
           statusMessage={workspace.statusMessage}
           isDrawing={workspace.drawing.isDrawing}
+          drawingMode={workspace.drawing.drawingMode}
           canFinish={workspace.drawing.canFinish}
           canUndo={workspace.drawing.canUndo}
           pointCount={workspace.drawing.pointCount}
@@ -93,6 +94,7 @@ export default function App() {
           savedAois={workspace.saved.aois}
           onAoiNameChange={workspace.setAoiName}
           onAoiDescriptionChange={workspace.setAoiDescription}
+          onDrawingModeChange={workspace.drawing.setDrawingMode}
           onStartDrawing={workspace.handleStartDrawing}
           onFinishDrawing={workspace.drawing.finishDrawing}
           onCancelDrawing={workspace.handleCancelDrawing}
@@ -250,6 +252,7 @@ export default function App() {
       <MapView
         basemapId={basemapId}
         isDrawing={workspace.drawing.isDrawing}
+        drawingMode={workspace.drawing.drawingMode}
         draftVertices={workspace.drawing.draftVertices}
         pointCount={workspace.drawing.pointCount}
         canFinish={workspace.drawing.canFinish}
@@ -268,6 +271,10 @@ export default function App() {
         onFinishDrawing={workspace.drawing.finishDrawing}
         onCancelDrawing={workspace.handleCancelDrawing}
         onUndoVertex={workspace.drawing.undoLastVertex}
+        onRectangleStart={workspace.drawing.beginRectangle}
+        onRectangleUpdate={workspace.drawing.updateRectangle}
+        onRectangleFinish={workspace.drawing.finishRectangle}
+        onRectangleCommitAt={workspace.drawing.commitRectangleAt}
         onCursorChange={setMapCursor}
         onZoomChange={setMapZoom}
       />

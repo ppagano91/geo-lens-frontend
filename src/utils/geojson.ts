@@ -1,7 +1,31 @@
-import type { AoiPolygonFeature, AoiRecord } from "../types/aoi";
+import type { AoiDrawingMode, AoiPolygonFeature, AoiRecord } from "../types/aoi";
 import type { SceneFootprintGeometry } from "../types/scene";
 
 export type LngLat = [number, number];
+
+/** Minimum lng/lat span so a rectangle is not a degenerate line or point. */
+export const MIN_RECTANGLE_SPAN_DEG = 1e-6;
+
+export function rectangleRingFromCorners(a: LngLat, b: LngLat): LngLat[] {
+  const minLng = Math.min(a[0], b[0]);
+  const maxLng = Math.max(a[0], b[0]);
+  const minLat = Math.min(a[1], b[1]);
+  const maxLat = Math.max(a[1], b[1]);
+
+  return [
+    [minLng, minLat],
+    [maxLng, minLat],
+    [maxLng, maxLat],
+    [minLng, maxLat],
+    [minLng, minLat],
+  ];
+}
+
+export function isValidAoiRectangle(a: LngLat, b: LngLat): boolean {
+  const width = Math.abs(a[0] - b[0]);
+  const height = Math.abs(a[1] - b[1]);
+  return width >= MIN_RECTANGLE_SPAN_DEG && height >= MIN_RECTANGLE_SPAN_DEG;
+}
 
 export function closeRing(vertices: LngLat[]): LngLat[] {
   if (vertices.length === 0) {
@@ -115,6 +139,7 @@ export function buildAoiMapData(
   draftVertices: LngLat[],
   completedAoi: AoiPolygonFeature | null,
   isDrawing: boolean,
+  drawingMode: AoiDrawingMode = "polygon",
 ): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
 
@@ -122,7 +147,16 @@ export function buildAoiMapData(
     features.push(completedAoi);
   }
 
-  if (isDrawing && draftVertices.length >= 2) {
+  if (isDrawing && drawingMode === "rectangle" && draftVertices.length >= 2) {
+    features.push({
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "Polygon",
+        coordinates: [rectangleRingFromCorners(draftVertices[0], draftVertices[1])],
+      },
+    });
+  } else if (isDrawing && draftVertices.length >= 2) {
     features.push({
       type: "Feature",
       properties: {},
@@ -142,9 +176,12 @@ export function buildVerticesData(
   draftVertices: LngLat[],
   completedAoi: AoiPolygonFeature | null,
   isDrawing: boolean,
+  drawingMode: AoiDrawingMode = "polygon",
 ): GeoJSON.FeatureCollection {
   const vertices = isDrawing
-    ? draftVertices
+    ? drawingMode === "rectangle" && draftVertices.length >= 2
+      ? rectangleRingFromCorners(draftVertices[0], draftVertices[1]).slice(0, 4)
+      : draftVertices
     : completedAoi
       ? (completedAoi.geometry.coordinates[0].slice(0, -1) as LngLat[])
       : [];

@@ -1,5 +1,7 @@
 export type AoiDrawingStatus = "idle" | "drawing" | "ready";
 
+export type AoiDrawingMode = "polygon" | "rectangle";
+
 export interface AoiPolygonGeometry {
   type: "Polygon";
   coordinates: [number, number][][];

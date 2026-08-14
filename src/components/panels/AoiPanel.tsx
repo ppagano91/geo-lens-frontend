@@ -9,8 +9,8 @@ import {
   Undo2,
   XCircle,
 } from "lucide-react";
-import type { AoiPolygonFeature, AoiRecord } from "../../types/aoi";
-import { AOI_DRAWING_HELP } from "../../hooks/useAoiDrawing";
+import type { AoiDrawingMode, AoiPolygonFeature, AoiRecord } from "../../types/aoi";
+import { getAoiDrawingHelp } from "../../hooks/useAoiDrawing";
 import {
   IconCheck,
   IconEye,
@@ -25,6 +25,7 @@ import IconButton from "../ui/IconButton";
 interface AoiPanelProps {
   statusMessage: string;
   isDrawing: boolean;
+  drawingMode: AoiDrawingMode;
   canFinish: boolean;
   canUndo: boolean;
   pointCount: number;
@@ -41,6 +42,7 @@ interface AoiPanelProps {
   savedAois: AoiRecord[];
   onAoiNameChange: (value: string) => void;
   onAoiDescriptionChange: (value: string) => void;
+  onDrawingModeChange: (mode: AoiDrawingMode) => void;
   onStartDrawing: () => void;
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
@@ -65,6 +67,7 @@ function formatDate(value: string): string {
 export default function AoiPanel({
   statusMessage,
   isDrawing,
+  drawingMode,
   canFinish,
   canUndo,
   pointCount,
@@ -81,6 +84,7 @@ export default function AoiPanel({
   savedAois,
   onAoiNameChange,
   onAoiDescriptionChange,
+  onDrawingModeChange,
   onStartDrawing,
   onFinishDrawing,
   onCancelDrawing,
@@ -153,6 +157,36 @@ export default function AoiPanel({
         />
       </div>
 
+      <div className="aoi-field">
+        <label className="aoi-field-label" htmlFor="aoi-drawing-mode">
+          Modo de dibujo
+        </label>
+        <select
+          id="aoi-drawing-mode"
+          className="aoi-input"
+          value={drawingMode}
+          onChange={(event) =>
+            onDrawingModeChange(event.target.value as AoiDrawingMode)
+          }
+          disabled={isDrawing || saving}
+        >
+          <option value="polygon">Polígono libre</option>
+          <option value="rectangle">Rectángulo</option>
+        </select>
+        <div className="aoi-drawing-hints-row aoi-mode-help">
+          <p className="aoi-hint">
+            {drawingMode === "rectangle"
+              ? "Click y arrastrar para definir el área. Esc cancela."
+              : "Click para agregar puntos. Enter finaliza. Esc cancela."}
+          </p>
+          <HelpTooltip
+            text={getAoiDrawingHelp(drawingMode)}
+            label="Ayuda de modo de dibujo AOI"
+            placement="bottom"
+          />
+        </div>
+      </div>
+
       <div className="aoi-icon-toolbar" aria-label="Acciones de AOI">
         <div className="aoi-icon-actions" role="group" aria-label="Dibujo">
           <IconButton
@@ -165,19 +199,25 @@ export default function AoiPanel({
             <PenLine size={16} strokeWidth={2} aria-hidden="true" />
           </IconButton>
           <IconButton
-            label="Deshacer último punto"
+            label={
+              drawingMode === "rectangle"
+                ? "Reiniciar rectángulo"
+                : "Deshacer último punto"
+            }
             onClick={onUndoVertex}
             disabled={!canUndo || saving}
           >
             <Undo2 size={16} strokeWidth={2} aria-hidden="true" />
           </IconButton>
-          <IconButton
-            label="Finalizar AOI"
-            onClick={onFinishDrawing}
-            disabled={!canFinish || saving}
-          >
-            <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
-          </IconButton>
+          {drawingMode === "rectangle" ? null : (
+            <IconButton
+              label="Finalizar AOI"
+              onClick={onFinishDrawing}
+              disabled={!canFinish || saving}
+            >
+              <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
+          )}
           <IconButton
             label="Cancelar dibujo"
             onClick={onCancelDrawing}
@@ -225,15 +265,23 @@ export default function AoiPanel({
         <div className="aoi-drawing-hints">
           <div className="aoi-drawing-hints-row">
             <p className="aoi-hint">
-              Puntos actuales: <strong>{pointCount}</strong>
+              {drawingMode === "rectangle"
+                ? pointCount === 0
+                  ? "Click para la primera esquina."
+                  : "Mové el mouse para ver el preview. Soltá o hacé click para finalizar."
+                : (
+                  <>
+                    Puntos actuales: <strong>{pointCount}</strong>
+                  </>
+                )}
             </p>
             <HelpTooltip
-              text={AOI_DRAWING_HELP}
+              text={getAoiDrawingHelp(drawingMode)}
               label="Ayuda de dibujo AOI"
               placement="bottom"
             />
           </div>
-          {!canFinish && (
+          {drawingMode === "polygon" && !canFinish && (
             <p className="aoi-hint">
               Se necesitan al menos 3 puntos para finalizar.
             </p>

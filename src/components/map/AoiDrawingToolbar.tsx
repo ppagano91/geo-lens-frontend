@@ -3,11 +3,13 @@ import {
   Undo2,
   XCircle,
 } from "lucide-react";
-import { AOI_DRAWING_HELP } from "../../hooks/useAoiDrawing";
+import type { AoiDrawingMode } from "../../types/aoi";
+import { getAoiDrawingHelp } from "../../hooks/useAoiDrawing";
 import HelpTooltip from "../ui/HelpTooltip";
 import IconButton from "../ui/IconButton";
 
 interface AoiDrawingToolbarProps {
+  drawingMode: AoiDrawingMode;
   pointCount: number;
   canFinish: boolean;
   canUndo: boolean;
@@ -17,6 +19,7 @@ interface AoiDrawingToolbarProps {
 }
 
 export default function AoiDrawingToolbar({
+  drawingMode,
   pointCount,
   canFinish,
   canUndo,
@@ -24,21 +27,31 @@ export default function AoiDrawingToolbar({
   onCancel,
   onFinish,
 }: AoiDrawingToolbarProps) {
+  const isRectangle = drawingMode === "rectangle";
+
   return (
     <div className="aoi-drawing-toolbar" role="toolbar" aria-label="Dibujo de AOI">
       <div className="aoi-drawing-toolbar-main">
-        <span className="aoi-drawing-toolbar-status">Dibujando AOI</span>
+        <span className="aoi-drawing-toolbar-status">
+          {isRectangle ? "Dibujando rectángulo" : "Dibujando AOI"}
+        </span>
         <span className="aoi-drawing-toolbar-points">
-          {pointCount} punto{pointCount === 1 ? "" : "s"}
+          {isRectangle
+            ? pointCount === 0
+              ? "esperando esquina"
+              : pointCount === 1
+                ? "1 esquina"
+                : "área en preview"
+            : `${pointCount} punto${pointCount === 1 ? "" : "s"}`}
         </span>
         <HelpTooltip
-          text={AOI_DRAWING_HELP}
+          text={getAoiDrawingHelp(drawingMode)}
           label="Ayuda de dibujo AOI"
           placement="bottom"
         />
         <div className="aoi-drawing-toolbar-actions">
           <IconButton
-            label="Deshacer último punto"
+            label={isRectangle ? "Reiniciar rectángulo" : "Deshacer último punto"}
             onClick={onUndo}
             disabled={!canUndo}
           >
@@ -47,14 +60,16 @@ export default function AoiDrawingToolbar({
           <IconButton label="Cancelar dibujo" onClick={onCancel}>
             <XCircle size={16} strokeWidth={2} aria-hidden="true" />
           </IconButton>
-          <IconButton
-            label="Finalizar AOI"
-            tone="primary"
-            onClick={onFinish}
-            disabled={!canFinish}
-          >
-            <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
-          </IconButton>
+          {isRectangle ? null : (
+            <IconButton
+              label="Finalizar AOI"
+              tone="primary"
+              onClick={onFinish}
+              disabled={!canFinish}
+            >
+              <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
+          )}
         </div>
       </div>
     </div>

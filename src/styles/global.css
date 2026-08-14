@@ -538,6 +538,10 @@ body {
   margin-top: 0;
 }
 
+.aoi-mode-help {
+  margin-top: 0.4rem;
+}
+
 .aoi-icon-actions {
   display: flex;
   flex-wrap: wrap;

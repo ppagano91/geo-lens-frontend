@@ -7,7 +7,7 @@ import {
   getBasemapStyle,
   getDefaultBasemap,
 } from "../../config/basemaps";
-import type { AoiPolygonFeature } from "../../types/aoi";
+import type { AoiDrawingMode, AoiPolygonFeature } from "../../types/aoi";
 import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
 import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
@@ -30,6 +30,7 @@ type MapStatus = "loading" | "ready" | "error";
 interface MapViewProps {
   basemapId: string;
   isDrawing: boolean;
+  drawingMode: AoiDrawingMode;
   draftVertices: LngLat[];
   pointCount: number;
   canFinish: boolean;
@@ -48,6 +49,10 @@ interface MapViewProps {
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
   onUndoVertex: () => void;
+  onRectangleStart: (lng: number, lat: number) => void;
+  onRectangleUpdate: (lng: number, lat: number) => void;
+  onRectangleFinish: () => void;
+  onRectangleCommitAt: (lng: number, lat: number) => void;
   onCursorChange?: (cursor: MapCursorPosition | null) => void;
   onZoomChange?: (zoom: number) => void;
 }
@@ -55,6 +60,7 @@ interface MapViewProps {
 export default function MapView({
   basemapId,
   isDrawing,
+  drawingMode,
   draftVertices,
   pointCount,
   canFinish,
@@ -73,6 +79,10 @@ export default function MapView({
   onFinishDrawing,
   onCancelDrawing,
   onUndoVertex,
+  onRectangleStart,
+  onRectangleUpdate,
+  onRectangleFinish,
+  onRectangleCommitAt,
   onCursorChange,
   onZoomChange,
 }: MapViewProps) {
@@ -88,12 +98,22 @@ export default function MapView({
 
   const onMapClickRef = useRef(onMapClick);
   const onFinishDrawingRef = useRef(onFinishDrawing);
+  const onRectangleStartRef = useRef(onRectangleStart);
+  const onRectangleUpdateRef = useRef(onRectangleUpdate);
+  const onRectangleFinishRef = useRef(onRectangleFinish);
+  const onRectangleCommitAtRef = useRef(onRectangleCommitAt);
   const onCursorChangeRef = useRef(onCursorChange);
   const onZoomChangeRef = useRef(onZoomChange);
   onMapClickRef.current = onMapClick;
   onFinishDrawingRef.current = onFinishDrawing;
+  onRectangleStartRef.current = onRectangleStart;
+  onRectangleUpdateRef.current = onRectangleUpdate;
+  onRectangleFinishRef.current = onRectangleFinish;
+  onRectangleCommitAtRef.current = onRectangleCommitAt;
   onCursorChangeRef.current = onCursorChange;
   onZoomChangeRef.current = onZoomChange;
+  const draftCountRef = useRef(draftVertices.length);
+  draftCountRef.current = draftVertices.length;
 
   useEffect(() => {
     if (!mapContainer.current || map.current) {
@@ -232,8 +252,13 @@ export default function MapView({
     }
 
     const canvas = mapInstance.getCanvas();
+    const isRectangle = drawingMode === "rectangle";
     canvas.style.cursor = "crosshair";
     mapInstance.doubleClickZoom.disable();
+    if (isRectangle) {
+      mapInstance.dragPan.disable();
+      mapInstance.boxZoom.disable();
+    }
 
     let spaceHeld = false;
     let pointerDown: { x: number; y: number } | null = null;
@@ -241,6 +266,7 @@ export default function MapView({
     let suppressNextClick = false;
     let altPanActive = false;
     let lastAltPanPoint: { x: number; y: number } | null = null;
+    let rectangleDragging = false;
 
     const setCursor = (value: string) => {
       canvas.style.cursor = value;
@@ -248,6 +274,20 @@ export default function MapView({
 
     const isAltPanButton = (button: number) =>
       button === 1 || button === 2 || (button === 0 && spaceHeld);
+
+    const lngLatFromClient = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      return mapInstance.unproject([clientX - rect.left, clientY - rect.top]);
+    };
+
+    const restoreDragPan = () => {
+      if (isRectangle) {
+        return;
+      }
+      if (!mapInstance.dragPan.isEnabled()) {
+        mapInstance.dragPan.enable();
+      }
+    };
 
     const onWindowKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space" || event.repeat) {
@@ -293,14 +333,25 @@ export default function MapView({
           y: event.originalEvent.clientY,
         };
         suppressNextClick = true;
+        rectangleDragging = false;
         setCursor("grabbing");
-        if (button === 0 && spaceHeld) {
+        if (button === 0 && spaceHeld && !isRectangle) {
           // Left+Space: MapLibre dragPan already pans; just block vertex add.
           return;
         }
-        // Middle / right: custom pan (dragPan is left-button only).
+        // Middle / right, or Left+Space in rectangle mode (dragPan is off).
         mapInstance.dragPan.disable();
         event.originalEvent.preventDefault();
+        return;
+      }
+
+      if (isRectangle && button === 0) {
+        rectangleDragging = true;
+        event.originalEvent.preventDefault();
+        if (draftCountRef.current === 0) {
+          suppressNextClick = true;
+          onRectangleStartRef.current(event.lngLat.lng, event.lngLat.lat);
+        }
       }
     };
 
@@ -314,13 +365,25 @@ export default function MapView({
         }
       }
 
+      if (isRectangle && !altPanActive) {
+        onRectangleUpdateRef.current(event.lngLat.lng, event.lngLat.lat);
+      }
+
       if (!altPanActive || !lastAltPanPoint) {
         return;
       }
 
       const buttons = event.originalEvent.buttons;
-      // Custom pan only for middle (4) or right (2). Left+Space uses MapLibre dragPan.
-      if ((buttons & 2) === 0 && (buttons & 4) === 0) {
+      const leftHeld = (buttons & 1) !== 0;
+      const rightHeld = (buttons & 2) !== 0;
+      const middleHeld = (buttons & 4) !== 0;
+      // Custom pan for middle/right. Left+Space uses MapLibre dragPan unless
+      // rectangle mode disabled it.
+      if (
+        !middleHeld &&
+        !rightHeld &&
+        !(leftHeld && spaceHeld && isRectangle)
+      ) {
         return;
       }
 
@@ -338,14 +401,38 @@ export default function MapView({
       }
       altPanActive = false;
       lastAltPanPoint = null;
-      if (!mapInstance.dragPan.isEnabled()) {
-        mapInstance.dragPan.enable();
-      }
+      restoreDragPan();
       setCursor(spaceHeld ? "grab" : "crosshair");
+    };
+
+    const finishRectangleDragIfNeeded = () => {
+      if (!isRectangle || !rectangleDragging) {
+        return;
+      }
+      rectangleDragging = false;
+      if (movedBeyondThreshold) {
+        onRectangleFinishRef.current();
+        suppressNextClick = true;
+      }
     };
 
     const onMouseUp = () => {
       endAltPan();
+      finishRectangleDragIfNeeded();
+      pointerDown = null;
+    };
+
+    const onWindowMouseMove = (event: MouseEvent) => {
+      if (!isRectangle || !rectangleDragging || altPanActive) {
+        return;
+      }
+      const lngLat = lngLatFromClient(event.clientX, event.clientY);
+      onRectangleUpdateRef.current(lngLat.lng, lngLat.lat);
+    };
+
+    const onWindowMouseUp = () => {
+      endAltPan();
+      finishRectangleDragIfNeeded();
       pointerDown = null;
     };
 
@@ -362,16 +449,26 @@ export default function MapView({
         movedBeyondThreshold = false;
         return;
       }
+      if (isRectangle) {
+        onRectangleCommitAtRef.current(event.lngLat.lng, event.lngLat.lat);
+        return;
+      }
       onMapClickRef.current(event.lngLat.lng, event.lngLat.lat);
     };
 
     const onDblClick = (event: maplibregl.MapMouseEvent) => {
       event.preventDefault();
-      onFinishDrawingRef.current();
+      if (!isRectangle) {
+        onFinishDrawingRef.current();
+      }
     };
 
     window.addEventListener("keydown", onWindowKeyDown);
     window.addEventListener("keyup", onWindowKeyUp);
+    if (isRectangle) {
+      window.addEventListener("mousemove", onWindowMouseMove);
+      window.addEventListener("mouseup", onWindowMouseUp);
+    }
     canvas.addEventListener("contextmenu", onContextMenu);
     mapInstance.on("mousedown", onMouseDown);
     mapInstance.on("mousemove", onMouseMove);
@@ -382,6 +479,8 @@ export default function MapView({
     return () => {
       window.removeEventListener("keydown", onWindowKeyDown);
       window.removeEventListener("keyup", onWindowKeyUp);
+      window.removeEventListener("mousemove", onWindowMouseMove);
+      window.removeEventListener("mouseup", onWindowMouseUp);
       canvas.removeEventListener("contextmenu", onContextMenu);
       mapInstance.off("mousedown", onMouseDown);
       mapInstance.off("mousemove", onMouseMove);
@@ -391,10 +490,13 @@ export default function MapView({
       if (!mapInstance.dragPan.isEnabled()) {
         mapInstance.dragPan.enable();
       }
+      if (!mapInstance.boxZoom.isEnabled()) {
+        mapInstance.boxZoom.enable();
+      }
       mapInstance.doubleClickZoom.enable();
       canvas.style.cursor = "";
     };
-  }, [isDrawing, status]);
+  }, [isDrawing, drawingMode, status]);
 
   useEffect(() => {
     const mapInstance = map.current;
@@ -485,6 +587,7 @@ export default function MapView({
       )}
       {isDrawing && (
         <AoiDrawingToolbar
+          drawingMode={drawingMode}
           pointCount={pointCount}
           canFinish={canFinish}
           canUndo={canUndo}
@@ -498,6 +601,7 @@ export default function MapView({
         mapReady={status === "ready"}
         styleEpoch={styleEpoch}
         isDrawing={isDrawing}
+        drawingMode={drawingMode}
         draftVertices={draftVertices}
         completedAoi={completedAoi}
       />
