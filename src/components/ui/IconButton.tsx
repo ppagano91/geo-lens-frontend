@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 export type IconButtonTone = "default" | "primary" | "danger" | "ghost";
 
@@ -12,35 +12,43 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /** Compact icon button with aria-label, title, and focusable keyboard support. */
-export default function IconButton({
-  label,
-  text,
-  tone = "default",
-  children,
-  className,
-  type = "button",
-  ...rest
-}: IconButtonProps) {
-  const toneClass =
-    tone === "primary"
-      ? " icon-button--primary"
-      : tone === "danger"
-        ? " icon-button--danger"
-        : tone === "ghost"
-          ? " icon-button--ghost"
-          : "";
-  const withTextClass = text ? " icon-button--with-text" : "";
+const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  function IconButton(
+    {
+      label,
+      text,
+      tone = "default",
+      children,
+      className,
+      type = "button",
+      ...rest
+    },
+    ref,
+  ) {
+    const toneClass =
+      tone === "primary"
+        ? " icon-button--primary"
+        : tone === "danger"
+          ? " icon-button--danger"
+          : tone === "ghost"
+            ? " icon-button--ghost"
+            : "";
+    const withTextClass = text ? " icon-button--with-text" : "";
 
-  return (
-    <button
-      type={type}
-      className={`icon-button${toneClass}${withTextClass}${className ? ` ${className}` : ""}`}
-      title={label}
-      aria-label={label}
-      {...rest}
-    >
-      {children}
-      {text ? <span className="icon-button-text">{text}</span> : null}
-    </button>
-  );
-}
+    return (
+      <button
+        ref={ref}
+        type={type}
+        className={`icon-button${toneClass}${withTextClass}${className ? ` ${className}` : ""}`}
+        title={label}
+        aria-label={label}
+        {...rest}
+      >
+        {children}
+        {text ? <span className="icon-button-text">{text}</span> : null}
+      </button>
+    );
+  },
+);
+
+export default IconButton;

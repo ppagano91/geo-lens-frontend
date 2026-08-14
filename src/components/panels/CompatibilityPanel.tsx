@@ -5,10 +5,14 @@ import {
   getCompatibilityMessage,
   resolveCompatibilityStatus,
 } from "../../utils/indexCompatibility";
+import { extractRadiometryFromMetadata } from "../../utils/radiometry";
 import {
   detectSensorFromScene,
   getSensorLabel,
 } from "../../utils/sensors";
+import SectionCard from "../ui/SectionCard";
+import StatusBadge from "../ui/StatusBadge";
+import RadiometryBadge from "../ui/RadiometryBadge";
 
 interface CompatibilityPanelProps {
   selectedIndex: SpectralIndexDefinition | null;
@@ -32,75 +36,57 @@ export default function CompatibilityPanel({
   const sensorLabel = selectedScene
     ? getSensorLabel(detectSensorFromScene(selectedScene))
     : null;
+  const radiometry = selectedScene
+    ? extractRadiometryFromMetadata(selectedScene.metadata)
+    : null;
 
-  const statusClass =
-    status === "compatible"
-      ? "compatibility-status--ok"
-      : status === "incompatible"
-        ? "compatibility-status--warn"
-        : "compatibility-status--neutral";
+  const statusTone =
+    status === "compatible" ? "ok" : status === "incompatible" ? "warn" : "muted";
 
   return (
-    <section
-      className="compatibility-panel"
-      aria-label="Compatibilidad índice / escena"
-    >
-      <p className="aoi-geojson-label">Compatibilidad índice / escena</p>
-
-      <p className={`compatibility-status ${statusClass}`} role="status">
+    <SectionCard title="Compatibilidad">
+      <div className="status-badge-row">
+        <StatusBadge
+          label={
+            status === "compatible"
+              ? "Compatible"
+              : status === "incompatible"
+                ? "No compatible"
+                : "Sin evaluar"
+          }
+          tone={statusTone}
+          title={message}
+        />
+        {sensorLabel ? <StatusBadge label={sensorLabel} /> : null}
+      </div>
+      {radiometry ? <RadiometryBadge radiometry={radiometry} /> : null}
+      <p className="aoi-hint" role="status">
         {message}
       </p>
-
-      <dl className="scene-detail-fields">
-        <div className="scene-detail-row">
-          <dt>Escena</dt>
-          <dd>{selectedScene?.name ?? "Ninguna"}</dd>
-        </div>
-        <div className="scene-detail-row">
-          <dt>Sensor</dt>
-          <dd>{sensorLabel ?? "—"}</dd>
-        </div>
-        <div className="scene-detail-row">
-          <dt>Índice</dt>
-          <dd>
-            {selectedIndex
-              ? `${selectedIndex.key.toUpperCase()} — ${selectedIndex.name}`
-              : "Ninguno"}
-          </dd>
-        </div>
-        {result && (
-          <>
-            <div className="scene-detail-row">
-              <dt>Requeridas</dt>
-              <dd>{formatBandList(result.required_bands)}</dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Disponibles</dt>
-              <dd>{formatBandList(result.available_bands)}</dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Faltantes</dt>
-              <dd
-                className={
-                  result.missing_bands.length > 0
-                    ? "compatibility-missing"
-                    : undefined
-                }
-              >
-                {formatBandList(result.missing_bands)}
-              </dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Estado</dt>
-              <dd>
-                <span className={`compatibility-badge ${statusClass}`}>
-                  {result.compatible ? "Compatible" : "No compatible"}
-                </span>
-              </dd>
-            </div>
-          </>
-        )}
-      </dl>
-    </section>
+      {result && (
+        <dl className="scene-detail-fields">
+          <div className="scene-detail-row">
+            <dt>Requeridas</dt>
+            <dd>{formatBandList(result.required_bands)}</dd>
+          </div>
+          <div className="scene-detail-row">
+            <dt>Disponibles</dt>
+            <dd>{formatBandList(result.available_bands)}</dd>
+          </div>
+          <div className="scene-detail-row">
+            <dt>Faltantes</dt>
+            <dd
+              className={
+                result.missing_bands.length > 0
+                  ? "compatibility-missing"
+                  : undefined
+              }
+            >
+              {formatBandList(result.missing_bands)}
+            </dd>
+          </div>
+        </dl>
+      )}
+    </SectionCard>
   );
 }

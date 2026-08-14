@@ -18,20 +18,16 @@ export default function ExistingDerivedNotice({
 
   return (
     <div className="results-existing-notice" role="status">
-      <p className="aoi-hint">
-        Ya existe un resultado generado para esta escena/AOI (
-        <code>{existing.product_key}</code>).
+      <p className="aoi-hint" title={regenerateHint}>
+        Ya existe <code>{existing.product_key}</code>.
       </p>
-      <div className="aoi-actions">
-        <button
-          type="button"
-          className="results-link-button"
-          onClick={onViewInResults}
-        >
-          Ver en Resultados
-        </button>
-      </div>
-      <p className="aoi-hint">{regenerateHint}</p>
+      <button
+        type="button"
+        className="results-link-button"
+        onClick={onViewInResults}
+      >
+        Ver en Resultados
+      </button>
     </div>
   );
 }

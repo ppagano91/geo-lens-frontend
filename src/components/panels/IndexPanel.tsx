@@ -1,3 +1,4 @@
+import { RefreshCw } from "lucide-react";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
 import type { AoiRecord } from "../../types/aoi";
@@ -10,6 +11,9 @@ import {
 } from "../../utils/sensors";
 import CompatibilityPanel from "./CompatibilityPanel";
 import IndexPreviewPanel from "./IndexPreviewPanel";
+import CollapsibleSection from "../ui/CollapsibleSection";
+import IconButton from "../ui/IconButton";
+import SectionCard from "../ui/SectionCard";
 
 interface IndexPanelProps {
   indices: SpectralIndexDefinition[];
@@ -159,17 +163,130 @@ export default function IndexPanel({
         : selectedIndex.required_bands;
 
   return (
-    <section className="index-panel" aria-label="Índices espectrales">
+    <section className="index-panel panel-stack" aria-label="Índices espectrales">
       <p className="sidebar-label">Índices</p>
 
-      <IndexPreviewPanel
-        scenes={scenes}
+      {error && (
+        <p className="aoi-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <SectionCard
+        title="Selección"
+        actions={
+          <IconButton
+            label={listLoading ? "Cargando índices..." : "Refrescar índices"}
+            onClick={onRefreshList}
+            disabled={listLoading || detailLoading}
+          >
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={listLoading ? "icon-spin" : undefined}
+            />
+          </IconButton>
+        }
+      >
+        <div className="aoi-field">
+          <label className="aoi-field-label" htmlFor="index-preview-scene">
+            Escena
+          </label>
+          <select
+            id="index-preview-scene"
+            className="aoi-input"
+            value={selectedSceneId ?? ""}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (value) {
+                void onSelectScene(value);
+              }
+            }}
+            disabled={scenesLoading || sceneDetailLoading}
+          >
+            <option value="">
+              {scenesLoading ? "Cargando escenas..." : "Seleccioná una escena"}
+            </option>
+            {scenes.map((scene) => (
+              <option key={scene.id} value={scene.id}>
+                {scene.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="aoi-field">
+          <label className="aoi-field-label" htmlFor="index-category-filter">
+            Categoría
+          </label>
+          <select
+            id="index-category-filter"
+            className="aoi-input"
+            value={categoryFilter}
+            onChange={(event) => onCategoryFilterChange(event.target.value)}
+            disabled={listLoading || detailLoading}
+          >
+            {CATEGORY_OPTIONS.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="aoi-field">
+          <p className="aoi-field-label" id="index-list-label">
+            Índice
+          </p>
+          {listLoading && indices.length === 0 && (
+            <p className="aoi-hint" role="status">
+              Cargando índices...
+            </p>
+          )}
+          {!listLoading && indices.length === 0 && (
+            <p className="aoi-hint" role="status">
+              Sin índices disponibles.
+            </p>
+          )}
+          {indices.length > 0 && (
+            <ul className="compact-select-list" aria-labelledby="index-list-label">
+              {indices.map((index) => {
+                const isSelected = selectedIndexKey === index.key;
+                return (
+                  <li key={index.id}>
+                    <button
+                      type="button"
+                      className={`compact-select-item${isSelected ? " compact-select-item--active" : ""}`}
+                      onClick={() => void onSelectIndex(index.key)}
+                      disabled={detailLoading}
+                      aria-pressed={isSelected}
+                    >
+                      <span className="compact-select-item-name">
+                        {index.key.toUpperCase()}
+                      </span>
+                      <span className="compact-select-item-meta">
+                        {detailLoading && isSelected
+                          ? "Cargando..."
+                          : formatCategory(index.category)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </SectionCard>
+
+      <CompatibilityPanel
+        selectedIndex={selectedIndex}
         selectedScene={selectedScene}
+      />
+
+      <IndexPreviewPanel
         selectedSceneId={selectedSceneId}
         selectedIndex={selectedIndex}
-        scenesLoading={scenesLoading}
         sceneDetailLoading={sceneDetailLoading}
-        onSelectScene={onSelectScene}
         savedAois={savedAois}
         selectedAoiId={selectedAoiId}
         selectedAoiName={selectedAoiName}
@@ -188,118 +305,18 @@ export default function IndexPanel({
         onDerivedCatalogChanged={onDerivedCatalogChanged}
       />
 
-      <CompatibilityPanel
-        selectedIndex={selectedIndex}
-        selectedScene={selectedScene}
-      />
-
-      {error && (
-        <p className="aoi-error" role="alert">
-          {error}
-        </p>
-      )}
-
-      <div className="index-filter">
-        <label className="aoi-field-label" htmlFor="index-category-filter">
-          Categoría
-        </label>
-        <select
-          id="index-category-filter"
-          className="aoi-input"
-          value={categoryFilter}
-          onChange={(event) => onCategoryFilterChange(event.target.value)}
-          disabled={listLoading || detailLoading}
-        >
-          {CATEGORY_OPTIONS.map((option) => (
-            <option key={option.value || "all"} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="aoi-actions">
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={onRefreshList}
-          disabled={listLoading || detailLoading}
-        >
-          {listLoading ? "Cargando índices..." : "Refrescar índices"}
-        </button>
-      </div>
-
-      <div className="index-list">
-        {listLoading && indices.length === 0 && (
-          <p className="aoi-hint" role="status">
-            Cargando índices...
-          </p>
-        )}
-
-        {!listLoading && indices.length === 0 && (
-          <p className="aoi-hint" role="status">
-            Sin índices disponibles.
-          </p>
-        )}
-
-        {indices.length > 0 && (
-          <ul className="aoi-saved-items">
-            {indices.map((index) => {
-              const isSelected = selectedIndexKey === index.key;
-
-              return (
-                <li
-                  key={index.id}
-                  className={`aoi-saved-item${isSelected ? " aoi-saved-item--selected" : ""}`}
-                >
-                  <div className="aoi-saved-item-header">
-                    <strong className="aoi-saved-item-name">
-                      {index.key.toUpperCase()}
-                    </strong>
-                    <span className="aoi-saved-item-date">
-                      {formatCategory(index.category)}
-                    </span>
-                  </div>
-                  <p className="index-item-meta">{index.name}</p>
-                  <div className="aoi-saved-item-actions">
-                    <button
-                      type="button"
-                      className="aoi-button aoi-button--small"
-                      onClick={() => void onSelectIndex(index.key)}
-                      disabled={detailLoading}
-                    >
-                      {detailLoading && isSelected ? "Cargando..." : "Seleccionar"}
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
       {selectedIndex && (
-        <div className="index-detail">
-          <p className="aoi-geojson-label">Índice seleccionado</p>
-
-          <dl className="scene-detail-fields">
-            <div className="scene-detail-row">
-              <dt>Key</dt>
-              <dd>{selectedIndex.key}</dd>
-            </div>
+        <CollapsibleSection title="Detalle del índice" defaultOpen={false}>
+          <dl className="scene-detail-fields index-detail">
             <div className="scene-detail-row">
               <dt>Nombre</dt>
               <dd>{selectedIndex.name}</dd>
             </div>
-            <div className="scene-detail-row">
-              <dt>Categoría</dt>
-              <dd>{formatCategory(selectedIndex.category)}</dd>
-            </div>
-            <div className="scene-detail-row">
+            <div className="scene-detail-row scene-detail-row--wrap">
               <dt>Descripción</dt>
               <dd>{selectedIndex.description}</dd>
             </div>
-            <div className="scene-detail-row">
+            <div className="scene-detail-row scene-detail-row--wrap">
               <dt>Fórmula</dt>
               <dd>
                 <code className="index-formula">{selectedIndex.formula}</code>
@@ -318,12 +335,12 @@ export default function IndexPanel({
                 <dd>{formatOutputRange(selectedIndex.output_range)}</dd>
               </div>
             )}
-            <div className="scene-detail-row">
+            <div className="scene-detail-row scene-detail-row--wrap">
               <dt>Interpretación</dt>
               <dd>{selectedIndex.interpretation}</dd>
             </div>
           </dl>
-        </div>
+        </CollapsibleSection>
       )}
     </section>
   );

@@ -1,5 +1,7 @@
 import { useSpatialCoverage } from "../../hooks/useSpatialCoverage";
 import type { SpatialCoverageUiStatus } from "../../types/spatialCoverage";
+import CollapsibleSection from "../ui/CollapsibleSection";
+import StatusBadge from "../ui/StatusBadge";
 
 interface CoveragePanelProps {
   selectedAoiId: string | null;
@@ -42,20 +44,16 @@ function resolveMessage(
   return apiMessage ?? "Seleccioná un AOI y una escena para evaluar cobertura.";
 }
 
-function statusClassName(status: SpatialCoverageUiStatus): string {
+function statusTone(
+  status: SpatialCoverageUiStatus,
+): "ok" | "warn" | "muted" | "neutral" {
   if (status === "full") {
-    return "compatibility-status--ok";
+    return "ok";
   }
-
-  if (status === "partial" || status === "error") {
-    return "compatibility-status--warn";
+  if (status === "partial" || status === "error" || status === "none") {
+    return "warn";
   }
-
-  if (status === "none") {
-    return "compatibility-status--warn";
-  }
-
-  return "compatibility-status--neutral";
+  return "muted";
 }
 
 function formatStatusLabel(status: SpatialCoverageUiStatus): string {
@@ -93,19 +91,20 @@ export default function CoveragePanel({
     result?.message ?? null,
     error,
   );
-  const statusClass = statusClassName(status);
 
   return (
-    <section
-      className="compatibility-panel"
-      aria-label="Cobertura espacial AOI / escena"
+    <CollapsibleSection
+      title="Footprint / acciones"
+      defaultOpen={false}
+      badge={
+        selectedAoiId && selectedSceneId ? (
+          <StatusBadge label={formatStatusLabel(status)} tone={statusTone(status)} />
+        ) : null
+      }
     >
-      <p className="aoi-geojson-label">Cobertura espacial AOI / escena</p>
-
-      <p className={`compatibility-status ${statusClass}`} role="status">
+      <p className="aoi-hint" role="status">
         {message}
       </p>
-
       <dl className="scene-detail-fields">
         <div className="scene-detail-row">
           <dt>AOI</dt>
@@ -117,14 +116,6 @@ export default function CoveragePanel({
         </div>
         {result && (
           <>
-            <div className="scene-detail-row">
-              <dt>Estado</dt>
-              <dd>
-                <span className={`compatibility-badge ${statusClass}`}>
-                  {formatStatusLabel(status)}
-                </span>
-              </dd>
-            </div>
             <div className="scene-detail-row">
               <dt>Intersecta</dt>
               <dd>{result.intersects ? "Sí" : "No"}</dd>
@@ -140,6 +131,6 @@ export default function CoveragePanel({
           </>
         )}
       </dl>
-    </section>
+    </CollapsibleSection>
   );
 }

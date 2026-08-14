@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
 import type { BandRead } from "../../types/band";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import {
@@ -9,12 +10,16 @@ import {
 } from "../ui/ActionIcons";
 import ConfirmModal from "../ui/ConfirmModal";
 import IconActionButton from "../ui/IconActionButton";
+import IconButton from "../ui/IconButton";
 import CoveragePanel from "./CoveragePanel";
 import RadiometryBadge from "../ui/RadiometryBadge";
+import CollapsibleSection from "../ui/CollapsibleSection";
+import MetadataBlock from "../ui/MetadataBlock";
+import SectionCard from "../ui/SectionCard";
+import StatusBadge from "../ui/StatusBadge";
 import {
   extractRadiometryFromMetadata,
   productLevelLabel,
-  radiometryTypeLabel,
 } from "../../utils/radiometry";
 
 interface ScenePanelProps {
@@ -64,10 +69,12 @@ function BandItem({ band }: { band: BandRead }) {
         <span className="scene-band-name">{band.band_name}</span>
       </div>
       <div className="scene-band-meta">
-        {band.resolution && <span>Resolución: {band.resolution} m</span>}
-        {band.dtype && <span>Tipo: {band.dtype}</span>}
+        {band.resolution && <span>{band.resolution} m</span>}
+        {band.dtype && <span>{band.dtype}</span>}
       </div>
-      <p className="scene-band-path">{band.asset_path}</p>
+      <p className="scene-band-path" title={band.asset_path}>
+        {band.asset_path}
+      </p>
     </li>
   );
 }
@@ -88,7 +95,9 @@ export default function ScenePanel({
   onDeselectScene,
   onDeleteScene,
 }: ScenePanelProps) {
-  const [pendingDelete, setPendingDelete] = useState<SceneListItem | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<SceneListItem | null>(
+    null,
+  );
   const sceneRadiometry = selectedScene
     ? extractRadiometryFromMetadata(selectedScene.metadata)
     : null;
@@ -107,15 +116,8 @@ export default function ScenePanel({
   };
 
   return (
-    <section className="scene-panel" aria-label="Escenas satelitales">
+    <section className="scene-panel panel-stack" aria-label="Escenas satelitales">
       <p className="sidebar-label">Escenas</p>
-
-      <CoveragePanel
-        selectedAoiId={selectedAoiId}
-        selectedAoiName={selectedAoiName}
-        selectedSceneId={selectedSceneId}
-        selectedSceneName={selectedScene?.name ?? null}
-      />
 
       {error && (
         <p className="aoi-error" role="alert">
@@ -124,23 +126,30 @@ export default function ScenePanel({
       )}
 
       {successMessage && (
-        <p className="compatibility-status compatibility-status--ok" role="status">
+        <p
+          className="compatibility-status compatibility-status--ok"
+          role="status"
+        >
           {successMessage}
         </p>
       )}
 
-      <div className="aoi-actions">
-        <button
-          type="button"
-          className="aoi-button aoi-button--secondary"
-          onClick={onRefreshList}
-          disabled={listLoading || detailLoading}
-        >
-          {listLoading ? "Cargando escenas..." : "Refrescar escenas"}
-        </button>
-      </div>
-
-      <div className="scene-list">
+      <SectionCard
+        title="Lista de escenas"
+        actions={
+          <IconButton
+            label={listLoading ? "Cargando escenas..." : "Refrescar escenas"}
+            onClick={onRefreshList}
+            disabled={listLoading || detailLoading}
+          >
+            <RefreshCw
+              size={16}
+              aria-hidden="true"
+              className={listLoading ? "icon-spin" : undefined}
+            />
+          </IconButton>
+        }
+      >
         {listLoading && scenes.length === 0 && (
           <p className="aoi-hint" role="status">
             Cargando escenas...
@@ -173,9 +182,9 @@ export default function ScenePanel({
                       {formatDate(scene.acquisition_date)}
                     </span>
                   </div>
-                  <p className="scene-item-meta">
-                    Fuente: {scene.source}
-                    {cloudCover && ` · Nubosidad: ${cloudCover}`}
+                  <p className="compact-meta-line">
+                    {scene.source}
+                    {cloudCover ? ` · ${cloudCover}` : ""}
                   </p>
                   <div className="aoi-saved-item-actions">
                     <IconActionButton
@@ -217,36 +226,26 @@ export default function ScenePanel({
             })}
           </ul>
         )}
-      </div>
+      </SectionCard>
 
       {selectedScene && (
-        <div className="scene-detail">
-          <p className="aoi-geojson-label">Detalle de escena</p>
-
+        <SectionCard title="Detalle de escena">
+          <div className="status-badge-row">
+            <StatusBadge label={selectedScene.source} />
+            {productLevelLabel(sceneRadiometry?.product_level) ? (
+              <StatusBadge
+                label={productLevelLabel(sceneRadiometry?.product_level) ?? ""}
+                tone="muted"
+              />
+            ) : null}
+          </div>
+          {sceneRadiometry && (
+            <RadiometryBadge radiometry={sceneRadiometry} />
+          )}
           <dl className="scene-detail-fields">
             <div className="scene-detail-row">
               <dt>Nombre</dt>
               <dd title={selectedScene.name}>{selectedScene.name}</dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Fuente</dt>
-              <dd>{selectedScene.source}</dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Sensor</dt>
-              <dd>{selectedScene.source}</dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Nivel producto</dt>
-              <dd>
-                {productLevelLabel(sceneRadiometry?.product_level) ?? "—"}
-              </dd>
-            </div>
-            <div className="scene-detail-row">
-              <dt>Radiometría</dt>
-              <dd>
-                {radiometryTypeLabel(sceneRadiometry?.radiometry_type) ?? "—"}
-              </dd>
             </div>
             <div className="scene-detail-row">
               <dt>Fecha</dt>
@@ -254,32 +253,49 @@ export default function ScenePanel({
             </div>
             <div className="scene-detail-row">
               <dt>Nubosidad</dt>
-              <dd>
-                {formatCloudCover(selectedScene.cloud_cover) ?? "—"}
-              </dd>
+              <dd>{formatCloudCover(selectedScene.cloud_cover) ?? "—"}</dd>
             </div>
             <div className="scene-detail-row">
               <dt>Bandas</dt>
               <dd>{selectedScene.bands.length}</dd>
             </div>
           </dl>
-
-          {sceneRadiometry && (
-            <RadiometryBadge radiometry={sceneRadiometry} />
-          )}
-
-          {selectedScene.bands.length > 0 && (
-            <div className="scene-bands">
-              <p className="aoi-geojson-label">Bandas</p>
-              <ul className="scene-band-items">
-                {selectedScene.bands.map((band) => (
-                  <BandItem key={band.id} band={band} />
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+        </SectionCard>
       )}
+
+      {selectedScene && selectedScene.bands.length > 0 && (
+        <CollapsibleSection
+          title="Bandas registradas"
+          defaultOpen={false}
+          badge={
+            <StatusBadge
+              label={String(selectedScene.bands.length)}
+              tone="neutral"
+            />
+          }
+        >
+          <ul className="scene-band-items">
+            {selectedScene.bands.map((band) => (
+              <BandItem key={band.id} band={band} />
+            ))}
+          </ul>
+        </CollapsibleSection>
+      )}
+
+      {selectedScene && (
+        <MetadataBlock
+          title="Metadata técnica"
+          data={selectedScene.metadata}
+          defaultOpen={false}
+        />
+      )}
+
+      <CoveragePanel
+        selectedAoiId={selectedAoiId}
+        selectedAoiName={selectedAoiName}
+        selectedSceneId={selectedSceneId}
+        selectedSceneName={selectedScene?.name ?? null}
+      />
 
       <ConfirmModal
         open={pendingDelete !== null}

@@ -18,7 +18,6 @@ import {
   type ActiveIndexOverlay,
 } from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
-import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
 import {
   isComputableIndexKey,
@@ -26,18 +25,17 @@ import {
 } from "../../types/indexCompute";
 import type { SpectralIndexDefinition } from "../../types/spectralIndex";
 import ExistingDerivedNotice from "./ExistingDerivedNotice";
+import ActionRow from "../ui/ActionRow";
+import CollapsibleSection from "../ui/CollapsibleSection";
 import IconButton from "../ui/IconButton";
 import RadiometryBadge from "../ui/RadiometryBadge";
+import SectionCard from "../ui/SectionCard";
 import { normalizeRadiometry } from "../../utils/radiometry";
 
 interface IndexPreviewPanelProps {
-  scenes: SceneListItem[];
-  selectedScene: SceneRead | null;
   selectedSceneId: string | null;
   selectedIndex: SpectralIndexDefinition | null;
-  scenesLoading: boolean;
   sceneDetailLoading: boolean;
-  onSelectScene: (sceneId: string) => void;
   savedAois: AoiRecord[];
   selectedAoiId: string | null;
   selectedAoiName: string | null;
@@ -96,13 +94,9 @@ function StatsBlock({ stats }: { stats: IndexStats }) {
 }
 
 export default function IndexPreviewPanel({
-  scenes,
-  selectedScene,
   selectedSceneId,
   selectedIndex,
-  scenesLoading,
   sceneDetailLoading,
-  onSelectScene,
   savedAois,
   selectedAoiId,
   selectedAoiName,
@@ -159,7 +153,6 @@ export default function IndexPreviewPanel({
   } = useIndexCompute(selectedSceneId, indexKey);
 
   const crop = useIndexAoiCrop(selectedSceneId, indexKey, selectedAoiId);
-  // Overwrite checkbox UI is currently hidden; keep false until re-enabled.
   const cropOverwrite = false;
 
   const disabled = loading || sceneDetailLoading || !canAct;
@@ -167,7 +160,6 @@ export default function IndexPreviewPanel({
   const cropDisabled =
     disabled || crop.loading || !selectedAoiId || mapOverlayLoading;
 
-  // Never treat null===null as loading; never spin on a disabled button.
   const loadingFullOverlay =
     !addFullToMapDisabled &&
     fullOverlayId != null &&
@@ -205,206 +197,206 @@ export default function IndexPreviewPanel({
     mapOverlay.productKey === indexKey &&
     mapOverlay.aoiId === selectedAoiId;
 
+  const hasResult = Boolean(stats || previewResult || previewUrl || imageError);
+
   return (
-    <section className="index-preview-panel" aria-label="Preview de índices">
-      <p className="aoi-geojson-label">Cálculo y preview</p>
+    <div className="panel-stack-contents" aria-label="Cálculo y preview de índices">
+      <SectionCard title="Acciones">
+        {!selectedSceneId && (
+          <p className="aoi-hint" role="status">
+            Seleccioná una escena para calcular índices.
+          </p>
+        )}
+        {selectedSceneId && !selectedIndex && (
+          <p className="aoi-hint" role="status">
+            Seleccioná un índice (NDVI, NDWI, NBR o NDMI).
+          </p>
+        )}
+        {selectedIndex && !computable && (
+          <p className="aoi-hint" role="status">
+            El cálculo local solo soporta NDVI, NDWI, NBR y NDMI.
+          </p>
+        )}
 
-      <div className="index-filter">
-        <label className="aoi-field-label" htmlFor="index-preview-scene">
-          Escena
-        </label>
-        <select
-          id="index-preview-scene"
-          className="aoi-input"
-          value={selectedSceneId ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (value) {
-              void onSelectScene(value);
-            }
-          }}
-          disabled={scenesLoading || sceneDetailLoading || loading}
-        >
-          <option value="">
-            {scenesLoading ? "Cargando escenas..." : "Seleccioná una escena"}
-          </option>
-          {scenes.map((scene) => (
-            <option key={scene.id} value={scene.id}>
-              {scene.name}
-            </option>
-          ))}
-        </select>
-      </div>
+        <ExistingDerivedNotice
+          existing={existingFull}
+          onViewInResults={onViewInResults}
+          regenerateHint="Podés regenerar con «Calcular y guardar» para sobrescribir."
+        />
 
-      <dl className="scene-detail-fields">
-        <div className="scene-detail-row">
-          <dt>Escena</dt>
-          <dd>{selectedScene?.name ?? "Ninguna"}</dd>
-        </div>
-        <div className="scene-detail-row">
-          <dt>Índice</dt>
-          <dd>
-            {selectedIndex
-              ? selectedIndex.key.toUpperCase()
-              : "Ninguno (NDVI / NDWI / NBR / NDMI)"}
-          </dd>
-        </div>
-      </dl>
-
-      {!selectedSceneId && (
-        <p className="aoi-hint" role="status">
-          Seleccioná una escena para calcular índices.
-        </p>
-      )}
-
-      {selectedSceneId && !selectedIndex && (
-        <p className="aoi-hint" role="status">
-          Seleccioná un índice (NDVI, NDWI, NBR o NDMI).
-        </p>
-      )}
-
-      {selectedIndex && !computable && (
-        <p className="aoi-hint" role="status">
-          El cálculo local solo soporta NDVI, NDWI, NBR y NDMI.
-        </p>
-      )}
-
-      <ExistingDerivedNotice
-        existing={existingFull}
-        onViewInResults={onViewInResults}
-        regenerateHint="Podés regenerar con «Calcular y guardar» para sobrescribir."
-      />
-
-      <div className="aoi-icon-toolbar index-preview-actions" aria-label="Acciones de índice">
-        <div className="aoi-icon-actions" role="group" aria-label="Cálculo">
-          <IconButton
-            label={
-              busyAction === "compute" ? "Calculando índice..." : "Calcular índice"
-            }
-            tone="primary"
-            onClick={() => void compute()}
-            disabled={disabled}
-          >
-            {busyAction === "compute" ? (
-              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
-            ) : (
-              <Calculator size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-          <IconButton
-            label={
-              busyAction === "compute-and-save"
-                ? "Calculando y guardando GeoTIFF..."
-                : existingFull
-                  ? "Regenerar GeoTIFF"
-                  : "Calcular y guardar GeoTIFF"
-            }
-            onClick={() => void runAndRefresh(computeAndSave)}
-            disabled={disabled}
-          >
-            {busyAction === "compute-and-save" ? (
-              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
-            ) : (
-              <HardDriveDownload size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-
-        <div className="aoi-icon-actions" role="group" aria-label="Preview">
-          <IconButton
-            label={
-              busyAction === "preview"
-                ? "Generando preview PNG..."
-                : "Generar preview PNG"
-            }
-            onClick={() => void generatePreview()}
-            disabled={disabled}
-          >
-            {busyAction === "preview" ? (
-              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
-            ) : (
-              <ImagePlus size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-          <IconButton
-            label="Ver preview"
-            onClick={showPreview}
-            disabled={disabled}
-          >
-            <Eye size={16} strokeWidth={2} aria-hidden="true" />
-          </IconButton>
-        </div>
-
-        <div className="aoi-icon-actions" role="group" aria-label="Descargas del índice">
-          <IconButton
-            label={
-              busyAction === "download-tif"
-                ? "Descargando GeoTIFF..."
-                : "Descargar GeoTIFF"
-            }
-            onClick={() => void downloadGeotiff()}
-            disabled={disabled}
-          >
-            {busyAction === "download-tif" ? (
-              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
-            ) : (
-              <Download size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-          <IconButton
-            label={
-              busyAction === "download-png"
-                ? "Descargando PNG..."
-                : "Descargar PNG"
-            }
-            onClick={() => void downloadPng()}
-            disabled={disabled}
-          >
-            {busyAction === "download-png" ? (
-              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
-            ) : (
-              <ImageDown size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-
-        <div className="aoi-icon-actions" role="group" aria-label="Mapa">
-          <IconButton
-            label={
-              loadingFullOverlay
-                ? "Agregando al mapa..."
-                : "Agregar al mapa"
-            }
-            onClick={() => {
-              if (selectedSceneId && indexKey) {
-                onAddIndexToMap(selectedSceneId, indexKey);
+        <ActionRow label="Acciones de índice">
+          <div className="aoi-icon-actions" role="group" aria-label="Cálculo">
+            <IconButton
+              label={
+                busyAction === "compute"
+                  ? "Calculando índice..."
+                  : "Calcular índice"
               }
-            }}
-            disabled={addFullToMapDisabled}
+              tone="primary"
+              onClick={() => void compute()}
+              disabled={disabled}
+            >
+              {busyAction === "compute" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Calculator size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <IconButton
+              label={
+                busyAction === "compute-and-save"
+                  ? "Calculando y guardando GeoTIFF..."
+                  : existingFull
+                    ? "Regenerar GeoTIFF"
+                    : "Calcular y guardar GeoTIFF"
+              }
+              onClick={() => void runAndRefresh(computeAndSave)}
+              disabled={disabled}
+            >
+              {busyAction === "compute-and-save" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <HardDriveDownload size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
+
+          <div className="aoi-icon-actions" role="group" aria-label="Preview">
+            <IconButton
+              label={
+                busyAction === "preview"
+                  ? "Generando preview PNG..."
+                  : "Generar preview PNG"
+              }
+              onClick={() => void generatePreview()}
+              disabled={disabled}
+            >
+              {busyAction === "preview" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <ImagePlus size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <IconButton
+              label="Ver preview"
+              onClick={showPreview}
+              disabled={disabled}
+            >
+              <Eye size={16} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
+          </div>
+
+          <div
+            className="aoi-icon-actions"
+            role="group"
+            aria-label="Descargas del índice"
           >
-            {loadingFullOverlay ? (
-              <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
-            ) : (
-              <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-      </div>
+            <IconButton
+              label={
+                busyAction === "download-tif"
+                  ? "Descargando GeoTIFF..."
+                  : "Descargar GeoTIFF"
+              }
+              onClick={() => void downloadGeotiff()}
+              disabled={disabled}
+            >
+              {busyAction === "download-tif" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Download size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <IconButton
+              label={
+                busyAction === "download-png"
+                  ? "Descargando PNG..."
+                  : "Descargar PNG"
+              }
+              onClick={() => void downloadPng()}
+              disabled={disabled}
+            >
+              {busyAction === "download-png" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <ImageDown size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
 
-      <div className="index-aoi-crop" aria-label="Recorte por AOI">
-        <p className="aoi-geojson-label">Recorte por AOI</p>
-        {/* <p className="aoi-hint" role="status">
-          Recorta el índice derivado ya guardado (no las bandas originales).
-          Primero ejecutá Calcular y guardar.
-        </p> */}
+          <div className="aoi-icon-actions" role="group" aria-label="Mapa">
+            <IconButton
+              label={
+                loadingFullOverlay ? "Agregando al mapa..." : "Agregar al mapa"
+              }
+              onClick={() => {
+                if (selectedSceneId && indexKey) {
+                  onAddIndexToMap(selectedSceneId, indexKey);
+                }
+              }}
+              disabled={addFullToMapDisabled}
+            >
+              {loadingFullOverlay ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
+        </ActionRow>
 
+        {error && (
+          <p className="aoi-error" role="alert">
+            {error}
+          </p>
+        )}
+        {successMessage && !error && (
+          <p
+            className="compatibility-status compatibility-status--ok"
+            role="status"
+          >
+            {successMessage}
+          </p>
+        )}
+      </SectionCard>
+
+      <SectionCard title="Recorte por AOI">
         <ExistingDerivedNotice
           existing={existingCrop}
           onViewInResults={onViewInResults}
           regenerateHint="Podés regenerar el recorte (marcá sobrescribir si hace falta)."
         />
 
-        <div className="index-filter">
+        <div className="aoi-field">
           <label className="aoi-field-label" htmlFor="index-preview-aoi">
             AOI
           </label>
@@ -433,14 +425,11 @@ export default function IndexPreviewPanel({
           </select>
         </div>
 
-        <dl className="scene-detail-fields">
-          <div className="scene-detail-row">
-            <dt>AOI</dt>
-            <dd>{selectedAoiName ?? "Ninguno"}</dd>
-          </div>
-        </dl>
+        {selectedAoiName && (
+          <p className="compact-meta-line">{selectedAoiName}</p>
+        )}
 
-        <div className="aoi-icon-toolbar index-preview-actions">
+        <ActionRow label="Recorte por AOI">
           <div className="aoi-icon-actions" role="group" aria-label="Recorte">
             <IconButton
               label={
@@ -450,34 +439,34 @@ export default function IndexPreviewPanel({
                     ? "Regenerar recorte AOI"
                     : "Recortar por AOI"
               }
-              // text={crop.busyAction === "crop" ? undefined : "Recortar"}
               tone="primary"
               onClick={() =>
                 void runAndRefresh(() =>
-                  crop.cropByAoi({ overwrite: cropOverwrite || Boolean(existingCrop) }),
+                  crop.cropByAoi({
+                    overwrite: cropOverwrite || Boolean(existingCrop),
+                  }),
                 )
               }
               disabled={cropDisabled}
             >
               {crop.busyAction === "crop" ? (
-                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <Crop size={16} strokeWidth={2} aria-hidden="true" />
               )}
             </IconButton>
-            {/* <label className="aoi-field-label index-crop-overwrite" htmlFor="index-crop-overwrite">
-              <input
-                id="index-crop-overwrite"
-                type="checkbox"
-                checked={cropOverwrite}
-                onChange={(event) => setCropOverwrite(event.target.checked)}
-                disabled={cropDisabled}
-              />{" "}
-              Sobrescribir
-            </label> */}
           </div>
 
-          <div className="aoi-icon-actions" role="group" aria-label="Mapa del recorte">
+          <div
+            className="aoi-icon-actions"
+            role="group"
+            aria-label="Mapa del recorte"
+          >
             <IconButton
               label={
                 loadingCropOverlay
@@ -492,7 +481,12 @@ export default function IndexPreviewPanel({
               disabled={cropDisabled}
             >
               {loadingCropOverlay ? (
-                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
               )}
@@ -514,7 +508,12 @@ export default function IndexPreviewPanel({
               disabled={cropDisabled}
             >
               {crop.busyAction === "download-tif" ? (
-                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <Download size={16} strokeWidth={2} aria-hidden="true" />
               )}
@@ -529,20 +528,24 @@ export default function IndexPreviewPanel({
               disabled={cropDisabled}
             >
               {crop.busyAction === "download-png" ? (
-                <Loader2 size={16} strokeWidth={2} className="icon-spin" aria-hidden="true" />
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <ImageDown size={16} strokeWidth={2} aria-hidden="true" />
               )}
             </IconButton>
           </div>
-        </div>
+        </ActionRow>
 
         {crop.error && (
           <p className="aoi-error" role="alert">
             {crop.error}
           </p>
         )}
-
         {crop.successMessage && !crop.error && (
           <p
             className="compatibility-status compatibility-status--ok"
@@ -553,136 +556,144 @@ export default function IndexPreviewPanel({
         )}
 
         {crop.cropResult && (
-          <div className="index-preview-stats">
-            <p className="aoi-geojson-label">
-              Recorte ({crop.cropResult.index_key.toUpperCase()} ·{" "}
-              {crop.cropResult.status})
+          <CollapsibleSection title="Preview crop" defaultOpen>
+            <p className="compact-meta-line">
+              {crop.cropResult.index_key.toUpperCase()} ·{" "}
+              {crop.cropResult.status} · {crop.cropResult.raster.width}×
+              {crop.cropResult.raster.height}
             </p>
-            <dl className="scene-detail-fields">
-              <div className="scene-detail-row">
-                <dt>Tamaño</dt>
-                <dd>
-                  {crop.cropResult.raster.width}×{crop.cropResult.raster.height}
-                </dd>
-              </div>
-              <div className="scene-detail-row">
-                <dt>CRS</dt>
-                <dd>{crop.cropResult.raster.crs ?? "—"}</dd>
-              </div>
-            </dl>
             <StatsBlock stats={crop.cropResult.stats} />
-            <p className="aoi-hint" role="status">
+            <p
+              className="aoi-hint"
+              role="status"
+              title={crop.cropResult.output.geotiff_asset_path}
+            >
               GeoTIFF: {crop.cropResult.output.geotiff_asset_path}
             </p>
             {crop.cropResult.output.png_asset_path && (
-              <p className="aoi-hint" role="status">
+              <p
+                className="aoi-hint"
+                role="status"
+                title={crop.cropResult.output.png_asset_path}
+              >
                 PNG: {crop.cropResult.output.png_asset_path}
               </p>
             )}
-          </div>
+          </CollapsibleSection>
         )}
-      </div>
+      </SectionCard>
 
-      {mapOverlay && (
-        <div className="index-overlay-controls" aria-label="Capa de índice en el mapa">
-          <p className="aoi-geojson-label">
-            Capa activa:{" "}
-            {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
-            {mapOverlay.productKey.toUpperCase()}
-            {mapOverlay.aoiId ? " (recorte AOI)" : ""}
-          </p>
-          <label className="aoi-field-label" htmlFor="index-overlay-opacity">
-            Opacidad ({Math.round(mapOverlay.opacity * 100)}%)
-          </label>
-          <input
-            id="index-overlay-opacity"
-            className="index-overlay-opacity"
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={mapOverlay.opacity}
-            onChange={(event) =>
-              onIndexOverlayOpacityChange(Number(event.target.value))
-            }
-          />
-          <div className="aoi-icon-actions" role="group" aria-label="Controles de capa">
-            <IconButton label="Centrar capa" onClick={onFitIndexOverlay}>
-              <Crosshair size={16} strokeWidth={2} aria-hidden="true" />
-            </IconButton>
-            <IconButton label="Quitar capa" onClick={onRemoveIndexFromMap}>
-              <X size={16} strokeWidth={2} aria-hidden="true" />
-            </IconButton>
-          </div>
-          {!overlayActiveFull && !overlayActiveCrop && selectedSceneId && indexKey && (
-            <p className="aoi-hint" role="status">
-              Hay otra capa en el mapa. Agregar índice o recorte la reemplaza.
+      {(hasResult || mapOverlay || mapOverlayError) && (
+        <SectionCard title="Resultado / metadata">
+          {mapOverlay && (
+            <div
+              className="index-overlay-controls"
+              aria-label="Capa de índice en el mapa"
+            >
+              <p className="compact-meta-line">
+                Capa activa:{" "}
+                {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
+                {mapOverlay.productKey.toUpperCase()}
+                {mapOverlay.aoiId ? " (recorte AOI)" : ""}
+              </p>
+              <label className="aoi-field-label" htmlFor="index-overlay-opacity">
+                Opacidad ({Math.round(mapOverlay.opacity * 100)}%)
+              </label>
+              <input
+                id="index-overlay-opacity"
+                className="index-overlay-opacity"
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={mapOverlay.opacity}
+                onChange={(event) =>
+                  onIndexOverlayOpacityChange(Number(event.target.value))
+                }
+              />
+              <div
+                className="aoi-icon-actions"
+                role="group"
+                aria-label="Controles de capa"
+              >
+                <IconButton label="Centrar capa" onClick={onFitIndexOverlay}>
+                  <Crosshair size={16} strokeWidth={2} aria-hidden="true" />
+                </IconButton>
+                <IconButton label="Quitar capa" onClick={onRemoveIndexFromMap}>
+                  <X size={16} strokeWidth={2} aria-hidden="true" />
+                </IconButton>
+              </div>
+              {!overlayActiveFull &&
+                !overlayActiveCrop &&
+                selectedSceneId &&
+                indexKey && (
+                  <p className="aoi-hint" role="status">
+                    Hay otra capa en el mapa. Agregar índice o recorte la
+                    reemplaza.
+                  </p>
+                )}
+            </div>
+          )}
+
+          {mapOverlayError && (
+            <p className="aoi-error" role="alert">
+              {mapOverlayError}
             </p>
           )}
-        </div>
-      )}
 
-      {mapOverlayError && (
-        <p className="aoi-error" role="alert">
-          {mapOverlayError}
-        </p>
-      )}
-
-      {error && (
-        <p className="aoi-error" role="alert">
-          {error}
-        </p>
-      )}
-
-      {successMessage && !error && (
-        <p className="compatibility-status compatibility-status--ok" role="status">
-          {successMessage}
-        </p>
-      )}
-
-      {stats && computeResult && (
-        <div className="index-preview-stats">
-          <p className="aoi-geojson-label">
-            Stats ({computeResult.index} · {computeResult.status})
-          </p>
-          {computeResult.radiometry && (
-            <RadiometryBadge
-              radiometry={normalizeRadiometry(computeResult.radiometry)}
-            />
+          {stats && computeResult && (
+            <>
+              <p className="compact-meta-line">
+                {computeResult.index} · {computeResult.status}
+              </p>
+              {computeResult.radiometry && (
+                <RadiometryBadge
+                  radiometry={normalizeRadiometry(computeResult.radiometry)}
+                />
+              )}
+              <StatsBlock stats={stats} />
+              {"output" in computeResult && (
+                <p
+                  className="aoi-hint"
+                  role="status"
+                  title={computeResult.output.asset_path}
+                >
+                  Guardado: {computeResult.output.asset_path}
+                </p>
+              )}
+            </>
           )}
-          <StatsBlock stats={stats} />
-          {"output" in computeResult && (
-            <p className="aoi-hint" role="status">
-              Guardado: {computeResult.output.asset_path}
+
+          {previewResult && (
+            <p
+              className="aoi-hint"
+              role="status"
+              title={previewResult.output.asset_path}
+            >
+              PNG: {previewResult.output.asset_path} ({previewResult.width}×
+              {previewResult.height})
             </p>
           )}
-        </div>
-      )}
 
-      {previewResult && (
-        <p className="aoi-hint" role="status">
-          PNG: {previewResult.output.asset_path} ({previewResult.width}×
-          {previewResult.height})
-        </p>
-      )}
+          {imageError && (
+            <p className="aoi-error" role="alert">
+              {imageError}
+            </p>
+          )}
 
-      {imageError && (
-        <p className="aoi-error" role="alert">
-          {imageError}
-        </p>
+          {previewUrl && (
+            <div className="index-preview-image-wrap">
+              <img
+                className="index-preview-image"
+                src={previewUrl}
+                alt={`Preview ${indexKey?.toUpperCase() ?? "índice"}`}
+                onError={onPreviewImageError}
+                onLoad={onPreviewImageLoad}
+              />
+            </div>
+          )}
+        </SectionCard>
       )}
-
-      {previewUrl && (
-        <div className="index-preview-image-wrap">
-          <img
-            className="index-preview-image"
-            src={previewUrl}
-            alt={`Preview ${indexKey?.toUpperCase() ?? "índice"}`}
-            onError={onPreviewImageError}
-            onLoad={onPreviewImageLoad}
-          />
-        </div>
-      )}
-    </section>
+    </div>
   );
 }

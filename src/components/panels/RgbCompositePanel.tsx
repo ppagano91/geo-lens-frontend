@@ -28,9 +28,15 @@ import {
   getSensorLabel,
 } from "../../utils/sensors";
 import ExistingDerivedNotice from "./ExistingDerivedNotice";
+import ActionRow from "../ui/ActionRow";
 import IconButton from "../ui/IconButton";
 import RadiometryBadge from "../ui/RadiometryBadge";
-import { normalizeRadiometry } from "../../utils/radiometry";
+import SectionCard from "../ui/SectionCard";
+import StatusBadge from "../ui/StatusBadge";
+import {
+  extractRadiometryFromMetadata,
+  normalizeRadiometry,
+} from "../../utils/radiometry";
 
 interface RgbCompositePanelProps {
   scenes: SceneListItem[];
@@ -120,6 +126,9 @@ export default function RgbCompositePanel({
 
   const sensor = selectedScene ? detectSensorFromScene(selectedScene) : null;
   const bandsUsed = sensor ? resolvePresetBands(sensor, preset) : null;
+  const sceneRadiometry = selectedScene
+    ? extractRadiometryFromMetadata(selectedScene.metadata)
+    : null;
   const canAct = Boolean(selectedSceneId && !sceneDetailLoading);
   const canActAoi = Boolean(canAct && selectedAoiId);
   const hasAois = savedAois.length > 0;
@@ -166,7 +175,6 @@ export default function RgbCompositePanel({
   const addAoiRgbDisabled =
     !canActAoi || mapOverlayLoading || !aoiPreviewResult;
 
-  // Never treat null===null as loading; never spin on a disabled button.
   const loadingFullRgb =
     !addFullRgbDisabled &&
     fullOverlayId != null &&
@@ -176,99 +184,85 @@ export default function RgbCompositePanel({
     aoiOverlayId != null &&
     mapOverlayLoadingAssetId === aoiOverlayId;
 
+  const hasResult = Boolean(
+    previewResult ||
+      aoiPreviewResult ||
+      previewUrl ||
+      aoiPreviewUrl ||
+      error ||
+      successMessage ||
+      imageError ||
+      mapOverlay ||
+      mapOverlayError,
+  );
+
   return (
-    <section className="index-preview-panel" aria-label="Composiciones RGB">
-      <p className="aoi-geojson-label">Composiciones RGB</p>
-      <p className="aoi-hint">
-        Combiná tres bandas (escena completa o recorte por AOI) y agregalas al
-        mapa.
-      </p>
+    <section
+      className="index-preview-panel panel-stack"
+      aria-label="Composiciones RGB"
+    >
+      <p className="sidebar-label">Composiciones</p>
 
-      <label className="aoi-field-label" htmlFor="rgb-scene-select">
-        Escena
-      </label>
-      <select
-        id="rgb-scene-select"
-        className="aoi-select"
-        value={selectedSceneId ?? ""}
-        onChange={(event) => {
-          const value = event.target.value;
-          if (value) {
-            onSelectScene(value);
-          }
-        }}
-        disabled={scenesLoading}
-      >
-        <option value="">
-          {scenesLoading ? "Cargando escenas…" : "Seleccionar escena"}
-        </option>
-        {scenes.map((scene) => (
-          <option key={scene.id} value={scene.id}>
-            {scene.name}
-          </option>
-        ))}
-      </select>
-
-      {sensor && (
-        <p className="aoi-hint" role="status">
-          Sensor detectado: {getSensorLabel(sensor)}
-        </p>
-      )}
-
-      <label className="aoi-field-label" htmlFor="rgb-aoi-select">
-        AOI
-      </label>
-      {hasAois ? (
-        <>
+      <SectionCard title="Selección">
+        <div className="aoi-field">
+          <label className="aoi-field-label" htmlFor="rgb-scene-select">
+            Escena
+          </label>
           <select
-            id="rgb-aoi-select"
+            id="rgb-scene-select"
             className="aoi-select"
-            value={selectedAoiId ?? ""}
+            value={selectedSceneId ?? ""}
             onChange={(event) => {
               const value = event.target.value;
               if (value) {
-                onSelectAoi(value);
+                onSelectScene(value);
               }
             }}
+            disabled={scenesLoading}
           >
-            <option value="">Seleccionar AOI</option>
-            {savedAois.map((aoi) => (
-              <option key={aoi.id} value={aoi.id}>
-                {aoi.name}
+            <option value="">
+              {scenesLoading ? "Cargando escenas…" : "Seleccionar escena"}
+            </option>
+            {scenes.map((scene) => (
+              <option key={scene.id} value={scene.id}>
+                {scene.name}
               </option>
             ))}
           </select>
-          {selectedAoiName && (
-            <p className="aoi-hint" role="status">
-              AOI seleccionado: {selectedAoiName}
-            </p>
+        </div>
+
+        <div className="aoi-field">
+          <label className="aoi-field-label" htmlFor="rgb-preset-select">
+            Preset RGB
+          </label>
+          <select
+            id="rgb-preset-select"
+            className="aoi-select"
+            value={preset}
+            onChange={(event) => setPreset(event.target.value as RgbPresetKey)}
+          >
+            {RGB_PRESET_KEYS.map((key) => (
+              <option key={key} value={key}>
+                {RGB_PRESET_LABELS[key]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Compatibilidad">
+        <div className="status-badge-row">
+          {sensor ? (
+            <StatusBadge label={getSensorLabel(sensor)} />
+          ) : (
+            <StatusBadge label="Sin escena" tone="muted" />
           )}
-        </>
-      ) : (
-        <p className="aoi-hint" role="status" id="rgb-aoi-select">
-          No hay AOIs guardados. Dibujá y guardá uno en la pestaña AOI.
-        </p>
-      )}
-
-      <label className="aoi-field-label" htmlFor="rgb-preset-select">
-        Preset
-      </label>
-      <select
-        id="rgb-preset-select"
-        className="aoi-select"
-        value={preset}
-        onChange={(event) => setPreset(event.target.value as RgbPresetKey)}
-      >
-        {RGB_PRESET_KEYS.map((key) => (
-          <option key={key} value={key}>
-            {RGB_PRESET_LABELS[key]}
-          </option>
-        ))}
-      </select>
-
-      {bandsUsed && (
-        <div className="index-preview-stats">
-          <p className="aoi-geojson-label">Bandas usadas (R / G / B)</p>
+          <StatusBadge label={RGB_PRESET_LABELS[preset]} tone="neutral" />
+        </div>
+        {sceneRadiometry && (
+          <RadiometryBadge radiometry={sceneRadiometry} />
+        )}
+        {bandsUsed && (
           <dl className="scene-detail-fields">
             <div className="scene-detail-row">
               <dt>Rojo</dt>
@@ -289,310 +283,336 @@ export default function RgbCompositePanel({
               </dd>
             </div>
           </dl>
-        </div>
-      )}
+        )}
+      </SectionCard>
 
-      <p className="aoi-geojson-label">Generar Composición</p>
-      <ExistingDerivedNotice
-        existing={existingFull}
-        onViewInResults={onViewInResults}
-        regenerateHint="Podés regenerar la composición para sobrescribir el PNG."
-      />
-      <div
-        className="aoi-icon-toolbar"
-        role="toolbar"
-        aria-label="Composición RGB escena completa"
-      >
-        <div className="aoi-icon-actions" role="group" aria-label="Generar">
-          <IconButton
-            className="composition-button"
-            label={
-              busyAction === "generate"
-                ? "Generando…"
-                : existingFull
-                  ? "Regenerar composición"
-                  : "Generar Composición"
-            }
-            text={existingFull ? "Regenerar" : "Por Escena"}
-            tone="primary"
-            onClick={() => void runAndRefresh(generate)}
-            disabled={!canAct || loading}
-          >
-            {busyAction === "generate" ? (
-              <Loader2
-                size={16}
-                strokeWidth={2}
-                className="icon-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <Aperture size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-
-        <div className="aoi-icon-actions" role="group" aria-label="Mapa y descarga">
-          <IconButton
-            label={
-              loadingFullRgb
-                ? "Agregando al mapa…"
-                : "Agregar al mapa"
-            }
-            onClick={() => {
-              if (selectedSceneId) {
-                onAddRgbToMap(selectedSceneId, preset);
+      <SectionCard title="RGB escena completa">
+        <ExistingDerivedNotice
+          existing={existingFull}
+          onViewInResults={onViewInResults}
+          regenerateHint="Podés regenerar la composición para sobrescribir el PNG."
+        />
+        <ActionRow label="Composición RGB escena completa">
+          <div className="aoi-icon-actions" role="group" aria-label="Generar">
+            <IconButton
+              className="composition-button"
+              label={
+                busyAction === "generate"
+                  ? "Generando…"
+                  : existingFull
+                    ? "Regenerar composición"
+                    : "Generar Composición"
               }
-            }}
-            disabled={addFullRgbDisabled}
-          >
-            {loadingFullRgb ? (
-              <Loader2
-                size={16}
-                strokeWidth={2}
-                className="icon-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-          <IconButton
-            label={
-              busyAction === "download" ? "Descargando PNG…" : "Descargar PNG"
-            }
-            onClick={() => void downloadPng()}
-            disabled={!canAct || loading || !previewResult}
-          >
-            {busyAction === "download" ? (
-              <Loader2
-                size={16}
-                strokeWidth={2}
-                className="icon-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <Download size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-      </div>
-
-      {previewResult && (
-        <div className="index-preview-stats">
-          <p className="aoi-geojson-label">
-            Completa ({previewResult.preset} · {previewResult.status})
-          </p>
-          {previewResult.radiometry && (
-            <RadiometryBadge
-              radiometry={normalizeRadiometry(previewResult.radiometry)}
-            />
-          )}
-          <p className="aoi-hint" role="status">
-            {previewResult.width}×{previewResult.height} ·{" "}
-            {previewResult.output.asset_path}
-          </p>
-        </div>
-      )}
-
-      {previewUrl && (
-        <div className="index-preview-image-wrap">
-          <img
-            className="index-preview-image"
-            src={previewUrl}
-            alt={`Composición RGB ${RGB_PRESET_LABELS[preset]}`}
-            onError={onPreviewImageError}
-            onLoad={onPreviewImageLoad}
-          />
-        </div>
-      )}
-
-      {/* <p className="aoi-geojson-label">Por AOI</p> */}
-      <ExistingDerivedNotice
-        existing={existingAoi}
-        onViewInResults={onViewInResults}
-        regenerateHint="Podés regenerar la composición AOI para sobrescribir el PNG."
-      />
-      <div
-        className="aoi-icon-toolbar"
-        role="toolbar"
-        aria-label="Composición RGB por AOI"
-      >
-        <div className="aoi-icon-actions" role="group" aria-label="Generar AOI">
-          <IconButton
-            className="composition-button"
-            label={
-              busyAction === "generate-aoi"
-                ? "Generando composición por AOI…"
-                : existingAoi
-                  ? "Regenerar composición por AOI"
-                  : "Generar composición por AOI"
-            }
-            text={existingAoi ? "Regenerar" : "Por AOI"}
-            tone="primary"
-            onClick={() => void runAndRefresh(generateByAoi)}
-            disabled={!canActAoi || loading || !hasAois}
-          >
-            {busyAction === "generate-aoi" ? (
-              <Loader2
-                size={16}
-                strokeWidth={2}
-                className="icon-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <Crop size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-
-        <div
-          className="aoi-icon-actions"
-          role="group"
-          aria-label="Mapa y descarga AOI"
-        >
-          <IconButton
-            label={
-              loadingAoiRgb
-                ? "Agregando recorte al mapa…"
-                : "Agregar recorte al mapa"
-            }
-            onClick={() => {
-              if (selectedSceneId && selectedAoiId) {
-                onAddRgbAoiToMap(selectedSceneId, selectedAoiId, preset);
-              }
-            }}
-            disabled={addAoiRgbDisabled}
-          >
-            {loadingAoiRgb ? (
-              <Loader2
-                size={16}
-                strokeWidth={2}
-                className="icon-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-          <IconButton
-            label={
-              busyAction === "download-aoi"
-                ? "Descargando PNG AOI…"
-                : "Descargar PNG AOI"
-            }
-            onClick={() => void downloadAoiPng()}
-            disabled={!canActAoi || loading || !aoiPreviewResult}
-          >
-            {busyAction === "download-aoi" ? (
-              <Loader2
-                size={16}
-                strokeWidth={2}
-                className="icon-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <Download size={16} strokeWidth={2} aria-hidden="true" />
-            )}
-          </IconButton>
-        </div>
-      </div>
-
-      {aoiPreviewResult && (
-        <div className="index-preview-stats">
-          <p className="aoi-geojson-label">
-            AOI ({aoiPreviewResult.preset} · {aoiPreviewResult.status})
-          </p>
-          {aoiPreviewResult.radiometry && (
-            <RadiometryBadge
-              radiometry={normalizeRadiometry(aoiPreviewResult.radiometry)}
-            />
-          )}
-          <p className="aoi-hint" role="status">
-            {aoiPreviewResult.width}×{aoiPreviewResult.height} ·{" "}
-            {aoiPreviewResult.output.asset_path}
-          </p>
-        </div>
-      )}
-
-      {aoiPreviewUrl && (
-        <div className="index-preview-image-wrap">
-          <img
-            className="index-preview-image"
-            src={aoiPreviewUrl}
-            alt={`Composición RGB AOI ${RGB_PRESET_LABELS[preset]}`}
-            onError={onPreviewImageError}
-            onLoad={onPreviewImageLoad}
-          />
-        </div>
-      )}
-
-      {error && (
-        <p className="aoi-error" role="alert">
-          {error}
-        </p>
-      )}
-
-      {successMessage && !error && (
-        <p
-          className="compatibility-status compatibility-status--ok"
-          role="status"
-        >
-          {successMessage}
-        </p>
-      )}
-
-      {imageError && (
-        <p className="aoi-error" role="alert">
-          {imageError}
-        </p>
-      )}
-
-      {mapOverlay && (
-        <div
-          className="index-overlay-controls"
-          aria-label="Capa raster activa en el mapa"
-        >
-          <p className="aoi-geojson-label">
-            Capa activa:{" "}
-            {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
-            {mapOverlay.productKey.toUpperCase()}
-            {mapOverlay.aoiId ? " (recorte AOI)" : ""}
-          </p>
-          <label className="aoi-field-label" htmlFor="rgb-overlay-opacity">
-            Opacidad ({Math.round(mapOverlay.opacity * 100)}%)
-          </label>
-          <input
-            id="rgb-overlay-opacity"
-            className="index-overlay-opacity"
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={mapOverlay.opacity}
-            onChange={(event) =>
-              onOverlayOpacityChange(Number(event.target.value))
-            }
-          />
-          <div className="aoi-icon-actions" role="group" aria-label="Controles de capa">
-            <IconButton label="Centrar capa" onClick={onFitOverlay}>
-              <Crosshair size={16} strokeWidth={2} aria-hidden="true" />
-            </IconButton>
-            <IconButton label="Quitar capa" onClick={onRemoveOverlayFromMap}>
-              <X size={16} strokeWidth={2} aria-hidden="true" />
+              text={existingFull ? "Regenerar" : "Por Escena"}
+              tone="primary"
+              onClick={() => void runAndRefresh(generate)}
+              disabled={!canAct || loading}
+            >
+              {busyAction === "generate" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Aperture size={16} strokeWidth={2} aria-hidden="true" />
+              )}
             </IconButton>
           </div>
-          {!overlayIsFullRgb && !overlayIsAoiRgb && (
-            <p className="aoi-hint" role="status">
-              Hay otra capa en el mapa. Agregar esta composición la reemplaza.
+          <div
+            className="aoi-icon-actions"
+            role="group"
+            aria-label="Mapa y descarga"
+          >
+            <IconButton
+              label={
+                loadingFullRgb ? "Agregando al mapa…" : "Agregar al mapa"
+              }
+              onClick={() => {
+                if (selectedSceneId) {
+                  onAddRgbToMap(selectedSceneId, preset);
+                }
+              }}
+              disabled={addFullRgbDisabled}
+            >
+              {loadingFullRgb ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <IconButton
+              label={
+                busyAction === "download" ? "Descargando PNG…" : "Descargar PNG"
+              }
+              onClick={() => void downloadPng()}
+              disabled={!canAct || loading || !previewResult}
+            >
+              {busyAction === "download" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Download size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
+        </ActionRow>
+      </SectionCard>
+
+      <SectionCard title="RGB por AOI">
+        <div className="aoi-field">
+          <label className="aoi-field-label" htmlFor="rgb-aoi-select">
+            AOI
+          </label>
+          {hasAois ? (
+            <select
+              id="rgb-aoi-select"
+              className="aoi-select"
+              value={selectedAoiId ?? ""}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value) {
+                  onSelectAoi(value);
+                }
+              }}
+            >
+              <option value="">Seleccionar AOI</option>
+              {savedAois.map((aoi) => (
+                <option key={aoi.id} value={aoi.id}>
+                  {aoi.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="aoi-hint" role="status" id="rgb-aoi-select">
+              No hay AOIs guardados.
             </p>
           )}
         </div>
-      )}
+        {selectedAoiName && (
+          <p className="compact-meta-line">{selectedAoiName}</p>
+        )}
+        <ExistingDerivedNotice
+          existing={existingAoi}
+          onViewInResults={onViewInResults}
+          regenerateHint="Podés regenerar la composición AOI para sobrescribir el PNG."
+        />
+        <ActionRow label="Composición RGB por AOI">
+          <div className="aoi-icon-actions" role="group" aria-label="Generar AOI">
+            <IconButton
+              className="composition-button"
+              label={
+                busyAction === "generate-aoi"
+                  ? "Generando composición por AOI…"
+                  : existingAoi
+                    ? "Regenerar composición por AOI"
+                    : "Generar composición por AOI"
+              }
+              text={existingAoi ? "Regenerar" : "Por AOI"}
+              tone="primary"
+              onClick={() => void runAndRefresh(generateByAoi)}
+              disabled={!canActAoi || loading || !hasAois}
+            >
+              {busyAction === "generate-aoi" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Crop size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
+          <div
+            className="aoi-icon-actions"
+            role="group"
+            aria-label="Mapa y descarga AOI"
+          >
+            <IconButton
+              label={
+                loadingAoiRgb
+                  ? "Agregando recorte al mapa…"
+                  : "Agregar recorte al mapa"
+              }
+              onClick={() => {
+                if (selectedSceneId && selectedAoiId) {
+                  onAddRgbAoiToMap(selectedSceneId, selectedAoiId, preset);
+                }
+              }}
+              disabled={addAoiRgbDisabled}
+            >
+              {loadingAoiRgb ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <LayersPlus size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+            <IconButton
+              label={
+                busyAction === "download-aoi"
+                  ? "Descargando PNG AOI…"
+                  : "Descargar PNG AOI"
+              }
+              onClick={() => void downloadAoiPng()}
+              disabled={!canActAoi || loading || !aoiPreviewResult}
+            >
+              {busyAction === "download-aoi" ? (
+                <Loader2
+                  size={16}
+                  strokeWidth={2}
+                  className="icon-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Download size={16} strokeWidth={2} aria-hidden="true" />
+              )}
+            </IconButton>
+          </div>
+        </ActionRow>
+      </SectionCard>
 
-      {mapOverlayError && (
-        <p className="aoi-error" role="alert">
-          {mapOverlayError}
-        </p>
+      {hasResult && (
+        <SectionCard title="Resultado / metadata">
+          {error && (
+            <p className="aoi-error" role="alert">
+              {error}
+            </p>
+          )}
+          {successMessage && !error && (
+            <p
+              className="compatibility-status compatibility-status--ok"
+              role="status"
+            >
+              {successMessage}
+            </p>
+          )}
+          {imageError && (
+            <p className="aoi-error" role="alert">
+              {imageError}
+            </p>
+          )}
+          {mapOverlayError && (
+            <p className="aoi-error" role="alert">
+              {mapOverlayError}
+            </p>
+          )}
+
+          {previewResult && (
+            <>
+              <p className="compact-meta-line">
+                Completa · {previewResult.preset} · {previewResult.status} ·{" "}
+                {previewResult.width}×{previewResult.height}
+              </p>
+              {previewResult.radiometry && (
+                <RadiometryBadge
+                  radiometry={normalizeRadiometry(previewResult.radiometry)}
+                />
+              )}
+            </>
+          )}
+          {previewUrl && (
+            <div className="index-preview-image-wrap">
+              <img
+                className="index-preview-image"
+                src={previewUrl}
+                alt={`Composición RGB ${RGB_PRESET_LABELS[preset]}`}
+                onError={onPreviewImageError}
+                onLoad={onPreviewImageLoad}
+              />
+            </div>
+          )}
+
+          {aoiPreviewResult && (
+            <>
+              <p className="compact-meta-line">
+                AOI · {aoiPreviewResult.preset} · {aoiPreviewResult.status} ·{" "}
+                {aoiPreviewResult.width}×{aoiPreviewResult.height}
+              </p>
+              {aoiPreviewResult.radiometry && (
+                <RadiometryBadge
+                  radiometry={normalizeRadiometry(aoiPreviewResult.radiometry)}
+                />
+              )}
+            </>
+          )}
+          {aoiPreviewUrl && (
+            <div className="index-preview-image-wrap">
+              <img
+                className="index-preview-image"
+                src={aoiPreviewUrl}
+                alt={`Composición RGB AOI ${RGB_PRESET_LABELS[preset]}`}
+                onError={onPreviewImageError}
+                onLoad={onPreviewImageLoad}
+              />
+            </div>
+          )}
+
+          {mapOverlay && (
+            <div
+              className="index-overlay-controls"
+              aria-label="Capa raster activa en el mapa"
+            >
+              <p className="compact-meta-line">
+                Capa activa: {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
+                {mapOverlay.productKey.toUpperCase()}
+                {mapOverlay.aoiId ? " (recorte AOI)" : ""}
+              </p>
+              <label className="aoi-field-label" htmlFor="rgb-overlay-opacity">
+                Opacidad ({Math.round(mapOverlay.opacity * 100)}%)
+              </label>
+              <input
+                id="rgb-overlay-opacity"
+                className="index-overlay-opacity"
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={mapOverlay.opacity}
+                onChange={(event) =>
+                  onOverlayOpacityChange(Number(event.target.value))
+                }
+              />
+              <div
+                className="aoi-icon-actions"
+                role="group"
+                aria-label="Controles de capa"
+              >
+                <IconButton label="Centrar capa" onClick={onFitOverlay}>
+                  <Crosshair size={16} strokeWidth={2} aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label="Quitar capa"
+                  onClick={onRemoveOverlayFromMap}
+                >
+                  <X size={16} strokeWidth={2} aria-hidden="true" />
+                </IconButton>
+              </div>
+              {!overlayIsFullRgb && !overlayIsAoiRgb && (
+                <p className="aoi-hint" role="status">
+                  Hay otra capa en el mapa. Agregar esta composición la
+                  reemplaza.
+                </p>
+              )}
+            </div>
+          )}
+        </SectionCard>
       )}
     </section>
   );
