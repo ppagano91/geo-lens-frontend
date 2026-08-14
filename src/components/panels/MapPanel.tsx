@@ -1,10 +1,11 @@
-import { Crosshair, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Copy, Crosshair, X } from "lucide-react";
 import type { ActiveRasterOverlay } from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
 import type { SceneListItem } from "../../types/scene";
 import {
-  formatCursorLine,
+  formatCompactLonLat,
   formatMapZoom,
   getLayerLegendSpec,
   overlayKindLabel,
@@ -51,6 +52,20 @@ function DetailRow({
   );
 }
 
+type CopyStatus = "copied" | "error" | null;
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (!navigator.clipboard?.writeText) {
+      return false;
+    }
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function MapPanel({
   basemapId,
   onBasemapChange,
@@ -75,13 +90,64 @@ export default function MapPanel({
         context?.rgbBandsLabel ?? null,
       )
     : null;
-  const coords = formatCursorLine(cursor);
+  const compactCoords = formatCompactLonLat(cursor);
   const opacityPct = overlay ? Math.round(overlay.opacity * 100) : 0;
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>(null);
+  const copyTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(copyTimerRef.current);
+    };
+  }, []);
+
+  const handleCopyCoords = async () => {
+    if (!compactCoords) {
+      return;
+    }
+    window.clearTimeout(copyTimerRef.current);
+    const ok = await copyToClipboard(compactCoords);
+    setCopyStatus(ok ? "copied" : "error");
+    copyTimerRef.current = window.setTimeout(() => {
+      setCopyStatus(null);
+    }, 2000);
+  };
 
   return (
     <div className="map-panel panel-stack">
-      <SectionCard title="Mapa base">
+      <SectionCard
+        title="Estado del mapa"
+        help="Zoom actual y coordenadas del cursor. Copiá lon, lat al portapapeles."
+      >
         <BasemapSelector value={basemapId} onChange={onBasemapChange} />
+        <dl className="scene-detail-fields">
+          <DetailRow label="Zoom" value={formatMapZoom(zoom)} />
+        </dl>
+        <div className="map-cursor-coords">
+          <p className="map-cursor-coords-line">
+            <span className="map-cursor-coords-label">Lon, Lat</span>
+            <span className="map-cursor-coords-value">
+              {compactCoords ?? "—"}
+            </span>
+          </p>
+          <IconButton
+            label="Copiar coordenadas"
+            onClick={() => void handleCopyCoords()}
+            disabled={!compactCoords}
+          >
+            <Copy size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+        </div>
+        {copyStatus === "copied" ? (
+          <p className="map-copy-feedback" role="status">
+            Coordenadas copiadas
+          </p>
+        ) : null}
+        {copyStatus === "error" ? (
+          <p className="map-copy-feedback map-copy-feedback--error" role="alert">
+            No se pudieron copiar las coordenadas.
+          </p>
+        ) : null}
       </SectionCard>
 
       <SectionCard
@@ -111,37 +177,6 @@ export default function MapPanel({
             <p className="map-inspector-layer-name">
               {overlayProductName(overlay.productKey, overlay.kind)}
             </p>
-            <dl className="scene-detail-fields">
-              <DetailRow
-                label="Producto"
-                value={overlayProductKeyLabel(overlay.productKey)}
-              />
-              <DetailRow
-                label="Tipo"
-                value={overlayKindLabel(overlay.kind)}
-              />
-              <DetailRow
-                label="Escena"
-                value={context.sceneName ?? overlay.sceneId.slice(0, 8)}
-                wrap
-              />
-              {overlay.aoiId ? (
-                <DetailRow
-                  label="AOI"
-                  value={context.aoiName ?? overlay.aoiId.slice(0, 8)}
-                  wrap
-                />
-              ) : null}
-              <DetailRow
-                label="product_key"
-                value={overlay.productKey}
-              />
-            </dl>
-            {context.radiometry ? (
-              <RadiometryBadge radiometry={context.radiometry} />
-            ) : (
-              <p className="aoi-hint">Radiometría no disponible.</p>
-            )}
             <div
               className="index-overlay-controls map-inspector-controls"
               aria-label="Controles de capa activa"
@@ -177,22 +212,57 @@ export default function MapPanel({
                 </IconButton>
               </div>
             </div>
+            <dl className="scene-detail-fields">
+              <DetailRow
+                label="Producto"
+                value={overlayProductKeyLabel(overlay.productKey)}
+              />
+              <DetailRow
+                label="Tipo"
+                value={overlayKindLabel(overlay.kind)}
+              />
+              <DetailRow
+                label="Escena"
+                value={context.sceneName ?? overlay.sceneId.slice(0, 8)}
+                wrap
+              />
+              {overlay.aoiId ? (
+                <DetailRow
+                  label="AOI"
+                  value={context.aoiName ?? overlay.aoiId.slice(0, 8)}
+                  wrap
+                />
+              ) : null}
+              <DetailRow label="product_key" value={overlay.productKey} />
+            </dl>
+            {context.radiometry ? (
+              <RadiometryBadge radiometry={context.radiometry} />
+            ) : (
+              <p className="aoi-hint">Radiometría no disponible.</p>
+            )}
           </>
         ) : null}
       </SectionCard>
 
-      {overlay && legendSpec ? (
-        <SectionCard title="Leyenda">
+      <SectionCard title="Leyenda">
+        {overlay && legendSpec ? (
           <LayerLegend spec={legendSpec} />
-        </SectionCard>
-      ) : null}
+        ) : (
+          <p className="aoi-hint">
+            La leyenda aparece cuando hay una capa raster activa.
+          </p>
+        )}
+      </SectionCard>
 
-      <SectionCard title="Cursor / zoom">
-        <dl className="scene-detail-fields">
-          <DetailRow label="Lat" value={coords.lat} />
-          <DetailRow label="Lon" value={coords.lon} />
-          <DetailRow label="Zoom" value={formatMapZoom(zoom)} />
-        </dl>
+      <SectionCard title="Relieve / DEM">
+        {/* TODO(v0.1 backlog): carga DEM / hillshade / terrain MapLibre. */}
+        <div className="map-inspector-empty" role="status">
+          <p className="map-inspector-empty-title">No hay DEM cargado</p>
+          <p className="aoi-hint">
+            La carga de DEM y visualización de relieve se implementará en una
+            fase posterior.
+          </p>
+        </div>
       </SectionCard>
     </div>
   );

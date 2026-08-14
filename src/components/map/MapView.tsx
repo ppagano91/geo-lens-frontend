@@ -84,7 +84,6 @@ export default function MapView({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   /** Increments on every basemap `style.load` so React re-adds custom layers. */
   const [styleEpoch, setStyleEpoch] = useState(0);
-  const [cursor, setCursor] = useState<MapCursorPosition | null>(null);
   const [zoom, setZoom] = useState<number | null>(INITIAL_ZOOM);
 
   const onMapClickRef = useRef(onMapClick);
@@ -110,6 +109,8 @@ export default function MapView({
       style: getBasemapStyle(initialBasemap),
       center: INITIAL_CENTER,
       zoom: INITIAL_ZOOM,
+      minZoom: 3.5,
+      maxZoom: 20,
       attributionControl: false
     });
 
@@ -410,16 +411,15 @@ export default function MapView({
     const lastCursorEmitRef = { current: 0 };
 
     const onMouseMove = (event: maplibregl.MapMouseEvent) => {
-      const next: MapCursorPosition = {
+      const now = performance.now();
+      if (now - lastCursorEmitRef.current < 80) {
+        return;
+      }
+      lastCursorEmitRef.current = now;
+      onCursorChangeRef.current?.({
         lon: event.lngLat.lng,
         lat: event.lngLat.lat,
-      };
-      setCursor(next);
-      const now = performance.now();
-      if (now - lastCursorEmitRef.current >= 80) {
-        lastCursorEmitRef.current = now;
-        onCursorChangeRef.current?.(next);
-      }
+      });
     };
 
     reportZoom();
@@ -427,6 +427,10 @@ export default function MapView({
     mapInstance.on("zoom", reportZoom);
     mapInstance.on("zoomend", reportZoom);
     mapInstance.on("moveend", reportZoom);
+    // TODO(v0.1 backlog): secondary-click contextual menu.
+    // Planned: right-click on the map → menu → "Copiar coordenadas".
+    // Do not preventDefault on contextmenu until that menu is implemented
+    // (keep the native browser menu for now).
 
     return () => {
       mapInstance.off("mousemove", onMouseMove);
@@ -514,7 +518,7 @@ export default function MapView({
         opacity={indexOverlayOpacity}
         fitTrigger={indexOverlayFitTrigger}
       />
-      <MapCursorHud cursor={cursor} zoom={zoom} />
+      <MapCursorHud zoom={zoom} />
       <div ref={mapContainer} className="map-container" />
     </div>
   );

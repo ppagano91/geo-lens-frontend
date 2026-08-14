@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
 
 interface HelpTooltipProps {
@@ -8,6 +9,12 @@ interface HelpTooltipProps {
   placement?: "top" | "bottom";
 }
 
+interface TooltipCoords {
+  top: number;
+  left: number;
+  placement: "top" | "bottom";
+}
+
 function canHoverFinePointer(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) {
     return true;
@@ -15,8 +22,41 @@ function canHoverFinePointer(): boolean {
   return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 }
 
+function positionFromTrigger(
+  trigger: HTMLElement,
+  preferred: "top" | "bottom",
+): TooltipCoords {
+  const rect = trigger.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top;
+  const estimatedHeight = 72;
+  let placement = preferred;
+  if (preferred === "bottom" && spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
+    placement = "top";
+  } else if (
+    preferred === "top" &&
+    spaceAbove < estimatedHeight &&
+    spaceBelow > spaceAbove
+  ) {
+    placement = "bottom";
+  }
+
+  const maxWidth = Math.min(288, window.innerWidth - 16);
+  const half = maxWidth / 2;
+  const left = Math.min(
+    Math.max(rect.left + rect.width / 2, half + 8),
+    window.innerWidth - half - 8,
+  );
+  const top =
+    placement === "bottom" ? rect.bottom + 6 : Math.max(8, rect.top - 6);
+
+  return { top, left, placement };
+}
+
 /**
  * Compact info control: tooltip on hover/focus; tap toggles on touch devices.
+ * The panel is portaled to ``document.body`` so overflow/z-index of the
+ * sidebar, cards, and map cannot clip it.
  */
 export default function HelpTooltip({
   text,
@@ -25,7 +65,33 @@ export default function HelpTooltip({
 }: HelpTooltipProps) {
   const tooltipId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<TooltipCoords | null>(null);
+
+  const updatePosition = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) {
+      return;
+    }
+    setCoords(positionFromTrigger(trigger, placement));
+  };
+
+  const show = () => {
+    updatePosition();
+    setOpen(true);
+  };
+
+  const hide = () => {
+    setOpen(false);
+  };
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return;
+    }
+    updatePosition();
+  }, [open, placement, text]);
 
   useEffect(() => {
     if (!open) {
@@ -42,17 +108,40 @@ export default function HelpTooltip({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false);
+        hide();
       }
+    };
+
+    const onReposition = () => {
+      updatePosition();
     };
 
     document.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onReposition);
+    document.addEventListener("scroll", onReposition, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onReposition);
+      document.removeEventListener("scroll", onReposition, true);
     };
-  }, [open]);
+  }, [open, placement]);
+
+  const panel =
+    open && coords
+      ? createPortal(
+          <div
+            id={tooltipId}
+            role="tooltip"
+            className={`help-tooltip-panel help-tooltip-panel--portal help-tooltip-panel--${coords.placement}`}
+            style={{ top: coords.top, left: coords.left }}
+          >
+            {text}
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <div
@@ -60,47 +149,44 @@ export default function HelpTooltip({
       className={`help-tooltip help-tooltip--${placement}${open ? " help-tooltip--open" : ""}`}
     >
       <button
+        ref={triggerRef}
         type="button"
         className="help-tooltip-trigger"
         aria-label={label}
         aria-describedby={open ? tooltipId : undefined}
         aria-expanded={open}
-        title={text}
         onClick={() => {
           if (canHoverFinePointer()) {
             return;
           }
-          setOpen((value) => !value);
+          if (open) {
+            hide();
+            return;
+          }
+          show();
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={show}
         onBlur={(event) => {
           const next = event.relatedTarget;
           if (next instanceof Node && rootRef.current?.contains(next)) {
             return;
           }
-          setOpen(false);
+          hide();
         }}
         onMouseEnter={() => {
           if (canHoverFinePointer()) {
-            setOpen(true);
+            show();
           }
         }}
         onMouseLeave={() => {
           if (canHoverFinePointer()) {
-            setOpen(false);
+            hide();
           }
         }}
       >
         <Info size={16} strokeWidth={2} aria-hidden="true" />
       </button>
-      <div
-        id={tooltipId}
-        role="tooltip"
-        className="help-tooltip-panel"
-        hidden={!open}
-      >
-        {text}
-      </div>
+      {panel}
     </div>
   );
 }

@@ -703,11 +703,26 @@ body {
   pointer-events: none;
 }
 
-.help-tooltip--bottom .help-tooltip-panel {
+.help-tooltip-panel--portal {
+  position: fixed;
+  z-index: 4000;
+  left: auto;
+  transform: translateX(-50%);
+}
+
+.help-tooltip-panel--portal.help-tooltip-panel--top {
+  transform: translate(-50%, -100%);
+}
+
+.help-tooltip-panel--portal.help-tooltip-panel--bottom {
+  transform: translateX(-50%);
+}
+
+.help-tooltip--bottom .help-tooltip-panel:not(.help-tooltip-panel--portal) {
   top: calc(100% + 0.4rem);
 }
 
-.help-tooltip--top .help-tooltip-panel {
+.help-tooltip--top .help-tooltip-panel:not(.help-tooltip-panel--portal) {
   bottom: calc(100% + 0.4rem);
 }
 
@@ -2131,7 +2146,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 0.7rem;
-  max-width: min(22rem, calc(100% - 6.5rem));
+  max-width: min(10rem, calc(100% - 6.5rem));
   padding: 0.3rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--border);
@@ -2144,10 +2159,43 @@ body {
   pointer-events: none;
 }
 
-.map-cursor-hud abbr {
-  text-decoration: none;
+.map-cursor-coords {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.map-cursor-coords-line {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.map-cursor-coords-label {
+  font-size: 0.7rem;
   font-weight: 650;
   color: var(--text-secondary);
+}
+
+.map-cursor-coords-value {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.map-copy-feedback {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--success);
+}
+
+.map-copy-feedback--error {
+  color: var(--danger);
 }
 
 .compact-meta-line {

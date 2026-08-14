@@ -284,7 +284,12 @@ export function getLayerLegendSpec(
   return GENERIC_LEGEND;
 }
 
-export function formatCoord(value: number, decimals = 5): string {
+export const CURSOR_COORD_DECIMALS = 6;
+
+export function formatCoord(
+  value: number,
+  decimals = CURSOR_COORD_DECIMALS,
+): string {
   if (!Number.isFinite(value)) {
     return "—";
   }
@@ -308,4 +313,14 @@ export function formatCursorLine(
     lat: formatCoord(cursor.lat),
     lon: formatCoord(cursor.lon),
   };
+}
+
+/** Compact ``lon, lat`` pair for the map panel and clipboard. */
+export function formatCompactLonLat(
+  cursor: MapCursorPosition | null,
+): string | null {
+  if (!cursor) {
+    return null;
+  }
+  return `${formatCoord(cursor.lon)}, ${formatCoord(cursor.lat)}`;
 }
