@@ -1,11 +1,11 @@
 import { useState } from "react";
 import AppLayout from "./components/layout/AppLayout";
-import BasemapSelector from "./components/map/BasemapSelector";
 import MapView from "./components/map/MapView";
 import AoiPanel from "./components/panels/AoiPanel";
 import DerivedAssetsPanel from "./components/panels/DerivedAssetsPanel";
 import IndexPanel from "./components/panels/IndexPanel";
 import IngestPanel from "./components/panels/IngestPanel";
+import MapPanel from "./components/panels/MapPanel";
 import RgbCompositePanel from "./components/panels/RgbCompositePanel";
 import ScenePanel from "./components/panels/ScenePanel";
 import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
@@ -20,11 +20,14 @@ import {
   DEFAULT_SIDEBAR_TAB,
   type ActiveSidebarTab,
 } from "./types/sidebar";
+import type { MapCursorPosition } from "./utils/mapInspector";
 
 export default function App() {
   const [basemapId, setBasemapId] = useState(DEFAULT_BASEMAP_ID);
   const [activeTab, setActiveTab] =
     useState<ActiveSidebarTab>(DEFAULT_SIDEBAR_TAB);
+  const [mapCursor, setMapCursor] = useState<MapCursorPosition | null>(null);
+  const [mapZoom, setMapZoom] = useState<number | null>(null);
   const workspace = useAoiWorkspace();
   const scenes = useScenes();
   const spectralIndices = useSpectralIndices();
@@ -227,7 +230,22 @@ export default function App() {
           loadingOverlayAssetId={indexOverlay.loadingAssetId}
         />
       }
-      map={<BasemapSelector value={basemapId} onChange={setBasemapId} />}
+      map={
+        <MapPanel
+          basemapId={basemapId}
+          onBasemapChange={setBasemapId}
+          overlay={indexOverlay.overlay}
+          overlayLoading={indexOverlay.loading}
+          scenes={scenes.scenes}
+          aois={workspace.saved.aois}
+          derivedAssets={derived.allAssets}
+          cursor={mapCursor}
+          zoom={mapZoom}
+          onOpacityChange={indexOverlay.setOpacity}
+          onFitOverlay={indexOverlay.fitToOverlay}
+          onRemoveOverlay={indexOverlay.removeFromMap}
+        />
+      }
     >
       <MapView
         basemapId={basemapId}
@@ -250,6 +268,8 @@ export default function App() {
         onFinishDrawing={workspace.drawing.finishDrawing}
         onCancelDrawing={workspace.handleCancelDrawing}
         onUndoVertex={workspace.drawing.undoLastVertex}
+        onCursorChange={setMapCursor}
+        onZoomChange={setMapZoom}
       />
     </AppLayout>
   );

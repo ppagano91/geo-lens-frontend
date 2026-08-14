@@ -12,9 +12,11 @@ import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
 import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
 import { reattachAppLayersAfterBasemapChange } from "../../utils/mapLayers";
+import type { MapCursorPosition } from "../../utils/mapInspector";
 import AoiDrawingToolbar from "./AoiDrawingToolbar";
 import AoiLayer from "./AoiLayer";
 import IndexOverlayLayer from "./IndexOverlayLayer";
+import MapCursorHud from "./MapCursorHud";
 import SceneFootprintLayer from "./SceneFootprintLayer";
 import type { IndexMapOverlayCoordinates } from "../../types/indexCompute";
 
@@ -46,6 +48,8 @@ interface MapViewProps {
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
   onUndoVertex: () => void;
+  onCursorChange?: (cursor: MapCursorPosition | null) => void;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export default function MapView({
@@ -69,6 +73,8 @@ export default function MapView({
   onFinishDrawing,
   onCancelDrawing,
   onUndoVertex,
+  onCursorChange,
+  onZoomChange,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -78,11 +84,17 @@ export default function MapView({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   /** Increments on every basemap `style.load` so React re-adds custom layers. */
   const [styleEpoch, setStyleEpoch] = useState(0);
+  const [cursor, setCursor] = useState<MapCursorPosition | null>(null);
+  const [zoom, setZoom] = useState<number | null>(INITIAL_ZOOM);
 
   const onMapClickRef = useRef(onMapClick);
   const onFinishDrawingRef = useRef(onFinishDrawing);
+  const onCursorChangeRef = useRef(onCursorChange);
+  const onZoomChangeRef = useRef(onZoomChange);
   onMapClickRef.current = onMapClick;
   onFinishDrawingRef.current = onFinishDrawing;
+  onCursorChangeRef.current = onCursorChange;
+  onZoomChangeRef.current = onZoomChange;
 
   useEffect(() => {
     if (!mapContainer.current || map.current) {
@@ -108,6 +120,9 @@ export default function MapView({
       if (isMounted) {
         setStatus("ready");
         setErrorMessage(null);
+        const initialZoom = mapInstance.getZoom();
+        setZoom(initialZoom);
+        onZoomChangeRef.current?.(initialZoom);
       }
     });
 
@@ -382,6 +397,47 @@ export default function MapView({
 
   useEffect(() => {
     const mapInstance = map.current;
+    if (!mapInstance || status !== "ready") {
+      return;
+    }
+
+    const reportZoom = () => {
+      const nextZoom = mapInstance.getZoom();
+      setZoom(nextZoom);
+      onZoomChangeRef.current?.(nextZoom);
+    };
+
+    const lastCursorEmitRef = { current: 0 };
+
+    const onMouseMove = (event: maplibregl.MapMouseEvent) => {
+      const next: MapCursorPosition = {
+        lon: event.lngLat.lng,
+        lat: event.lngLat.lat,
+      };
+      setCursor(next);
+      const now = performance.now();
+      if (now - lastCursorEmitRef.current >= 80) {
+        lastCursorEmitRef.current = now;
+        onCursorChangeRef.current?.(next);
+      }
+    };
+
+    reportZoom();
+    mapInstance.on("mousemove", onMouseMove);
+    mapInstance.on("zoom", reportZoom);
+    mapInstance.on("zoomend", reportZoom);
+    mapInstance.on("moveend", reportZoom);
+
+    return () => {
+      mapInstance.off("mousemove", onMouseMove);
+      mapInstance.off("zoom", reportZoom);
+      mapInstance.off("zoomend", reportZoom);
+      mapInstance.off("moveend", reportZoom);
+    };
+  }, [status]);
+
+  useEffect(() => {
+    const mapInstance = map.current;
     if (!mapInstance || status !== "ready" || !completedAoi || fitBoundsTrigger === 0) {
       return;
     }
@@ -458,6 +514,7 @@ export default function MapView({
         opacity={indexOverlayOpacity}
         fitTrigger={indexOverlayFitTrigger}
       />
+      <MapCursorHud cursor={cursor} zoom={zoom} />
       <div ref={mapContainer} className="map-container" />
     </div>
   );
