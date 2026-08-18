@@ -2,6 +2,9 @@ import type { LayerSpecification } from "maplibre-gl";
 import type maplibregl from "maplibre-gl";
 
 /** Source / layer IDs for app overlays (shared across map components). */
+export const DEM_OVERLAY_SOURCE_ID = "dem-hillshade-overlay";
+export const DEM_OVERLAY_LAYER_ID = "dem-hillshade-overlay-raster";
+
 export const INDEX_OVERLAY_SOURCE_ID = "index-overlay";
 export const INDEX_OVERLAY_LAYER_ID = "index-overlay-raster";
 
@@ -18,8 +21,10 @@ export const AOI_VERTICES_LAYER_ID = "aoi-vertices";
 /**
  * Bottom → top among app overlays.
  * Basemap stays below; labels (first symbol) stay above when present.
+ * Hillshade sits under the index/RGB product overlay.
  */
 export const APP_LAYER_ORDER = [
+  DEM_OVERLAY_LAYER_ID,
   INDEX_OVERLAY_LAYER_ID,
   SCENE_FOOTPRINT_FILL_LAYER_ID,
   SCENE_FOOTPRINT_LINE_LAYER_ID,

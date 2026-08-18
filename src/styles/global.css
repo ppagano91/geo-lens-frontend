@@ -2089,6 +2089,40 @@ body {
   overflow-wrap: anywhere;
 }
 
+.map-dem-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.map-dem-section .aoi-error,
+.map-dem-section .compatibility-status {
+  margin-bottom: 0;
+}
+
+.map-dem-section .aoi-hint {
+  margin-top: 0;
+}
+
+.map-dem-section .aoi-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.map-dem-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.map-dem-meta {
+  margin-bottom: 0;
+}
+
 .layer-legend {
   display: flex;
   flex-direction: column;

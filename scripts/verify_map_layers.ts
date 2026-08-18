@@ -6,6 +6,8 @@ import assert from "node:assert/strict";
 
 import type maplibregl from "maplibre-gl";
 import {
+  DEM_OVERLAY_LAYER_ID,
+  DEM_OVERLAY_SOURCE_ID,
   INDEX_OVERLAY_LAYER_ID,
   INDEX_OVERLAY_SOURCE_ID,
   clearImageOverlay,
@@ -110,11 +112,32 @@ clearImageOverlay(mock.map);
 assert.equal(mock.sources.has(INDEX_OVERLAY_SOURCE_ID), false);
 assert.equal(mock.layers.has(INDEX_OVERLAY_LAYER_ID), false);
 
+// DEM hillshade uses a separate source/layer under the product overlay.
+replaceImageOverlay(mock.map, {
+  url: "http://localhost/hillshade.png?t=d1",
+  coordinates: coords,
+  opacity: 0.45,
+  sourceId: DEM_OVERLAY_SOURCE_ID,
+  layerId: DEM_OVERLAY_LAYER_ID,
+});
+replaceImageOverlay(mock.map, {
+  url: "http://localhost/ndvi.png?t=5",
+  coordinates: coords,
+});
+assert.equal(mock.sources.has(DEM_OVERLAY_SOURCE_ID), true);
+assert.equal(mock.layers.has(DEM_OVERLAY_LAYER_ID), true);
+assert.equal(mock.sources.has(INDEX_OVERLAY_SOURCE_ID), true);
+assert.equal(mock.layers.has(INDEX_OVERLAY_LAYER_ID), true);
+
+clearImageOverlay(mock.map, DEM_OVERLAY_SOURCE_ID, DEM_OVERLAY_LAYER_ID);
+assert.equal(mock.sources.has(DEM_OVERLAY_SOURCE_ID), false);
+assert.equal(mock.layers.has(INDEX_OVERLAY_LAYER_ID), true);
+
 // clear then add is safe
 replaceImageOverlay(mock.map, {
   url: "http://localhost/rgb_aoi.png?t=4",
   coordinates: coords,
 });
-assert.equal(mock.addSourceCalls.length, 4);
+assert.equal(mock.addSourceCalls.length, 6);
 
 console.log("verify_map_layers: ok");

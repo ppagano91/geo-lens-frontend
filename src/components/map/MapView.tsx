@@ -11,12 +11,15 @@ import type { AoiDrawingMode, AoiPolygonFeature } from "../../types/aoi";
 import type { SceneFootprintGeometry } from "../../types/scene";
 import type { LngLat } from "../../utils/geojson";
 import { getFootprintBounds, getPolygonBounds } from "../../utils/geojson";
-import { reattachAppLayersAfterBasemapChange } from "../../utils/mapLayers";
+import {
+  DEM_OVERLAY_LAYER_ID,
+  DEM_OVERLAY_SOURCE_ID,
+  reattachAppLayersAfterBasemapChange,
+} from "../../utils/mapLayers";
 import type { MapCursorPosition } from "../../utils/mapInspector";
 import AoiDrawingToolbar from "./AoiDrawingToolbar";
 import AoiLayer from "./AoiLayer";
 import IndexOverlayLayer from "./IndexOverlayLayer";
-import MapCursorHud from "./MapCursorHud";
 import SceneFootprintLayer from "./SceneFootprintLayer";
 import type { IndexMapOverlayCoordinates } from "../../types/indexCompute";
 
@@ -45,6 +48,11 @@ interface MapViewProps {
   indexOverlayCoordinates: IndexMapOverlayCoordinates | null;
   indexOverlayOpacity: number;
   indexOverlayFitTrigger: number;
+  demOverlayAssetId: string | null;
+  demOverlayImageUrl: string | null;
+  demOverlayCoordinates: IndexMapOverlayCoordinates | null;
+  demOverlayOpacity: number;
+  demOverlayFitTrigger: number;
   onMapClick: (lng: number, lat: number) => void;
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
@@ -75,6 +83,11 @@ export default function MapView({
   indexOverlayCoordinates,
   indexOverlayOpacity,
   indexOverlayFitTrigger,
+  demOverlayAssetId,
+  demOverlayImageUrl,
+  demOverlayCoordinates,
+  demOverlayOpacity,
+  demOverlayFitTrigger,
   onMapClick,
   onFinishDrawing,
   onCancelDrawing,
@@ -94,7 +107,6 @@ export default function MapView({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   /** Increments on every basemap `style.load` so React re-adds custom layers. */
   const [styleEpoch, setStyleEpoch] = useState(0);
-  const [zoom, setZoom] = useState<number | null>(INITIAL_ZOOM);
 
   const onMapClickRef = useRef(onMapClick);
   const onFinishDrawingRef = useRef(onFinishDrawing);
@@ -141,9 +153,7 @@ export default function MapView({
       if (isMounted) {
         setStatus("ready");
         setErrorMessage(null);
-        const initialZoom = mapInstance.getZoom();
-        setZoom(initialZoom);
-        onZoomChangeRef.current?.(initialZoom);
+        onZoomChangeRef.current?.(mapInstance.getZoom());
       }
     });
 
@@ -505,9 +515,7 @@ export default function MapView({
     }
 
     const reportZoom = () => {
-      const nextZoom = mapInstance.getZoom();
-      setZoom(nextZoom);
-      onZoomChangeRef.current?.(nextZoom);
+      onZoomChangeRef.current?.(mapInstance.getZoom());
     };
 
     const lastCursorEmitRef = { current: 0 };
@@ -616,15 +624,24 @@ export default function MapView({
         map={mapInstance}
         mapReady={status === "ready"}
         styleEpoch={styleEpoch}
+        overlayAssetId={demOverlayAssetId}
+        imageUrl={demOverlayImageUrl}
+        coordinates={demOverlayCoordinates}
+        opacity={demOverlayOpacity}
+        fitTrigger={demOverlayFitTrigger}
+        sourceId={DEM_OVERLAY_SOURCE_ID}
+        layerId={DEM_OVERLAY_LAYER_ID}
+      />
+      <IndexOverlayLayer
+        map={mapInstance}
+        mapReady={status === "ready"}
+        styleEpoch={styleEpoch}
         overlayAssetId={indexOverlayAssetId}
         imageUrl={indexOverlayImageUrl}
         coordinates={indexOverlayCoordinates}
         opacity={indexOverlayOpacity}
         fitTrigger={indexOverlayFitTrigger}
       />
-      {/* <MapCursorHud 
-      zoom={zoom}
-      /> */}
       <div ref={mapContainer} className="map-container" />
     </div>
   );

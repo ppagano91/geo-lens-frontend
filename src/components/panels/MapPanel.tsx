@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Copy, Crosshair, X } from "lucide-react";
+import type { ActiveDemOverlay } from "../../hooks/useDemOverlay";
 import type { ActiveRasterOverlay } from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
+import type { DemAssetRead } from "../../types/dem";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
 import type { SceneListItem } from "../../types/scene";
 import {
@@ -16,6 +18,7 @@ import {
 } from "../../utils/mapInspector";
 import BasemapSelector from "../map/BasemapSelector";
 import LayerLegend from "../map/LayerLegend";
+import DemReliefSection from "./DemReliefSection";
 import IconButton from "../ui/IconButton";
 import RadiometryBadge from "../ui/RadiometryBadge";
 import SectionCard from "../ui/SectionCard";
@@ -33,6 +36,22 @@ interface MapPanelProps {
   onOpacityChange: (opacity: number) => void;
   onFitOverlay: () => void;
   onRemoveOverlay: () => void;
+  dems: DemAssetRead[];
+  selectedDem: DemAssetRead | null;
+  demOverlay: ActiveDemOverlay | null;
+  demListLoading: boolean;
+  demUploading: boolean;
+  demGenerating: boolean;
+  demAddingToMap: boolean;
+  demError: string | null;
+  demSuccessMessage: string | null;
+  onSelectDem: (demId: string) => void;
+  onUploadDem: (file: File, name?: string) => Promise<unknown>;
+  onGenerateHillshade: (demId: string) => Promise<unknown>;
+  onAddDemToMap: (demId: string) => Promise<unknown>;
+  onRemoveDemFromMap: () => void;
+  onDemOpacityChange: (opacity: number) => void;
+  onFitDemOverlay: () => void;
 }
 
 function DetailRow({
@@ -79,6 +98,22 @@ export default function MapPanel({
   onOpacityChange,
   onFitOverlay,
   onRemoveOverlay,
+  dems,
+  selectedDem,
+  demOverlay,
+  demListLoading,
+  demUploading,
+  demGenerating,
+  demAddingToMap,
+  demError,
+  demSuccessMessage,
+  onSelectDem,
+  onUploadDem,
+  onGenerateHillshade,
+  onAddDemToMap,
+  onRemoveDemFromMap,
+  onDemOpacityChange,
+  onFitDemOverlay,
 }: MapPanelProps) {
   const context = overlay
     ? resolveOverlayInspectorContext(overlay, scenes, aois, derivedAssets)
@@ -254,15 +289,28 @@ export default function MapPanel({
         )}
       </SectionCard>
 
-      <SectionCard title="Relieve / DEM">
-        {/* TODO(v0.1 backlog): carga DEM / hillshade / terrain MapLibre. */}
-        <div className="map-inspector-empty" role="status">
-          <p className="map-inspector-empty-title">No hay DEM cargado</p>
-          <p className="aoi-hint">
-            La carga de DEM y visualización de relieve se implementará en una
-            fase posterior.
-          </p>
-        </div>
+      <SectionCard
+        title="Relieve / DEM"
+        help="Hillshade 2D experimental. No es terrain 3D ni análisis topográfico."
+      >
+        <DemReliefSection
+          dems={dems}
+          selectedDem={selectedDem}
+          overlay={demOverlay}
+          listLoading={demListLoading}
+          uploading={demUploading}
+          generating={demGenerating}
+          addingToMap={demAddingToMap}
+          error={demError}
+          successMessage={demSuccessMessage}
+          onSelectDem={onSelectDem}
+          onUpload={onUploadDem}
+          onGenerateHillshade={onGenerateHillshade}
+          onAddToMap={onAddDemToMap}
+          onRemoveFromMap={onRemoveDemFromMap}
+          onOpacityChange={onDemOpacityChange}
+          onFitOverlay={onFitDemOverlay}
+        />
       </SectionCard>
     </div>
   );

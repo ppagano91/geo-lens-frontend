@@ -3,6 +3,7 @@ import type maplibregl from "maplibre-gl";
 import type { IndexMapOverlayCoordinates } from "../../types/indexCompute";
 import {
   INDEX_OVERLAY_LAYER_ID,
+  INDEX_OVERLAY_SOURCE_ID,
   clearImageOverlay,
   replaceImageOverlay,
 } from "../../utils/mapLayers";
@@ -18,6 +19,8 @@ export interface IndexOverlayLayerProps {
   coordinates: IndexMapOverlayCoordinates | null;
   opacity: number;
   fitTrigger: number;
+  sourceId?: string;
+  layerId?: string;
 }
 
 function coordinatesBounds(
@@ -45,6 +48,8 @@ export default function IndexOverlayLayer({
   coordinates,
   opacity,
   fitTrigger,
+  sourceId = INDEX_OVERLAY_SOURCE_ID,
+  layerId = INDEX_OVERLAY_LAYER_ID,
 }: IndexOverlayLayerProps) {
   const lastFitTrigger = useRef(0);
   const opacityRef = useRef(opacity);
@@ -59,7 +64,7 @@ export default function IndexOverlayLayer({
       Boolean(overlayAssetId) && Boolean(imageUrl) && Boolean(coordinates);
 
     if (!hasOverlay) {
-      clearImageOverlay(map);
+      clearImageOverlay(map, sourceId, layerId);
       return;
     }
 
@@ -67,20 +72,22 @@ export default function IndexOverlayLayer({
       url: imageUrl!,
       coordinates: coordinates!,
       opacity: opacityRef.current,
+      sourceId,
+      layerId,
     });
 
     return () => {
-      clearImageOverlay(map);
+      clearImageOverlay(map, sourceId, layerId);
     };
-  }, [map, mapReady, styleEpoch, overlayAssetId, imageUrl, coordinates]);
+  }, [map, mapReady, styleEpoch, overlayAssetId, imageUrl, coordinates, sourceId, layerId]);
 
   useEffect(() => {
-    if (!map || !mapReady || !map.getLayer(INDEX_OVERLAY_LAYER_ID)) {
+    if (!map || !mapReady || !map.getLayer(layerId)) {
       return;
     }
 
-    map.setPaintProperty(INDEX_OVERLAY_LAYER_ID, "raster-opacity", opacity);
-  }, [map, mapReady, styleEpoch, opacity]);
+    map.setPaintProperty(layerId, "raster-opacity", opacity);
+  }, [map, mapReady, styleEpoch, opacity, layerId]);
 
   useEffect(() => {
     if (

@@ -12,6 +12,7 @@ import { DEFAULT_BASEMAP_ID } from "./config/basemaps";
 import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
 import { useDerivedAssets } from "./hooks/useDerivedAssets";
 import { useIndexMapOverlay } from "./hooks/useIndexMapOverlay";
+import { useDemOverlay } from "./hooks/useDemOverlay";
 import { useLocalSceneIngest } from "./hooks/useLocalSceneIngest";
 import { useScenes } from "./hooks/useScenes";
 import { useSpectralIndices } from "./hooks/useSpectralIndices";
@@ -33,6 +34,7 @@ export default function App() {
   const spectralIndices = useSpectralIndices();
   const ingest = useLocalSceneIngest();
   const indexOverlay = useIndexMapOverlay();
+  const demOverlay = useDemOverlay();
   const derived = useDerivedAssets(scenes.selectedSceneId);
 
   const selectedSavedAoi = workspace.selectedSavedId
@@ -246,6 +248,22 @@ export default function App() {
           onOpacityChange={indexOverlay.setOpacity}
           onFitOverlay={indexOverlay.fitToOverlay}
           onRemoveOverlay={indexOverlay.removeFromMap}
+          dems={demOverlay.dems}
+          selectedDem={demOverlay.selectedDem}
+          demOverlay={demOverlay.overlay}
+          demListLoading={demOverlay.listLoading}
+          demUploading={demOverlay.uploading}
+          demGenerating={demOverlay.generating}
+          demAddingToMap={demOverlay.addingToMap}
+          demError={demOverlay.error}
+          demSuccessMessage={demOverlay.successMessage}
+          onSelectDem={demOverlay.selectDem}
+          onUploadDem={demOverlay.upload}
+          onGenerateHillshade={demOverlay.generateHillshade}
+          onAddDemToMap={demOverlay.addToMap}
+          onRemoveDemFromMap={demOverlay.removeFromMap}
+          onDemOpacityChange={demOverlay.setOpacity}
+          onFitDemOverlay={demOverlay.fitToOverlay}
         />
       }
     >
@@ -267,6 +285,11 @@ export default function App() {
         indexOverlayCoordinates={indexOverlay.overlay?.coordinates ?? null}
         indexOverlayOpacity={indexOverlay.overlay?.opacity ?? 0.75}
         indexOverlayFitTrigger={indexOverlay.fitTrigger}
+        demOverlayAssetId={demOverlay.overlay?.demId ?? null}
+        demOverlayImageUrl={demOverlay.overlay?.imageUrl ?? null}
+        demOverlayCoordinates={demOverlay.overlay?.coordinates ?? null}
+        demOverlayOpacity={demOverlay.overlay?.opacity ?? 0.45}
+        demOverlayFitTrigger={demOverlay.fitTrigger}
         onMapClick={workspace.drawing.addVertex}
         onFinishDrawing={workspace.drawing.finishDrawing}
         onCancelDrawing={workspace.handleCancelDrawing}
