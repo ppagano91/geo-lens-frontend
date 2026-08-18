@@ -13,6 +13,7 @@ import { useAoiWorkspace } from "./hooks/useAoiWorkspace";
 import { useDerivedAssets } from "./hooks/useDerivedAssets";
 import { useIndexMapOverlay } from "./hooks/useIndexMapOverlay";
 import { useDemOverlay } from "./hooks/useDemOverlay";
+import { useExternalTerrain } from "./hooks/useExternalTerrain";
 import { useLocalSceneIngest } from "./hooks/useLocalSceneIngest";
 import { useScenes } from "./hooks/useScenes";
 import { useSpectralIndices } from "./hooks/useSpectralIndices";
@@ -35,6 +36,7 @@ export default function App() {
   const ingest = useLocalSceneIngest();
   const indexOverlay = useIndexMapOverlay();
   const demOverlay = useDemOverlay();
+  const externalTerrain = useExternalTerrain();
   const derived = useDerivedAssets(scenes.selectedSceneId);
 
   const selectedSavedAoi = workspace.selectedSavedId
@@ -264,6 +266,14 @@ export default function App() {
           onRemoveDemFromMap={demOverlay.removeFromMap}
           onDemOpacityChange={demOverlay.setOpacity}
           onFitDemOverlay={demOverlay.fitToOverlay}
+          externalTerrainEnabled={externalTerrain.enabled}
+          externalTerrainProvider={externalTerrain.provider}
+          externalTerrainExaggeration={externalTerrain.exaggeration}
+          externalTerrainCanEnable={externalTerrain.canEnable}
+          maptilerKeyPresent={externalTerrain.maptilerKeyPresent}
+          onExternalTerrainEnabledChange={externalTerrain.setEnabled}
+          onExternalTerrainProviderChange={externalTerrain.setProvider}
+          onExternalTerrainExaggerationChange={externalTerrain.setExaggeration}
         />
       }
     >
@@ -290,6 +300,9 @@ export default function App() {
         demOverlayCoordinates={demOverlay.overlay?.coordinates ?? null}
         demOverlayOpacity={demOverlay.overlay?.opacity ?? 0.45}
         demOverlayFitTrigger={demOverlay.fitTrigger}
+        externalTerrainEnabled={externalTerrain.enabled}
+        externalTerrainProvider={externalTerrain.provider}
+        externalTerrainExaggeration={externalTerrain.exaggeration}
         onMapClick={workspace.drawing.addVertex}
         onFinishDrawing={workspace.drawing.finishDrawing}
         onCancelDrawing={workspace.handleCancelDrawing}

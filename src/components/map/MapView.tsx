@@ -20,8 +20,10 @@ import type { MapCursorPosition } from "../../utils/mapInspector";
 import AoiDrawingToolbar from "./AoiDrawingToolbar";
 import AoiLayer from "./AoiLayer";
 import IndexOverlayLayer from "./IndexOverlayLayer";
+import ExternalTerrainLayer from "./ExternalTerrainLayer";
 import SceneFootprintLayer from "./SceneFootprintLayer";
 import type { IndexMapOverlayCoordinates } from "../../types/indexCompute";
+import type { ExternalTerrainProviderId } from "../../types/externalTerrain";
 
 const INITIAL_CENTER: [number, number] = [-58.3816, -34.6037];
 const INITIAL_ZOOM = 10;
@@ -53,6 +55,9 @@ interface MapViewProps {
   demOverlayCoordinates: IndexMapOverlayCoordinates | null;
   demOverlayOpacity: number;
   demOverlayFitTrigger: number;
+  externalTerrainEnabled: boolean;
+  externalTerrainProvider: ExternalTerrainProviderId;
+  externalTerrainExaggeration: number;
   onMapClick: (lng: number, lat: number) => void;
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
@@ -88,6 +93,9 @@ export default function MapView({
   demOverlayCoordinates,
   demOverlayOpacity,
   demOverlayFitTrigger,
+  externalTerrainEnabled,
+  externalTerrainProvider,
+  externalTerrainExaggeration,
   onMapClick,
   onFinishDrawing,
   onCancelDrawing,
@@ -641,6 +649,14 @@ export default function MapView({
         coordinates={indexOverlayCoordinates}
         opacity={indexOverlayOpacity}
         fitTrigger={indexOverlayFitTrigger}
+      />
+      <ExternalTerrainLayer
+        map={mapInstance}
+        mapReady={status === "ready"}
+        styleEpoch={styleEpoch}
+        enabled={externalTerrainEnabled}
+        provider={externalTerrainProvider}
+        exaggeration={externalTerrainExaggeration}
       />
       <div ref={mapContainer} className="map-container" />
     </div>

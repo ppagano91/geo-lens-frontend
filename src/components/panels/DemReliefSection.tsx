@@ -96,7 +96,8 @@ export default function DemReliefSection({
   };
 
   return (
-    <div className="map-dem-section">
+    <div className="map-dem-subsection">
+        <h4 className="map-dem-subsection-title">DEM propio</h4>
       {error ? (
         <p className="aoi-error" role="alert">
           {error}

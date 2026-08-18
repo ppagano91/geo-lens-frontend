@@ -2092,8 +2092,27 @@ body {
 .map-dem-section {
   display: flex;
   flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.map-dem-subsection {
+  display: flex;
+  flex-direction: column;
   gap: 0.65rem;
   min-width: 0;
+}
+
+.map-dem-subsection + .map-dem-subsection {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.map-dem-subsection-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--text-primary);
 }
 
 .map-dem-section .aoi-error,

@@ -5,6 +5,10 @@ import type { ActiveRasterOverlay } from "../../hooks/useIndexMapOverlay";
 import type { AoiRecord } from "../../types/aoi";
 import type { DemAssetRead } from "../../types/dem";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
+import type {
+  ExternalTerrainExaggeration,
+  ExternalTerrainProviderId,
+} from "../../types/externalTerrain";
 import type { SceneListItem } from "../../types/scene";
 import {
   formatCompactLonLat,
@@ -19,6 +23,7 @@ import {
 import BasemapSelector from "../map/BasemapSelector";
 import LayerLegend from "../map/LayerLegend";
 import DemReliefSection from "./DemReliefSection";
+import ExternalTerrainSection from "./ExternalTerrainSection";
 import IconButton from "../ui/IconButton";
 import RadiometryBadge from "../ui/RadiometryBadge";
 import SectionCard from "../ui/SectionCard";
@@ -52,6 +57,16 @@ interface MapPanelProps {
   onRemoveDemFromMap: () => void;
   onDemOpacityChange: (opacity: number) => void;
   onFitDemOverlay: () => void;
+  externalTerrainEnabled: boolean;
+  externalTerrainProvider: ExternalTerrainProviderId;
+  externalTerrainExaggeration: ExternalTerrainExaggeration;
+  externalTerrainCanEnable: boolean;
+  maptilerKeyPresent: boolean;
+  onExternalTerrainEnabledChange: (enabled: boolean) => void;
+  onExternalTerrainProviderChange: (provider: ExternalTerrainProviderId) => void;
+  onExternalTerrainExaggerationChange: (
+    exaggeration: ExternalTerrainExaggeration,
+  ) => void;
 }
 
 function DetailRow({
@@ -114,6 +129,14 @@ export default function MapPanel({
   onRemoveDemFromMap,
   onDemOpacityChange,
   onFitDemOverlay,
+  externalTerrainEnabled,
+  externalTerrainProvider,
+  externalTerrainExaggeration,
+  externalTerrainCanEnable,
+  maptilerKeyPresent,
+  onExternalTerrainEnabledChange,
+  onExternalTerrainProviderChange,
+  onExternalTerrainExaggerationChange,
 }: MapPanelProps) {
   const context = overlay
     ? resolveOverlayInspectorContext(overlay, scenes, aois, derivedAssets)
@@ -291,26 +314,38 @@ export default function MapPanel({
 
       <SectionCard
         title="Relieve / DEM"
-        help="Hillshade 2D experimental. No es terrain 3D ni análisis topográfico."
+        help="Hillshade 2D del DEM propio, o terrain 3D experimental con tiles externos."
       >
-        <DemReliefSection
-          dems={dems}
-          selectedDem={selectedDem}
-          overlay={demOverlay}
-          listLoading={demListLoading}
-          uploading={demUploading}
-          generating={demGenerating}
-          addingToMap={demAddingToMap}
-          error={demError}
-          successMessage={demSuccessMessage}
-          onSelectDem={onSelectDem}
-          onUpload={onUploadDem}
-          onGenerateHillshade={onGenerateHillshade}
-          onAddToMap={onAddDemToMap}
-          onRemoveFromMap={onRemoveDemFromMap}
-          onOpacityChange={onDemOpacityChange}
-          onFitOverlay={onFitDemOverlay}
-        />
+        <div className="map-dem-section">
+          <DemReliefSection
+            dems={dems}
+            selectedDem={selectedDem}
+            overlay={demOverlay}
+            listLoading={demListLoading}
+            uploading={demUploading}
+            generating={demGenerating}
+            addingToMap={demAddingToMap}
+            error={demError}
+            successMessage={demSuccessMessage}
+            onSelectDem={onSelectDem}
+            onUpload={onUploadDem}
+            onGenerateHillshade={onGenerateHillshade}
+            onAddToMap={onAddDemToMap}
+            onRemoveFromMap={onRemoveDemFromMap}
+            onOpacityChange={onDemOpacityChange}
+            onFitOverlay={onFitDemOverlay}
+          />
+          <ExternalTerrainSection
+            enabled={externalTerrainEnabled}
+            provider={externalTerrainProvider}
+            exaggeration={externalTerrainExaggeration}
+            canEnable={externalTerrainCanEnable}
+            maptilerKeyPresent={maptilerKeyPresent}
+            onEnabledChange={onExternalTerrainEnabledChange}
+            onProviderChange={onExternalTerrainProviderChange}
+            onExaggerationChange={onExternalTerrainExaggerationChange}
+          />
+        </div>
       </SectionCard>
     </div>
   );
