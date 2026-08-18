@@ -5,10 +5,7 @@
 import assert from "node:assert/strict";
 
 import type maplibregl from "maplibre-gl";
-import {
-  canEnableExternalTerrain,
-  providerNeedsMaptilerKey,
-} from "../src/hooks/useExternalTerrain";
+import { canEnableExternalTerrain } from "../src/hooks/useExternalTerrain";
 import {
   applyExternalTerrain,
   buildExternalTerrainSource,
@@ -67,7 +64,7 @@ function createMockMap() {
   };
 }
 
-const aws = buildExternalTerrainSource("aws-terrarium", "");
+const aws = buildExternalTerrainSource("aws-terrarium");
 assert.ok(aws);
 assert.equal(aws.type, "raster-dem");
 assert.deepEqual(aws.tiles, [
@@ -76,29 +73,27 @@ assert.deepEqual(aws.tiles, [
 assert.equal(aws.tileSize, 256);
 assert.equal(aws.encoding, "terrarium");
 
+assert.equal(buildExternalTerrainSource("maptiler", null), null);
 assert.equal(buildExternalTerrainSource("maptiler", ""), null);
 assert.equal(buildExternalTerrainSource("maptiler", "   "), null);
-const maptiler = buildExternalTerrainSource("maptiler", "unit-test-key");
+const maptilerUrl =
+  "https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=unit-test-key";
+const maptiler = buildExternalTerrainSource("maptiler", maptilerUrl);
 assert.ok(maptiler);
 assert.equal(maptiler.type, "raster-dem");
-assert.equal(
-  maptiler.url,
-  "https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=unit-test-key",
-);
+assert.equal(maptiler.url, maptilerUrl);
 assert.equal(maptiler.encoding, "mapbox");
 
-const demo = buildExternalTerrainSource("maplibre-demo", "");
+const demo = buildExternalTerrainSource("maplibre-demo");
 assert.ok(demo);
 assert.equal(
   demo.url,
   "https://demotiles.maplibre.org/terrain-tiles/tiles.json",
 );
 
-assert.equal(providerNeedsMaptilerKey("maptiler"), true);
-assert.equal(providerNeedsMaptilerKey("aws-terrarium"), false);
-assert.equal(canEnableExternalTerrain("maptiler", ""), false);
-assert.equal(canEnableExternalTerrain("maptiler", "abc"), true);
-assert.equal(canEnableExternalTerrain("aws-terrarium", ""), true);
+assert.equal(canEnableExternalTerrain("maptiler", false), false);
+assert.equal(canEnableExternalTerrain("maptiler", true), true);
+assert.equal(canEnableExternalTerrain("aws-terrarium", false), true);
 
 const mockLibre = {
   TerrainControl: class {

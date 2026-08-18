@@ -61,7 +61,9 @@ interface MapPanelProps {
   externalTerrainProvider: ExternalTerrainProviderId;
   externalTerrainExaggeration: ExternalTerrainExaggeration;
   externalTerrainCanEnable: boolean;
-  maptilerKeyPresent: boolean;
+  maptilerConfigured: boolean;
+  externalTerrainConfigLoading: boolean;
+  externalTerrainConfigError: string | null;
   onExternalTerrainEnabledChange: (enabled: boolean) => void;
   onExternalTerrainProviderChange: (provider: ExternalTerrainProviderId) => void;
   onExternalTerrainExaggerationChange: (
@@ -133,7 +135,9 @@ export default function MapPanel({
   externalTerrainProvider,
   externalTerrainExaggeration,
   externalTerrainCanEnable,
-  maptilerKeyPresent,
+  maptilerConfigured,
+  externalTerrainConfigLoading,
+  externalTerrainConfigError,
   onExternalTerrainEnabledChange,
   onExternalTerrainProviderChange,
   onExternalTerrainExaggerationChange,
@@ -340,7 +344,9 @@ export default function MapPanel({
             provider={externalTerrainProvider}
             exaggeration={externalTerrainExaggeration}
             canEnable={externalTerrainCanEnable}
-            maptilerKeyPresent={maptilerKeyPresent}
+            maptilerConfigured={maptilerConfigured}
+            configLoading={externalTerrainConfigLoading}
+            configError={externalTerrainConfigError}
             onEnabledChange={onExternalTerrainEnabledChange}
             onProviderChange={onExternalTerrainProviderChange}
             onExaggerationChange={onExternalTerrainExaggerationChange}

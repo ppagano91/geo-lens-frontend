@@ -58,6 +58,7 @@ interface MapViewProps {
   externalTerrainEnabled: boolean;
   externalTerrainProvider: ExternalTerrainProviderId;
   externalTerrainExaggeration: number;
+  maptilerTilesJsonUrl: string | null;
   onMapClick: (lng: number, lat: number) => void;
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
@@ -96,6 +97,7 @@ export default function MapView({
   externalTerrainEnabled,
   externalTerrainProvider,
   externalTerrainExaggeration,
+  maptilerTilesJsonUrl,
   onMapClick,
   onFinishDrawing,
   onCancelDrawing,
@@ -657,6 +659,7 @@ export default function MapView({
         enabled={externalTerrainEnabled}
         provider={externalTerrainProvider}
         exaggeration={externalTerrainExaggeration}
+        maptilerTilesJsonUrl={maptilerTilesJsonUrl}
       />
       <div ref={mapContainer} className="map-container" />
     </div>

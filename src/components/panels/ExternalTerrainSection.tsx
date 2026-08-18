@@ -11,7 +11,9 @@ interface ExternalTerrainSectionProps {
   provider: ExternalTerrainProviderId;
   exaggeration: ExternalTerrainExaggeration;
   canEnable: boolean;
-  maptilerKeyPresent: boolean;
+  maptilerConfigured: boolean;
+  configLoading: boolean;
+  configError: string | null;
   onEnabledChange: (enabled: boolean) => void;
   onProviderChange: (provider: ExternalTerrainProviderId) => void;
   onExaggerationChange: (exaggeration: ExternalTerrainExaggeration) => void;
@@ -19,12 +21,12 @@ interface ExternalTerrainSectionProps {
 
 function providerWarning(
   provider: ExternalTerrainProviderId,
-  maptilerKeyPresent: boolean,
+  maptilerConfigured: boolean,
 ): { text: string; tone: "warn" | "neutral" } | null {
-  if (provider === "maptiler" && !maptilerKeyPresent) {
+  if (provider === "maptiler" && !maptilerConfigured) {
     return {
       tone: "warn",
-      text: "MapTiler requiere VITE_MAPTILER_KEY. Configurala en el entorno del frontend; no se pide ni se guarda una clave en la UI.",
+      text: "MapTiler no está configurado en el backend.",
     };
   }
   if (provider === "maplibre-demo") {
@@ -47,12 +49,14 @@ export default function ExternalTerrainSection({
   provider,
   exaggeration,
   canEnable,
-  maptilerKeyPresent,
+  maptilerConfigured,
+  configLoading,
+  configError,
   onEnabledChange,
   onProviderChange,
   onExaggerationChange,
 }: ExternalTerrainSectionProps) {
-  const warning = providerWarning(provider, maptilerKeyPresent);
+  const warning = providerWarning(provider, maptilerConfigured);
 
   return (
     <div className="map-dem-subsection">
@@ -61,6 +65,16 @@ export default function ExternalTerrainSection({
         El relieve externo usa tiles públicos/servicios externos. Puede
         requerir API key o tener límites.
       </p>
+      {configLoading ? (
+        <p className="aoi-hint" role="status">
+          Cargando proveedores…
+        </p>
+      ) : null}
+      {configError ? (
+        <p className="aoi-error" role="alert">
+          {configError}
+        </p>
+      ) : null}
 
       <div className="aoi-field">
         <label className="aoi-field-label" htmlFor="map-external-terrain-provider">

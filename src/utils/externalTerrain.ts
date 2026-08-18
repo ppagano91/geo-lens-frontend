@@ -1,6 +1,5 @@
 import type { RasterDEMSourceSpecification } from "maplibre-gl";
 import type maplibregl from "maplibre-gl";
-import { MAPTILER_KEY } from "../config/env";
 import type { ExternalTerrainProviderId } from "../types/externalTerrain";
 import { removeSourceIfExists } from "./mapLayers";
 
@@ -10,15 +9,12 @@ const AWS_TERRARIUM_TILES = [
   "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
 ];
 
-const MAPTILER_TERRAIN_TILEJSON =
-  "https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json";
-
 const MAPLIBRE_DEMO_TERRAIN_TILEJSON =
   "https://demotiles.maplibre.org/terrain-tiles/tiles.json";
 
 export function buildExternalTerrainSource(
   provider: ExternalTerrainProviderId,
-  maptilerKey: string = MAPTILER_KEY,
+  maptilerTilesJsonUrl: string | null = null,
 ): RasterDEMSourceSpecification | null {
   switch (provider) {
     case "aws-terrarium":
@@ -31,13 +27,13 @@ export function buildExternalTerrainSource(
         attribution: "AWS Terrain Tiles / Mapzen Terrarium",
       };
     case "maptiler": {
-      const key = maptilerKey.trim();
-      if (!key) {
+      const url = (maptilerTilesJsonUrl ?? "").trim();
+      if (!url) {
         return null;
       }
       return {
         type: "raster-dem",
-        url: `${MAPTILER_TERRAIN_TILEJSON}?key=${encodeURIComponent(key)}`,
+        url,
         encoding: "mapbox",
       };
     }

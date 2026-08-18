@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
-import { MAPTILER_KEY } from "../../config/env";
 import type { ExternalTerrainProviderId } from "../../types/externalTerrain";
 import {
   applyExternalTerrain,
@@ -15,6 +14,7 @@ interface ExternalTerrainLayerProps {
   enabled: boolean;
   provider: ExternalTerrainProviderId;
   exaggeration: number;
+  maptilerTilesJsonUrl: string | null;
 }
 
 export default function ExternalTerrainLayer({
@@ -24,6 +24,7 @@ export default function ExternalTerrainLayer({
   enabled,
   provider,
   exaggeration,
+  maptilerTilesJsonUrl,
 }: ExternalTerrainLayerProps) {
   const controlRef = useRef<maplibregl.IControl | null>(null);
 
@@ -32,7 +33,7 @@ export default function ExternalTerrainLayer({
       return;
     }
 
-    const spec = buildExternalTerrainSource(provider, MAPTILER_KEY);
+    const spec = buildExternalTerrainSource(provider, maptilerTilesJsonUrl);
     const shouldApply = mapReady && enabled && spec != null;
 
     if (!shouldApply) {
@@ -51,7 +52,15 @@ export default function ExternalTerrainLayer({
     return () => {
       controlRef.current = clearExternalTerrain(map, controlRef.current);
     };
-  }, [map, mapReady, styleEpoch, enabled, provider, exaggeration]);
+  }, [
+    map,
+    mapReady,
+    styleEpoch,
+    enabled,
+    provider,
+    exaggeration,
+    maptilerTilesJsonUrl,
+  ]);
 
   return null;
 }

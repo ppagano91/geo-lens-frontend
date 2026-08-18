@@ -270,7 +270,9 @@ export default function App() {
           externalTerrainProvider={externalTerrain.provider}
           externalTerrainExaggeration={externalTerrain.exaggeration}
           externalTerrainCanEnable={externalTerrain.canEnable}
-          maptilerKeyPresent={externalTerrain.maptilerKeyPresent}
+          maptilerConfigured={externalTerrain.maptilerConfigured}
+          externalTerrainConfigLoading={externalTerrain.configLoading}
+          externalTerrainConfigError={externalTerrain.configError}
           onExternalTerrainEnabledChange={externalTerrain.setEnabled}
           onExternalTerrainProviderChange={externalTerrain.setProvider}
           onExternalTerrainExaggerationChange={externalTerrain.setExaggeration}
@@ -303,6 +305,7 @@ export default function App() {
         externalTerrainEnabled={externalTerrain.enabled}
         externalTerrainProvider={externalTerrain.provider}
         externalTerrainExaggeration={externalTerrain.exaggeration}
+        maptilerTilesJsonUrl={externalTerrain.maptilerTilesJsonUrl}
         onMapClick={workspace.drawing.addVertex}
         onFinishDrawing={workspace.drawing.finishDrawing}
         onCancelDrawing={workspace.handleCancelDrawing}
