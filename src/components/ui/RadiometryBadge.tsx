@@ -35,11 +35,11 @@ export default function RadiometryBadge({
         <span className="radiometry-badge">{typeLabel}</span>
         {radiometry.scale_applied ? (
           <span className="radiometry-badge radiometry-badge--ok">
-            Scale applied
+            Escala aplicada
           </span>
         ) : (
           <span className="radiometry-badge radiometry-badge--muted">
-            No scale
+            Sin escala
           </span>
         )}
         {detailed ? (

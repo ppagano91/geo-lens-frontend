@@ -179,7 +179,7 @@ export default function MapPanel({
     <div className="map-panel panel-stack">
       <SectionCard
         title="Estado del mapa"
-        // help="Zoom actual y coordenadas del cursor"
+        // help="Zoom actual y coordenadas del cursor. El botón copia lon, lat con 6 decimales."
       >
         <BasemapSelector value={basemapId} onChange={onBasemapChange} />
         <dl className="scene-detail-fields">
@@ -214,7 +214,7 @@ export default function MapPanel({
 
       <SectionCard
         title="Capa activa"
-        // help="Inspeccionar la capa raster que está en el mapa"
+        help="Inspeccioná el índice o RGB que está en el mapa: opacidad, centrar y quitar."
       >
         {!overlay && !overlayLoading ? (
           <div className="map-inspector-empty" role="status">

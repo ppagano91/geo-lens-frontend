@@ -59,11 +59,11 @@ function statusTone(
 function formatStatusLabel(status: SpatialCoverageUiStatus): string {
   switch (status) {
     case "full":
-      return "Full";
+      return "Completa";
     case "partial":
-      return "Partial";
+      return "Parcial";
     case "none":
-      return "None";
+      return "Ninguna";
     case "loading":
       return "…";
     case "error":

@@ -124,9 +124,10 @@ export const SENTINEL_PRODUCT_LEVEL_OPTIONS: ReadonlyArray<{
 
 /** Expected band hints shown in the ingest form (by source). */
 export const INGEST_SOURCE_BAND_HINTS: Record<LocalSceneSource, string> = {
-  "landsat-8": "SR_B2…SR_B7 (.tif/.tiff). Opcional: MTL.txt.",
+  "landsat-8":
+    "SR_B2…SR_B7 (.tif/.tiff). Opcional: MTL.txt. ST_* / QA_* se ignoran.",
   "sentinel-2":
-    "B02, B03, B04, B08 a 10 m (.tif/.tiff). B11/B12 a 20 m se resamplean a la grilla 10 m. Opcional: MTD_MSIL*.xml / manifest.safe.",
+    "B02, B03, B04, B08 a 10 m (.tif/.tiff). B11/B12 a 20 m se resamplean a 10 m. Opcional: MTD_MSIL*.xml / manifest.safe. No subir JP2.",
 };
 
 export const INGEST_MODES: ReadonlyArray<{

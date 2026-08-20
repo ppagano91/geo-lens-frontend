@@ -182,6 +182,11 @@ export default function IngestPanel({
               <p className="aoi-hint">
                 {formatSelectedFilesLabel(form.files)}
               </p>
+              <p className="aoi-hint">
+                {form.source === "sentinel-2"
+                  ? "Obligatorias: B02, B03, B04, B08. Recomendadas: B11 y B12 (se resamplean a 10 m). JP2 no se acepta: convertí a GeoTIFF."
+                  : "Obligatorias: SR_B2…SR_B7 (Collection 2 L2). MTL.txt es opcional. ST_*, QA_* y otros TIF se ignoran."}
+              </p>
               {form.files.length > 0 && (
                 <ul className="ingest-file-list">
                   {form.files.map((file) => (
@@ -222,6 +227,10 @@ export default function IngestPanel({
                 autoComplete="off"
                 spellCheck={false}
               />
+              <p className="aoi-hint">
+                Ruta relativa a DATA_ROOT, no una ruta absoluta de Windows. La
+                carpeta debe existir en el disco del backend.
+              </p>
             </div>
           )}
         </SectionCard>
@@ -316,7 +325,7 @@ export default function IngestPanel({
                 }
                 disabled={submitting}
               />
-              <span>Overwrite</span>
+              <span>Sobrescribir escena existente</span>
             </label>
           </div>
         </CollapsibleSection>
@@ -344,7 +353,7 @@ export default function IngestPanel({
             <div className="status-badge-row">
               <StatusBadge label={result.sensor} />
               {result.overwritten ? (
-                <StatusBadge label="Overwrite" tone="warn" />
+                <StatusBadge label="Sobrescrita" tone="warn" />
               ) : null}
             </div>
             {radiometry && <RadiometryBadge radiometry={radiometry} />}
