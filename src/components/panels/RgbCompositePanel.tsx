@@ -17,14 +17,21 @@ import type { AoiRecord } from "../../types/aoi";
 import type { SceneListItem, SceneRead } from "../../types/scene";
 import type { DerivedAssetRead } from "../../types/derivedAsset";
 import {
-  RGB_PRESET_KEYS,
+  RGB_PRESET_DESCRIPTIONS,
+  RGB_PRESET_GROUPS,
   RGB_PRESET_LABELS,
   RGB_PRESET_ROLES,
+  rgbPresetDisplayName,
   type RgbPresetKey,
 } from "../../types/rgbComposite";
 import {
+  evaluateRgbPresetCompatibility,
+  getRgbCompatibilityMessage,
+  resolvePresetBands,
+  resolveRgbCompatibilityStatus,
+} from "../../utils/rgbCompatibility";
+import {
   detectSensorFromScene,
-  getBandMap,
   getSensorLabel,
 } from "../../utils/sensors";
 import ExistingDerivedNotice from "./ExistingDerivedNotice";
@@ -65,19 +72,6 @@ interface RgbCompositePanelProps {
   ) => DerivedAssetRead | null;
   onViewInResults: () => void;
   onDerivedCatalogChanged: () => void;
-}
-
-function resolvePresetBands(
-  sensorId: ReturnType<typeof detectSensorFromScene>,
-  preset: RgbPresetKey,
-): Record<string, string> {
-  const roles = RGB_PRESET_ROLES[preset];
-  const bandMap = getBandMap(sensorId);
-  return {
-    red: bandMap[roles.red] ?? roles.red,
-    green: bandMap[roles.green] ?? roles.green,
-    blue: bandMap[roles.blue] ?? roles.blue,
-  };
 }
 
 export default function RgbCompositePanel({
@@ -125,11 +119,23 @@ export default function RgbCompositePanel({
   } = useRgbComposite(selectedSceneId, preset, selectedAoiId);
 
   const sensor = selectedScene ? detectSensorFromScene(selectedScene) : null;
+  const compatibility = selectedScene
+    ? evaluateRgbPresetCompatibility(preset, selectedScene)
+    : null;
+  const compatibilityStatus = resolveRgbCompatibilityStatus(
+    preset,
+    selectedScene,
+  );
+  const compatibilityMessage = getRgbCompatibilityMessage(
+    compatibilityStatus,
+    compatibility,
+  );
   const bandsUsed = sensor ? resolvePresetBands(sensor, preset) : null;
   const sceneRadiometry = selectedScene
     ? extractRadiometryFromMetadata(selectedScene.metadata)
     : null;
   const canAct = Boolean(selectedSceneId && !sceneDetailLoading);
+  const presetCompatible = compatibilityStatus !== "incompatible";
   const canActAoi = Boolean(canAct && selectedAoiId);
   const hasAois = savedAois.length > 0;
 
@@ -241,17 +247,39 @@ export default function RgbCompositePanel({
             value={preset}
             onChange={(event) => setPreset(event.target.value as RgbPresetKey)}
           >
-            {RGB_PRESET_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {RGB_PRESET_LABELS[key]}
-              </option>
+            {RGB_PRESET_GROUPS.map((group) => (
+              <optgroup key={group.id} label={group.label}>
+                {group.keys.map((key) => (
+                  <option key={key} value={key}>
+                    {RGB_PRESET_LABELS[key]}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
+          <p className="aoi-hint">{RGB_PRESET_DESCRIPTIONS[preset]}</p>
         </div>
       </SectionCard>
 
       <SectionCard title="Compatibilidad">
         <div className="status-badge-row">
+          <StatusBadge
+            label={
+              compatibilityStatus === "compatible"
+                ? "Compatible"
+                : compatibilityStatus === "incompatible"
+                  ? "No compatible"
+                  : "Sin evaluar"
+            }
+            tone={
+              compatibilityStatus === "compatible"
+                ? "ok"
+                : compatibilityStatus === "incompatible"
+                  ? "warn"
+                  : "muted"
+            }
+            title={compatibilityMessage}
+          />
           {sensor ? (
             <StatusBadge label={getSensorLabel(sensor)} />
           ) : (
@@ -262,6 +290,9 @@ export default function RgbCompositePanel({
         {sceneRadiometry && (
           <RadiometryBadge radiometry={sceneRadiometry} />
         )}
+        <p className="aoi-hint" role="status">
+          {compatibilityMessage}
+        </p>
         {bandsUsed && (
           <dl className="scene-detail-fields">
             <div className="scene-detail-row">
@@ -282,6 +313,14 @@ export default function RgbCompositePanel({
                 {RGB_PRESET_ROLES[preset].blue} → {bandsUsed.blue}
               </dd>
             </div>
+            {compatibility && compatibility.missing_bands.length > 0 ? (
+              <div className="scene-detail-row">
+                <dt>Faltantes</dt>
+                <dd className="compatibility-missing">
+                  {compatibility.missing_bands.join(", ")}
+                </dd>
+              </div>
+            ) : null}
           </dl>
         )}
       </SectionCard>
@@ -306,7 +345,7 @@ export default function RgbCompositePanel({
               text={existingFull ? "Regenerar" : "Por Escena"}
               tone="primary"
               onClick={() => void runAndRefresh(generate)}
-              disabled={!canAct || loading}
+              disabled={!canAct || loading || !presetCompatible}
             >
               {busyAction === "generate" ? (
                 <Loader2
@@ -421,7 +460,7 @@ export default function RgbCompositePanel({
               text={existingAoi ? "Regenerar" : "Por AOI"}
               tone="primary"
               onClick={() => void runAndRefresh(generateByAoi)}
-              disabled={!canActAoi || loading || !hasAois}
+              disabled={!canActAoi || loading || !hasAois || !presetCompatible}
             >
               {busyAction === "generate-aoi" ? (
                 <Loader2
@@ -517,8 +556,9 @@ export default function RgbCompositePanel({
           {previewResult && (
             <>
               <p className="compact-meta-line">
-                Completa · {previewResult.preset} · {previewResult.status} ·{" "}
-                {previewResult.width}×{previewResult.height}
+                Completa · {rgbPresetDisplayName(previewResult.preset)} ·{" "}
+                {previewResult.status} · {previewResult.width}×
+                {previewResult.height}
               </p>
               {previewResult.radiometry && (
                 <RadiometryBadge
@@ -542,8 +582,9 @@ export default function RgbCompositePanel({
           {aoiPreviewResult && (
             <>
               <p className="compact-meta-line">
-                AOI · {aoiPreviewResult.preset} · {aoiPreviewResult.status} ·{" "}
-                {aoiPreviewResult.width}×{aoiPreviewResult.height}
+                AOI · {rgbPresetDisplayName(aoiPreviewResult.preset)} ·{" "}
+                {aoiPreviewResult.status} · {aoiPreviewResult.width}×
+                {aoiPreviewResult.height}
               </p>
               {aoiPreviewResult.radiometry && (
                 <RadiometryBadge
@@ -571,7 +612,7 @@ export default function RgbCompositePanel({
             >
               <p className="compact-meta-line">
                 Capa activa: {mapOverlay.kind.startsWith("rgb") ? "RGB " : ""}
-                {mapOverlay.productKey.toUpperCase()}
+                {rgbPresetDisplayName(mapOverlay.productKey)}
                 {mapOverlay.aoiId ? " (recorte AOI)" : ""}
               </p>
               <label className="aoi-field-label" htmlFor="rgb-overlay-opacity">

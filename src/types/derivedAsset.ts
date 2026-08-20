@@ -1,3 +1,5 @@
+import { isRgbPresetKey, RGB_PRESET_LABELS } from "./rgbComposite";
+
 export const DERIVED_ASSET_TYPES = [
   "index",
   "index_aoi_crop",
@@ -79,6 +81,15 @@ export function derivedAssetTypeLabel(assetType: string): string {
     return DERIVED_ASSET_TYPE_LABELS[assetType];
   }
   return assetType;
+}
+
+/** Readable product name for Results (RGB presets keep a Spanish label). */
+export function derivedProductDisplayName(productKey: string): string {
+  const key = productKey.trim().toLowerCase();
+  if (isRgbPresetKey(key)) {
+    return RGB_PRESET_LABELS[key];
+  }
+  return productKey;
 }
 
 /** Primary product file is present on disk (unknown when not checked yet). */

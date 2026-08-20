@@ -5,6 +5,7 @@ import type { AoiRecord } from "../types/aoi";
 import type { DerivedAssetRead } from "../types/derivedAsset";
 import {
   isRgbPresetKey,
+  RGB_PRESET_DESCRIPTIONS,
   RGB_PRESET_LABELS,
   RGB_PRESET_ROLES,
 } from "../types/rgbComposite";
@@ -194,6 +195,7 @@ export interface IndexLegendSpec {
 export interface RgbLegendSpec {
   kind: "rgb";
   title: string;
+  description: string | null;
   bandsLabel: string | null;
 }
 
@@ -264,9 +266,15 @@ export function getLayerLegendSpec(
   rgbBandsLabel: string | null,
 ): LayerLegendSpec {
   if (isRgbOverlayKind(overlayKind)) {
+    const key = productKey.trim().toLowerCase();
     return {
       kind: "rgb",
-      title: "Composición RGB",
+      title: isRgbPresetKey(key)
+        ? RGB_PRESET_LABELS[key]
+        : "Composición RGB",
+      description: isRgbPresetKey(key)
+        ? RGB_PRESET_DESCRIPTIONS[key]
+        : null,
       bandsLabel: rgbBandsLabel,
     };
   }

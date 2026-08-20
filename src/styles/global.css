@@ -783,6 +783,12 @@ body {
   border-color: var(--accent);
 }
 
+.aoi-select optgroup {
+  font-weight: 650;
+  color: var(--text-secondary);
+  background-color: var(--bg-input);
+}
+
 .aoi-panel {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
@@ -2154,6 +2160,13 @@ body {
   font-size: 0.78rem;
   font-weight: 650;
   color: var(--text-primary);
+}
+
+.layer-legend-description {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 
 .layer-legend-bands {

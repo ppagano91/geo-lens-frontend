@@ -1,4 +1,5 @@
 import type { DerivedAssetRead } from "../../types/derivedAsset";
+import { derivedProductDisplayName } from "../../types/derivedAsset";
 
 interface ExistingDerivedNoticeProps {
   existing: Pick<DerivedAssetRead, "id" | "product_key"> | null;
@@ -19,7 +20,11 @@ export default function ExistingDerivedNotice({
   return (
     <div className="results-existing-notice" role="status">
       <p className="aoi-hint" title={regenerateHint}>
-        Ya existe <code>{existing.product_key}</code>.
+        Ya existe{" "}
+        <code title={existing.product_key}>
+          {derivedProductDisplayName(existing.product_key)}
+        </code>
+        .
       </p>
       <button
         type="button"

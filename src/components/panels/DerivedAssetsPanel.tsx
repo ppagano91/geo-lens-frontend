@@ -12,6 +12,7 @@ import type { AoiRecord } from "../../types/aoi";
 import {
   DERIVED_ASSET_TYPES,
   derivedAssetTypeLabel,
+  derivedProductDisplayName,
   type DerivedActiveFilter,
   type DerivedAoiFilter,
   type DerivedAssetExistsResult,
@@ -242,7 +243,7 @@ export default function DerivedAssetsPanel({
               <option value="">Todos</option>
               {productOptions.map((key) => (
                 <option key={key} value={key}>
-                  {key}
+                  {derivedProductDisplayName(key)}
                 </option>
               ))}
             </select>
@@ -323,8 +324,11 @@ export default function DerivedAssetsPanel({
                 >
                   <div className="results-asset-header">
                     <strong>{derivedAssetTypeLabel(asset.asset_type)}</strong>
-                    <span className="results-asset-product">
-                      {asset.product_key}
+                    <span
+                      className="results-asset-product"
+                      title={asset.product_key}
+                    >
+                      {derivedProductDisplayName(asset.product_key)}
                     </span>
                   </div>
                   <StatusBadges asset={asset} existence={existence} />

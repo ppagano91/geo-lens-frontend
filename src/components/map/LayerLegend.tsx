@@ -10,6 +10,9 @@ export default function LayerLegend({ spec }: LayerLegendProps) {
     return (
       <div className="layer-legend" aria-label="Leyenda RGB">
         <p className="layer-legend-title">{spec.title}</p>
+        {spec.description ? (
+          <p className="layer-legend-description">{spec.description}</p>
+        ) : null}
         {spec.bandsLabel ? (
           <p className="layer-legend-bands">{spec.bandsLabel}</p>
         ) : (
